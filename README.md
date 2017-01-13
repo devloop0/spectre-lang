@@ -6,6 +6,7 @@ Spectre is a C-like systems programming language that attempts to bring some mod
 * Namespaces and using statements (similar to C++)
 * Digit separators (similar to C++)
 * Inline assembly
+* And more!...
 
 A big difference from C is that pre- and post- increment semantics are a little different, and there is no short-circuit evaluation of boolean expressions.
 
