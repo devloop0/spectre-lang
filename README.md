@@ -32,18 +32,18 @@ Now that the boring stuff is out of the way, here is the classic "Hello World!" 
 ```
 namespace my { # After getting import statements to work, print_string will be part of the standard library
 	func bool print_string(const char* str __rfuncarg__) {
-    		__asm__ (
-        		"li $v0, 4" : # The Mars and SPIM syscall for printing a string
-            		"syscall"
-        		); # This should be it, since the __rfuncarg__ annotation for function arguments automatically places the address of the const char* str into $4 ($a0).
+		__asm__ (
+			"li $v0, 4" : # The Mars and SPIM syscall for printing a string
+			"syscall"
+		); # This should be it, since the __rfuncarg__ annotation for function arguments automatically places the address of the const char* str into $4 ($a0).
 		return true;
 	}
 }
 
 func int main() {
-using my::print_string; # Places the print_string symbol from the my namespace in the current scope.
-    print_string("Hello World!");
-    return 0;
+	using my::print_string; # Places the print_string symbol from the my namespace in the current scope.
+	print_string("Hello World!");
+	return 0;
 }
 ```
 
