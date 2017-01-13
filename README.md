@@ -36,6 +36,7 @@ func bool print_string(const char* str __rfuncarg__) {
         "li $v0, 4" : # The Mars and SPIM syscall for printing a string
             "syscall"
         ); # This should be it, since the __rfuncarg__ annotation for function arguments automatically places the address of the const char* str into $4 ($a0).
+	return true;
     }
 }
 
