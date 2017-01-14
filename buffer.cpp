@@ -262,7 +262,7 @@ namespace spectre {
 				_current_column_number++;
 				while (_index < _source_code.length() && _source_code[_index] != '\'' && _source_code[_index] != '\n') {
 					if (_source_code[_index] == '\\') {
-						if (_index + 1 < _source_code.length() && _source_code[_index + 1] == '\'') {
+						if (_index + 1 < _source_code.length()) {
 							character += _source_code[_index];
 							_index++;
 							_current_column_number++;
@@ -285,13 +285,8 @@ namespace spectre {
 				string trimmed_character = character.substr(1, character.length() - 2);
 				bool good = true;
 				if (trimmed_character.length() == 1);
-				else if (trimmed_character.length() == 2) {
-					if (trimmed_character[0] == '\\');
-					else
-						good = false;
-				}
-				else
-					good = false;
+				else if (trimmed_character.length() == 2) good = trimmed_character[0] == '\\';
+				else good = false;
 				if (!good) {
 					token temp(_parent_directory, _file_name, _current_line_number, start, _current_column_number, token::kind::TOKEN_ERROR, character);
 					_diagnostics_reporter->report(error(error::kind::KIND_ERROR, "Malformed character token.", vector<token> { temp }, 0));

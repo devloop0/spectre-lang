@@ -3208,14 +3208,20 @@ namespace spectre {
 			}
 			if (rt->type_kind() == type::kind::KIND_PRIMITIVE) {
 				shared_ptr<primitive_type> prt = static_pointer_cast<primitive_type>(rt), pfrt = static_pointer_cast<primitive_type>(frt);
-				if (prt->primitive_type_kind() == primitive_type::kind::KIND_VOID && prt->primitive_type_kind() != pfrt->primitive_type_kind()) {
+				if (pfrt->primitive_type_kind() == primitive_type::kind::KIND_VOID && prt->primitive_type_kind() != pfrt->primitive_type_kind()) {
 					p->report(error(error::kind::KIND_ERROR, "Cannot return a non-void type from a void function.", stream, 0));
 					_contained_return_stmt = make_shared<return_stmt>(rv, false, stream);
 					_valid = false;
 					return;
 				}
-				else if (prt->primitive_type_kind() == primitive_type::kind::KIND_BOOL && prt->primitive_type_kind() != pfrt->primitive_type_kind()) {
+				if (pfrt->primitive_type_kind() == primitive_type::kind::KIND_BOOL && prt->primitive_type_kind() != pfrt->primitive_type_kind()) {
 					p->report(error(error::kind::KIND_ERROR, "Cannot return a non-bool type from a bool function.", stream, 0));
+					_contained_return_stmt = make_shared<return_stmt>(rv, false, stream);
+					_valid = false;
+					return;
+				}
+				if (rt->type_array_kind() == type::array_kind::KIND_ARRAY && prt->primitive_type_kind() != pfrt->primitive_type_kind()) {
+					p->report(error(error::kind::KIND_ERROR, "Cannot return incompatible array types from a function.", stream, 0));
 					_contained_return_stmt = make_shared<return_stmt>(rv, false, stream);
 					_valid = false;
 					return;
