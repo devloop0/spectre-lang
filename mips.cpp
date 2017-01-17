@@ -3901,7 +3901,7 @@ namespace spectre {
 				string c, st;
 				if (ft->type_const_kind() == type::const_kind::KIND_CONST) c = "C";
 				if (ft->type_static_kind() == type::static_kind::KIND_STATIC) st = "S";
-				return scope_string + "function" + c + st + "_" + type_2_string(mc, ft->return_type(), false) + "_" + fsym->function_name().raw_text();
+				return scope_string + "function_" + c + st + "_" + type_2_string(mc, ft->return_type(), false) + "_" + fsym->function_name().raw_text();
 			}
 			if (s->symbol_kind() == symbol::kind::KIND_STRUCT) {
 				shared_ptr<struct_symbol> ss = static_pointer_cast<struct_symbol>(s);

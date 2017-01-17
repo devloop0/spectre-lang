@@ -244,7 +244,7 @@ namespace spectre {
 		}
 
 		function_scope::function_scope(shared_ptr<scope> ps, type::const_kind ck, type::static_kind sk, shared_ptr<type> rt, token fn) :
-			scope(scope::kind::KIND_FUNCTION, ps), _return_type(rt), _function_name(fn) {
+			scope(scope::kind::KIND_FUNCTION, ps), _return_type(rt), _function_name(fn), _function_const_kind(ck), _function_static_kind(sk) {
 
 		}
 
@@ -4570,6 +4570,8 @@ namespace spectre {
 				_valid = false;
 				return;
 			}
+			vector<vector<token>> itl;
+			vector<shared_ptr<namespace_symbol>> il;
 			vector<token> stream;
 			stream.push_back(p->pop());
 			// TODO
