@@ -1912,11 +1912,11 @@ namespace spectre {
 				case unary_expression::kind::KIND_LOGICAL_NOT: {
 					tuple<int, string, shared_ptr<label_operand>, shared_ptr<insn>> lab_false_path = mc->next_label_info(), lab_done = mc->next_label_info();
 					mc->add_insn(make_shared<insn>(insn::kind::KIND_BEQ, to_use->raw_register_operand(), register_file::register_objects::_zero_register, get<2>(lab_false_path)));
-					mc->add_insn(make_shared<insn>(insn::kind::KIND_ADDIU, to_use->raw_register_operand(), register_file::register_objects::_zero_register, make_shared<immediate_operand>(1)));
-					mc->add_insn(make_shared<insn>(insn::kind::KIND_J, get<2>(lab_done)));
-					mc->add_insn(get<3>(lab_false_path));
 					mc->add_insn(make_shared<insn>(insn::kind::KIND_ADDU, to_use->raw_register_operand(), register_file::register_objects::_zero_register,
 						register_file::register_objects::_zero_register));
+					mc->add_insn(make_shared<insn>(insn::kind::KIND_J, get<2>(lab_done)));
+					mc->add_insn(get<3>(lab_false_path));
+					mc->add_insn(make_shared<insn>(insn::kind::KIND_ADDIU, to_use->raw_register_operand(), register_file::register_objects::_zero_register, make_shared<immediate_operand>(1)));
 					mc->add_insn(get<3>(lab_done));
 					to_use->set_register_wrapper_function_argument_kind(register_wrapper::function_argument_kind::KIND_NON_FUNCTION_ARGUMENT);
 				}
