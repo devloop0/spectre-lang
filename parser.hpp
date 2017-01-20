@@ -6,6 +6,7 @@
 #include "stmt.hpp"
 #include "diagnostics.hpp"
 #include "error.hpp"
+#include <experimental/filesystem>
 #include <memory>
 #include <vector>
 #include <functional>
@@ -41,7 +42,6 @@ using spectre::ast::namespace_stmt;
 using spectre::ast::using_stmt;
 using spectre::ast::asm_stmt;
 using spectre::ast::include_stmt;
-using spectre::ast::import_stmt;
 using spectre::lexer::diagnostics;
 using spectre::lexer::error;
 using std::shared_ptr;
@@ -53,6 +53,9 @@ using std::to_string;
 using std::reverse;
 using std::tuple;
 using std::stack;
+
+namespace filesystem = std::experimental::filesystem;
+namespace fs = filesystem;
 
 namespace spectre {
 	namespace parser {
@@ -222,6 +225,7 @@ namespace spectre {
 			vector<shared_ptr<struct_symbol>> _struct_symbol_table;
 			vector<shared_ptr<function_symbol>> _function_symbol_table;
 			vector<token> _consumed_token_list;
+			vector<shared_ptr<fs::path>> _import_list;
 		public:
 			parser(buffer sb);
 			~parser();
@@ -256,6 +260,9 @@ namespace spectre {
 			void add_to_function_symbol_table(shared_ptr<function_symbol> s);
 			shared_ptr<function_symbol> find_function_symbol(token n, int r);
 			void insert_token_list(int p, vector<token> vec);
+
+			void add_to_import_list(shared_ptr<fs::path> f);
+			bool in_import_list(shared_ptr<fs::path> f);
 		};
 
 		class primary_expression_parser {
@@ -559,17 +566,6 @@ namespace spectre {
 			include_stmt_parser(shared_ptr<parser> p);
 			~include_stmt_parser();
 			shared_ptr<include_stmt> contained_include_stmt();
-			bool valid();
-		};
-
-		class import_stmt_parser {
-		private:
-			shared_ptr<import_stmt> _contained_import_stmt;
-			bool _valid;
-		public:
-			import_stmt_parser(shared_ptr<parser> p);
-			~import_stmt_parser();
-			shared_ptr<import_stmt> contained_import_stmt();
 			bool valid();
 		};
 	}

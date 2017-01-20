@@ -2,6 +2,7 @@
 #include "file_io.hpp"
 #include <memory>
 #include <iostream>
+#include <experimental/filesystem>
 
 using std::make_shared;
 using std::static_pointer_cast;
@@ -380,8 +381,8 @@ namespace spectre {
 				sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_STRUCT && sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_VARIABLE_DECLARATION &&
 				sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_NAMESPACE && sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_EMPTY &&
 				sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_USING && sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_ASM &&
-				sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_INCLUDE && sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_IMPORT) {
-				report(error(error::kind::KIND_ERROR, "Only raw assembly, namespaces, using statements, expressions, functions, struct's, import statements, and variable declarations are " 
+				sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_INCLUDE) {
+				report(error(error::kind::KIND_ERROR, "Only raw assembly, namespaces, using statements, expressions, functions, struct's, and variable declarations are " 
 					"allowed at the global scope.", sp.contained_stmt()->stream(), 0));
 			}
 			_stmt_list.push_back(sp.contained_stmt());
@@ -433,6 +434,16 @@ namespace spectre {
 		void parser::insert_token_list(int i, vector<token> vec) {
 			for (int j = 0; j < vec.size(); j++)
 				_consumed_token_list.insert(_consumed_token_list.begin() + i + j, vec[j]);
+		}
+
+		void parser::add_to_import_list(shared_ptr<fs::path> f) {
+			_import_list.push_back(f);
+		}
+
+		bool parser::in_import_list(shared_ptr<fs::path> f) {
+			for (shared_ptr<fs::path> fp : _import_list)
+				if (fs::equivalent(*f, *fp)) return true;
+			return false;
 		}
 
 		primary_expression_parser::primary_expression_parser(shared_ptr<parser> p) : 
@@ -1263,22 +1274,10 @@ namespace spectre {
 					_valid = false;
 				}
 			}
-			else if (p->peek().token_kind() == token::kind::TOKEN_INCLUDE) {
+			else if (p->peek().token_kind() == token::kind::TOKEN_INCLUDE || p->peek().token_kind() == token::kind::TOKEN_IMPORT) {
 				shared_ptr<include_stmt> i = include_stmt_parser(p).contained_include_stmt();
 				if (i != nullptr) {
 					_contained_stmt = make_shared<stmt>(stmt::kind::KIND_INCLUDE, i, i->valid(), i->stream());
-					stream = i->stream();
-					_valid = i->valid();
-				}
-				else {
-					_contained_stmt = make_shared<stmt>();
-					_valid = false;
-				}
-			}
-			else if (p->peek().token_kind() == token::kind::TOKEN_IMPORT) {
-				shared_ptr<import_stmt> i = import_stmt_parser(p).contained_import_stmt();
-				if (i != nullptr) {
-					_contained_stmt = make_shared<stmt>(stmt::kind::KIND_IMPORT, i, i->valid(), i->stream());
 					stream = i->stream();
 					_valid = i->valid();
 				}
@@ -4131,8 +4130,7 @@ namespace spectre {
 				}
 				if (s->stmt_kind() != stmt::kind::KIND_EXPRESSION && s->stmt_kind() != stmt::kind::KIND_FUNCTION && s->stmt_kind() != stmt::kind::KIND_VARIABLE_DECLARATION &&
 					s->stmt_kind() != stmt::kind::KIND_NAMESPACE && s->stmt_kind() != stmt::kind::KIND_EMPTY && s->stmt_kind() != stmt::kind::KIND_STRUCT &&
-					s->stmt_kind() != stmt::kind::KIND_USING && s->stmt_kind() != stmt::kind::KIND_ASM && s->stmt_kind() != stmt::kind::KIND_INCLUDE &&
-					s->stmt_kind() != stmt::kind::KIND_IMPORT) {
+					s->stmt_kind() != stmt::kind::KIND_USING && s->stmt_kind() != stmt::kind::KIND_ASM && s->stmt_kind() != stmt::kind::KIND_INCLUDE) {
 					p->report(error(error::kind::KIND_ERROR, "Only raw assembly, namespaces, using statements, expressions, functions, struct's, import statements and variable declarations are"
 						"allowed at the namespace scope.", stream, 0));
 					_contained_namespace_stmt = make_shared<namespace_stmt>(k, dk, nn, n_scope, n_symbol, nsl, false, stream);
@@ -4450,13 +4448,14 @@ namespace spectre {
 		}
 
 		include_stmt_parser::include_stmt_parser(shared_ptr<parser> p) : _contained_include_stmt(nullptr), _valid(false) {
-			if (p->peek().token_kind() != token::kind::TOKEN_INCLUDE) {
-				_contained_include_stmt = make_shared<include_stmt>(vector<shared_ptr<include_stmt::include_type>>{}, vector<token>{}, false);
+			if (p->peek().token_kind() != token::kind::TOKEN_INCLUDE && p->peek().token_kind() != token::kind::TOKEN_IMPORT) {
+				_contained_include_stmt = make_shared<include_stmt>(include_stmt::type::KIND_NONE, vector<shared_ptr<include_stmt::include_type>>{}, vector<token>{}, false);
 				_valid = false;
 				return;
 			}
 			vector<token> stream;
 			token inc = p->pop();
+			include_stmt::type t = inc.token_kind() == token::kind::TOKEN_INCLUDE ? include_stmt::type::KIND_INCLUDE : include_stmt::type::KIND_IMPORT;
 			stream.push_back(inc);
 			vector<shared_ptr<include_stmt::include_type>> il;
 			vector<token> tstream;
@@ -4468,23 +4467,27 @@ namespace spectre {
 					string full_path = construct_file_name(vector<string>{ li.parent_directory(), raw });
 					if (!file_exists(full_path)) {
 						p->report(error(error::kind::KIND_ERROR, "The file: \"" + full_path + "\" does not exist.", stream, 0));
-						_contained_include_stmt = make_shared<include_stmt>(il, stream, false);
+						_contained_include_stmt = make_shared<include_stmt>(t, il, stream, false);
 						_valid = false;
 						return;
 					}
-					string pd = get_parent_path(full_path), fn = get_file_name(full_path), src = get_file_source(full_path);
-					buffer buff(pd, fn, make_shared<diagnostics>(), src);
-					token tok = bad_token;
-					while (true) {
-						tok = buff.pop();
-						if (tok.token_kind() != token::kind::TOKEN_EOF) tstream.push_back(tok);
-						else break;
-					}
-					if (buff.diagnostics_reporter()->error_count() > 0) {
-						p->report(error(error::kind::KIND_ERROR, "The included file is lexically invalid.", stream, 0));
-						_contained_include_stmt = make_shared<include_stmt>(il, stream, false);
-						_valid = false;
-						return;
+					if ((!p->in_import_list(make_shared<fs::path>(full_path)) && inc.token_kind() == token::kind::TOKEN_IMPORT) || inc.token_kind() == token::kind::TOKEN_INCLUDE) {
+						string pd = get_parent_path(full_path), fn = get_file_name(full_path), src = get_file_source(full_path);
+						buffer buff(pd, fn, make_shared<diagnostics>(), src);
+						token tok = bad_token;
+						while (true) {
+							tok = buff.pop();
+							if (tok.token_kind() != token::kind::TOKEN_EOF) tstream.push_back(tok);
+							else break;
+						}
+						if (buff.diagnostics_reporter()->error_count() > 0) {
+							p->report(error(error::kind::KIND_ERROR, "The included file is lexically invalid.", stream, 0));
+							_contained_include_stmt = make_shared<include_stmt>(t, il, stream, false);
+							_valid = false;
+							return;
+						}
+						if(!p->in_import_list(make_shared<fs::path>(full_path)) && inc.token_kind() == token::kind::TOKEN_IMPORT)
+							p->add_to_import_list(make_shared<fs::path>(full_path));
 					}
 					il.push_back(make_shared<include_stmt::include_type>(li));
 				}
@@ -4493,7 +4496,7 @@ namespace spectre {
 					stream.push_back(lb);
 					if (p->peek().token_kind() != token::kind::TOKEN_STRING) {
 						p->report(error(error::kind::KIND_ERROR, "Expected a string to a valid system include file.", stream, 0));
-						_contained_include_stmt = make_shared<include_stmt>(il, stream, false);
+						_contained_include_stmt = make_shared<include_stmt>(t, il, stream, false);
 						_valid = false;
 						return;
 					}
@@ -4501,7 +4504,7 @@ namespace spectre {
 					stream.push_back(si);
 					if (p->peek().token_kind() != token::kind::TOKEN_RIGHT_ANGLE_BRACKET) {
 						p->report(error(error::kind::KIND_ERROR, "Expected a close bracket ('>') to end a system include directive.", stream, 0));
-						_contained_include_stmt = make_shared<include_stmt>(il, stream, false);
+						_contained_include_stmt = make_shared<include_stmt>(t, il, stream, false);
 						_valid = false;
 						return;
 					}
@@ -4509,31 +4512,35 @@ namespace spectre {
 					stream.push_back(rb);
 					string raw = si.raw_text().substr(1, si.raw_text().size() - 2);
 					string full_path = construct_file_name(vector<string>{ system_include_path, raw });
-					if (!file_exists(full_path)) {
-						p->report(error(error::kind::KIND_ERROR, "The file: \"" + full_path + "\" does not exist.", stream, 0));
-						_contained_include_stmt = make_shared<include_stmt>(il, stream, false);
-						_valid = false;
-						return;
-					}
-					string pd = get_parent_path(full_path), fn = get_file_name(full_path), src = get_file_source(full_path);
-					buffer buff(pd, fn, make_shared<diagnostics>(), src);
-					token tok = bad_token;
-					while (true) {
-						tok = buff.pop();
-						if (tok.token_kind() != token::kind::TOKEN_EOF) tstream.push_back(tok);
-						else break;
-					}
-					if (buff.diagnostics_reporter()->error_count() > 0) {
-						p->report(error(error::kind::KIND_ERROR, "The included file is lexically invalid.", stream, 0));
-						_contained_include_stmt = make_shared<include_stmt>(il, stream, false);
-						_valid = false;
-						return;
+					if ((!p->in_import_list(make_shared<fs::path>(full_path)) && inc.token_kind() == token::kind::TOKEN_IMPORT) || inc.token_kind() == token::kind::TOKEN_INCLUDE) {
+						if (!file_exists(full_path)) {
+							p->report(error(error::kind::KIND_ERROR, "The file: \"" + full_path + "\" does not exist.", stream, 0));
+							_contained_include_stmt = make_shared<include_stmt>(t, il, stream, false);
+							_valid = false;
+							return;
+						}
+						string pd = get_parent_path(full_path), fn = get_file_name(full_path), src = get_file_source(full_path);
+						buffer buff(pd, fn, make_shared<diagnostics>(), src);
+						token tok = bad_token;
+						while (true) {
+							tok = buff.pop();
+							if (tok.token_kind() != token::kind::TOKEN_EOF) tstream.push_back(tok);
+							else break;
+						}
+						if (buff.diagnostics_reporter()->error_count() > 0) {
+							p->report(error(error::kind::KIND_ERROR, "The included file is lexically invalid.", stream, 0));
+							_contained_include_stmt = make_shared<include_stmt>(t, il, stream, false);
+							_valid = false;
+							return;
+						}
+						if(!p->in_import_list(make_shared<fs::path>(full_path)) && inc.token_kind() == token::kind::TOKEN_IMPORT)
+							p->add_to_import_list(make_shared<fs::path>(full_path));
 					}
 					il.push_back(make_shared<include_stmt::include_type>(vector<token> { lb, si, rb }));
 				}
 				else {
 					p->report(error(error::kind::KIND_ERROR, "Expected a local include or a system include.", stream, 0));
-					_contained_include_stmt = make_shared<include_stmt>(il, stream, false);
+					_contained_include_stmt = make_shared<include_stmt>(t, il, stream, false);
 					_valid = false;
 					return;
 				}
@@ -4541,14 +4548,14 @@ namespace spectre {
 					stream.push_back(p->pop());
 					if (inc.line_number() != p->peek().line_number()) {
 						p->report(error(error::kind::KIND_ERROR, "Expected a local include or a system include after a comma (',').", stream, 0));
-						_contained_include_stmt = make_shared<include_stmt>(il, stream, false);
+						_contained_include_stmt = make_shared<include_stmt>(t, il, stream, false);
 						_valid = false;
 						return;
 					}
 				}
 			}
 			p->insert_token_list(p->get_buffer_position(), tstream);
-			_contained_include_stmt = make_shared<include_stmt>(il, stream, true);
+			_contained_include_stmt = make_shared<include_stmt>(t, il, stream, true);
 			_valid = true;
 		}
 
@@ -4561,31 +4568,6 @@ namespace spectre {
 		}
 
 		bool include_stmt_parser::valid() {
-			return _valid;
-		}
-
-		import_stmt_parser::import_stmt_parser(shared_ptr<parser> p) : _contained_import_stmt(nullptr), _valid(false) {
-			if (p->peek().token_kind() != token::kind::TOKEN_IMPORT) {
-				_contained_import_stmt = make_shared<import_stmt>(vector<shared_ptr<namespace_symbol>>{}, vector<vector<token>>{}, vector<token>{}, false);
-				_valid = false;
-				return;
-			}
-			vector<vector<token>> itl;
-			vector<shared_ptr<namespace_symbol>> il;
-			vector<token> stream;
-			stream.push_back(p->pop());
-			// TODO
-		}
-
-		import_stmt_parser::~import_stmt_parser() {
-
-		}
-
-		shared_ptr<import_stmt> import_stmt_parser::contained_import_stmt() {
-			return _contained_import_stmt;
-		}
-
-		bool import_stmt_parser::valid() {
 			return _valid;
 		}
 	}

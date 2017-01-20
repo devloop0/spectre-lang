@@ -391,6 +391,9 @@ namespace spectre {
 
 		class include_stmt {
 		public:
+			enum class type {
+				KIND_IMPORT, KIND_INCLUDE, KIND_NONE
+			};
 			enum class kind {
 				KIND_LOCAL, KIND_SYSTEM, KIND_NONE
 			};
@@ -410,27 +413,14 @@ namespace spectre {
 			vector<shared_ptr<include_type>> _include_list;
 			vector<token> _stream;
 			bool _valid;
+			type _include_stmt_type;
 		public:
-			include_stmt(vector<shared_ptr<include_type>> il, vector<token> s, bool v);
+			include_stmt(type t, vector<shared_ptr<include_type>> il, vector<token> s, bool v);
 			~include_stmt();
 			vector<shared_ptr<include_type>> include_list();
 			vector<token> stream();
 			bool valid();
-		};
-
-		class import_stmt {
-		private:
-			vector<token> _stream;
-			vector<shared_ptr<namespace_symbol>> _import_list;
-			vector<vector<token>> _import_token_list;
-			bool _valid;
-		public:
-			import_stmt(vector<shared_ptr<namespace_symbol>> il, vector<vector<token>> itl, vector<token> s, bool v);
-			~import_stmt();
-			vector<token> stream();
-			bool valid();
-			vector<shared_ptr<namespace_symbol>> import_list();
-			vector<vector<token>> import_token_list();
+			type include_stmt_type();
 		};
 
 		class stmt {
@@ -438,7 +428,7 @@ namespace spectre {
 			enum class kind {
 				KIND_EXPRESSION, KIND_VARIABLE_DECLARATION, KIND_IF, KIND_EMPTY, KIND_FUNCTION, KIND_RETURN, KIND_WHILE,
 				KIND_BLOCK, KIND_BREAK_CONTINUE, KIND_FOR, KIND_DO_WHILE, KIND_CASE_DEFAULT, KIND_SWITCH, KIND_STRUCT,
-				KIND_NAMESPACE, KIND_USING, KIND_ASM, KIND_INCLUDE, KIND_IMPORT, KIND_NONE
+				KIND_NAMESPACE, KIND_USING, KIND_ASM, KIND_INCLUDE, KIND_NONE
 			};
 		private:
 			shared_ptr<expression> _stmt_expression;
@@ -458,7 +448,6 @@ namespace spectre {
 			shared_ptr<using_stmt> _stmt_using;
 			shared_ptr<asm_stmt> _stmt_asm;
 			shared_ptr<include_stmt> _stmt_include;
-			shared_ptr<import_stmt> _stmt_import;
 			kind _stmt_kind;
 			bool _valid;
 			vector<token> _stream;
@@ -480,7 +469,6 @@ namespace spectre {
 			stmt(kind sk, shared_ptr<using_stmt> us, bool v, vector<token> s);
 			stmt(kind sk, shared_ptr<asm_stmt> as, bool v, vector<token> s);
 			stmt(kind sk, shared_ptr<include_stmt> is, bool v, vector<token> s);
-			stmt(kind sk, shared_ptr<import_stmt> is, bool v, vector<token> s);
 			stmt();
 			~stmt();
 			shared_ptr<expression> stmt_expression();
@@ -503,7 +491,6 @@ namespace spectre {
 			shared_ptr<using_stmt> stmt_using();
 			shared_ptr<asm_stmt> stmt_asm();
 			shared_ptr<include_stmt> stmt_include();
-			shared_ptr<import_stmt> stmt_import();
 		};
 	}
 }

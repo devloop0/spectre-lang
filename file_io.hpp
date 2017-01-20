@@ -12,10 +12,8 @@ namespace spectre {
 
 #ifdef _WIN32
 		const static string system_include_path = "C:\\spectre\\include";
-		const static string system_pkg_path = "C:\\spectre\\pkg";
 #else
 		const static string system_include_path = "/usr/include/spectre";
-		const static string system_pkg_path = "/usr/include/spectre-pkg";
 #endif
 
 		string current_working_directory();

@@ -1117,7 +1117,6 @@ namespace spectre {
 			case stmt::kind::KIND_STRUCT:
 			case stmt::kind::KIND_USING:
 			case stmt::kind::KIND_INCLUDE:
-			case stmt::kind::KIND_IMPORT:
 			case stmt::kind::KIND_EMPTY:
 				return;
 				break;

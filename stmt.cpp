@@ -334,10 +334,6 @@ namespace spectre {
 
 		}
 
-		stmt::stmt(stmt::kind sk, shared_ptr<import_stmt> is, bool v, vector<token> s) : _valid(v), _stream(s), _stmt_import(is), _stmt_kind(sk) {
-
-		}
-
 		stmt::stmt() : _stmt_kind(stmt::kind::KIND_NONE), _stmt_expression(nullptr), _valid(false), _stream(vector<token>()) {
 
 		}
@@ -424,10 +420,6 @@ namespace spectre {
 
 		shared_ptr<include_stmt> stmt::stmt_include() {
 			return _stmt_include;
-		}
-
-		shared_ptr<import_stmt> stmt::stmt_import() {
-			return _stmt_import;
 		}
 
 		break_continue_stmt::break_continue_stmt(break_continue_stmt::kind k, vector<token> s, bool v) :
@@ -742,7 +734,8 @@ namespace spectre {
 			return _include_stmt_kind;
 		}
 
-		include_stmt::include_stmt(vector<shared_ptr<include_stmt::include_type>> il, vector<token> s, bool v) : _include_list(il), _stream(s), _valid(v) {
+		include_stmt::include_stmt(include_stmt::type t, vector<shared_ptr<include_stmt::include_type>> il, vector<token> s, bool v) : _include_list(il), _stream(s), _valid(v),
+			_include_stmt_type(t) {
 
 		}
 
@@ -762,28 +755,8 @@ namespace spectre {
 			return _valid;
 		}
 
-		import_stmt::import_stmt(vector<shared_ptr<namespace_symbol>> il, vector<vector<token>> itl, vector<token> s, bool v) : _import_list(il), _import_token_list(itl), _stream(s), _valid(v) {
-
-		}
-
-		import_stmt::~import_stmt() {
-
-		}
-
-		vector<shared_ptr<namespace_symbol>> import_stmt::import_list() {
-			return _import_list;
-		}
-
-		vector<vector<token>> import_stmt::import_token_list() {
-			return _import_token_list;
-		}
-
-		vector<token> import_stmt::stream() {
-			return _stream;
-		}
-
-		bool import_stmt::valid() {
-			return _valid;
+		include_stmt::type include_stmt::include_stmt_type() {
+			return _include_stmt_type;
 		}
 	}
 }
