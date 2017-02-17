@@ -39,32 +39,34 @@ int main(int argc, char* argv[]) {
 		else src += line + "\n";
 	}
 	std::cout << '\n' << '\n';*/
-	if (argc != 2) {
-		cerr << "Expected 1 command line argument with the name of the file to compile";
+	if (argc < 2) {
+		cerr << "Expected at least 1 command line argument with the name of the file to compile";
 		exit(1);
 	}
-	string full_path = construct_file_name(vector<string>{ current_working_directory(), argv[1] });
-	string fn = get_file_name(full_path), src = get_file_source(full_path);
-	buffer b(current_working_directory(), fn, make_shared<diagnostics>(), src);
-	shared_ptr<parser> p = make_shared<parser>(b);
-	bool b_ = p->parse_stmt();
-	while (b_)
-		b_ = p->parse_stmt();
-	if (b.diagnostics_reporter()->error_count() == 0) {
-		/*shared_ptr<lir_code> lc = make_shared<lir_code>(p);
-		for (shared_ptr<stmt> s : p->stmt_list())
-			generate_stmt_lir(lc, s);
+	for (string arg : vector<string>(argv + 1, argv + argc)) {
+		string full_path = construct_file_name(vector<string>{ current_working_directory(), arg });
+		string fn = get_file_name(full_path), src = get_file_source(full_path);
+		buffer b(current_working_directory(), fn, make_shared<diagnostics>(), src);
+		shared_ptr<parser> p = make_shared<parser>(b);
+		bool b_ = p->parse_stmt();
+		while (b_)
+			b_ = p->parse_stmt();
 		if (b.diagnostics_reporter()->error_count() == 0) {
-			cout << '\n' << "============Generated Code============" << '\n';
-			for (string s : lc->raw_instruction_list())
-				cout << s << '\n';
-		}*/
-		shared_ptr<mips_code> mc = make_shared<mips_code>(p);
-		generate_mips(mc, p);
-		string gen = "";
-		for (string s : mc->raw_insn_list()) gen += s + "\n";
-		string pd = get_parent_path(full_path), s = get_file_stem(full_path) + ".s";
-		string asm_file = construct_file_name(vector<string>{ pd, s });
-		write_to_file(asm_file, gen);
+			/*shared_ptr<lir_code> lc = make_shared<lir_code>(p);
+			for (shared_ptr<stmt> s : p->stmt_list())
+				generate_stmt_lir(lc, s);
+			if (b.diagnostics_reporter()->error_count() == 0) {
+				cout << '\n' << "============Generated Code============" << '\n';
+				for (string s : lc->raw_instruction_list())
+					cout << s << '\n';
+			}*/
+			shared_ptr<mips_code> mc = make_shared<mips_code>(p);
+			generate_mips(mc, p);
+			string gen = "";
+			for (string s : mc->raw_insn_list()) gen += s + "\n";
+			string pd = get_parent_path(full_path), s = get_file_stem(full_path) + ".s";
+			string asm_file = construct_file_name(vector<string>{ pd, s });
+			write_to_file(asm_file, gen);
+		}
 	}
 }

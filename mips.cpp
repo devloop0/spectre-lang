@@ -1,5 +1,6 @@
 // BUG!!!: __rfuncarg__ function arguments as lvalues in ternary assignment expressions do not work.
 // BUG!!!: register spilling in either branch of a ternary expression will fail.
+// BUG!!!: passing struct's through multiple __rfuncarg__ functions results in errors.
 // -- both of these mean -> avoid complex ternary expressions for now.
 
 #include "mips.hpp"
@@ -1819,11 +1820,6 @@ namespace spectre {
 						}
 						rhs_op = make_shared<operand_wrapper>(to_use_rhs);
 					}
-					if (be->lhs()->binary_expression_type()->type_kind() != type::kind::KIND_PRIMITIVE || be->rhs()->binary_expression_type()->type_kind() != type::kind::KIND_PRIMITIVE ||
-						be->lhs()->binary_expression_type()->array_dimensions() > 0 || be->rhs()->binary_expression_type()->array_dimensions() > 0 ||
-						be->lhs()->binary_expression_type()->type_array_kind() != type::array_kind::KIND_NON_ARRAY ||
-						be->rhs()->binary_expression_type()->type_array_kind() != type::array_kind::KIND_NON_ARRAY)
-						mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 					bool u = static_pointer_cast<primitive_type>(be->lhs()->binary_expression_type())->primitive_type_sign_kind() == primitive_type::sign_kind::KIND_UNSIGNED ||
 						static_pointer_cast<primitive_type>(be->rhs()->binary_expression_type())->primitive_type_sign_kind() == primitive_type::sign_kind::KIND_UNSIGNED;
 					shared_ptr<operand_wrapper> ret = binary_expression_helper_2(mc, lhs_op, be->binary_expression_operator_kind(), rhs_op, u);

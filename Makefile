@@ -4,8 +4,18 @@ CC = g++-6
 
 all: outputs/spectre
 
+install: setup all
+
+rinstall: setup release
+
 clean:
 	rm -f intermediates/* outputs/*
+
+setup:
+	mkdir intermediates outputs
+
+uninstall:
+	rm -rf intermediates outputs
 
 release: CXX_FLAGS += -O3
 release: outputs/spectre

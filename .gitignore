@@ -1,5 +1,6 @@
 Debug/
 intermediates/
 outputs/
+spectre-outputs/
 spectre.vcxproj
 spectre.vcxproj.filters

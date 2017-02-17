@@ -2853,7 +2853,8 @@ namespace spectre {
 						p->report(error(error::kind::KIND_ERROR, "Originally declared here.", temp_stream, 0));
 						bad = true;
 					}
-					bad = !matching_function_symbol_and_partial_function_stmt(p, temp, ft, fn, stream);
+					if(!bad)
+						bad = !matching_function_symbol_and_partial_function_stmt(p, temp, make_shared<function_type>(ck, sk, rt, pl, prl, p->next_function_reference_number()), fn, stream);
 				}
 				if (bad) {
 					_contained_function_stmt = make_shared<function_stmt>(ft, fn, nullptr, vector<shared_ptr<stmt>>{}, function_stmt::defined_kind::KIND_NONE, fs, false,
