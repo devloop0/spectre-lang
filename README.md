@@ -56,6 +56,7 @@ The two major bugs as of now are:
 
 1. Using `__rfuncarg__` function arguments as ternary expression lvalues will fail.
 2. Register spilling that occurs in either branch of a ternary expression will fail.
+3. Using `__rfuncarg__` function arguments as struct's through multiple `__rfuncarg__` functions results in errors.
 
 ### Future work
 
