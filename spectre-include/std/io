@@ -1,0 +1,43 @@
+namespace std {
+	namespace io {
+
+		func const bool print_ln();
+
+		func const bool print_byte(const signed byte s __rfuncarg__);
+		func const bool print_ubyte(const unsigned byte u __rfuncarg__);
+		func const bool print_byte_ln(const signed byte s __rfuncarg__);
+		func const bool print_ubyte_ln(const unsigned byte u __rfuncarg__);
+		
+		func const bool print_char(const signed char s __rfuncarg__);
+		func const bool print_uchar(const unsigned char u __rfuncarg__);
+		func const bool print_char_ln(const signed char s __rfuncarg__);
+		func const bool print_uchar_ln(const unsigned char u __rfuncarg__);
+	
+		func const bool print_bool(const bool b __rfuncarg__);
+		func const bool print_bool_ln(const bool b __rfuncarg__);
+		
+		func const bool print_short(const signed short s __rfuncarg__);
+		func const bool print_ushort(const unsigned short u __rfuncarg__);
+		func const bool print_short_ln(const signed short s __rfuncarg__);
+		func const bool print_ushort_ln(const unsigned short u __rfuncarg__);
+	
+		func const bool print_int(const signed int s __rfuncarg__);
+		func const bool print_uint(const unsigned int u __rfuncarg__);
+		func const bool print_int_ln(const signed int s __rfuncarg__);
+		func const bool print_uint_ln(const unsigned int u __rfuncarg__);
+
+		func const bool print_long(const signed long s __rfuncarg__);
+		func const bool print_ulong(const unsigned long u __rfuncarg__);
+		func const bool print_long_ln(const signed long s __rfuncarg__);
+		func const bool print_ulong_ln(const unsigned long u __rfuncarg__);
+
+		func const bool print_float(const float f __rfuncarg__);
+		func const bool print_float_ln(const float f __rfuncarg__);
+		
+		func const bool print_double(const double d __rfuncarg__);
+		func const bool print_double_ln(const double d __rfuncarg__);
+
+		func const bool print_string(const char* str __rfuncarg__);
+		func const bool print_string_ln(const char* str __rfuncarg__);
+	}
+}

@@ -1,0 +1,76 @@
+namespace std {
+	namespace core {
+
+		func const bool asm_syscall(const unsigned int u);
+
+		static char* char_nullptr;
+		static byte* byte_nullptr;
+		static bool* bool_nullptr;
+		
+		static short* short_nullptr;
+
+		static int* int_nullptr;
+		static long* long_nullptr;
+
+		static float* float_nullptr;
+	
+		static double* double_nullptr;
+
+		__asm__ (
+			char_nullptr "$8" :
+			"sw $0, 0($8)" :
+			byte_nullptr "$8" :
+			"sw $0, 0($8)" :
+			bool_nullptr "$8" :
+			"sw $0, 0($8)" :
+			short_nullptr "$8" :
+			"sw $0, 0($8)" :
+			int_nullptr "$8" :
+			"sw $0, 0($8)" :
+			long_nullptr "$8" :
+			"sw $0, 0($8)" :
+			float_nullptr "$8" :
+			"sw $0, 0($8)" :
+			double_nullptr "$8" :
+			"sw $0, 0($8)"
+		);
+
+		struct primitive {
+			int __dummy;
+			unsigned int tag;
+			int error_code;
+		}
+
+		namespace primitive_constants { 
+
+			static const unsigned int UNSIGNED_BYTE = 1;
+			static const unsigned int SIGNED_BYTE = 1 << 1;
+			static const unsigned int BOOL = 1 << 2;
+			static const unsigned int UNSIGNED_CHAR = 1 << 3;
+			static const unsigned int SIGNED_CHAR = 1 << 4;
+			static const unsigned int UNSIGNED_SHORT = 1 << 5;
+			static const unsigned int SIGNED_SHORT = 1 << 6;
+			static const unsigned int UNSIGNED_INT = 1 << 7;
+			static const unsigned int SIGNED_INT = 1 << 8;
+			static const unsigned int UNSIGNED_LONG = 1 << 9;
+			static const unsigned int SIGNED_LONG = 1 << 10;
+			static const unsigned int FLOAT = 1 << 11;
+			static const unsigned int DOUBLE = 1 << 12;
+			static const unsigned int CHAR_PTR = 1 << 13;
+			static const unsigned int STRING = CHAR_PTR;
+			
+			static const signed int NO_ERROR = 0;
+			static const signed int ERROR = -1;
+		}
+
+		func type primitive primitive_signed_int(const signed int s __rfuncarg__);
+		func const signed int get_signed_int(const type primitive pt);
+		func type primitive primitive_int(const signed int s __rfuncarg__);
+		func const signed int get_int(const type primitive pt);
+
+		func type primitive primitive_unsigned_int(const unsigned int u __rfuncarg__);
+		func const unsigned int get_unsigned_int(const type primitive pt);
+		func type primitive primitive_uint(const unsigned int u __rfuncarg__);
+		func const unsigned int get_uint(const type primitive pt);
+	}
+}
