@@ -24,6 +24,7 @@ With all of the basic stuff out of the way, here is how to build the compiler:
 </s>
 
 Now it's even simpler:
+
 2. Run `make install`. This will create the necessary directories and run `make all`. The binaries will be in the `outputs` folder and the the object files will be in the `intermediates` folder.
 
 ### Building the standard library
