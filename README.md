@@ -91,7 +91,7 @@ import <"std/io">
 # Imports the io module from the standard library.
 
 func int main() {
-using std::io::print_string_ln; # Print a string to standard output.
+    using std::io::print_string_ln; # Print a string to standard output.
     print_string_ln("Hello World!"); # Print "Hello World!" to the command line; this will automatically insert a new line at the end as well.
     return 0; # No errors occurred.
 }
