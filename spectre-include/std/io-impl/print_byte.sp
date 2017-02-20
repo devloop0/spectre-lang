@@ -7,11 +7,12 @@ namespace std {
 		namespace _detail {
 
 			func[static] const bool print_const_signed_byte(const signed byte s __rfuncarg__) {
-				return std::core::asm_syscall(1);
+				const signed int i = s;
+				return print_int(i);
 			}
 
 			func[static] const bool print_const_unsigned_byte(const unsigned byte u __rfuncarg__) {
-				return std::core::asm_syscall(1);
+				return print_uint(u & 0xFF);
 			}
 		}
 

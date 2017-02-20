@@ -63,14 +63,46 @@ namespace std {
 			static const signed int ERROR = -1;
 		}
 
-		func type primitive primitive_signed_int(const signed int s __rfuncarg__);
-		func const signed int get_signed_int(const type primitive pt);
-		func type primitive primitive_int(const signed int s __rfuncarg__);
-		func const signed int get_int(const type primitive pt);
+		func const unsigned int bits_from_float(const float f __rfuncarg__);
+		func const float float_from_bits(const unsigned int u __rfuncarg__);
 
-		func type primitive primitive_unsigned_int(const unsigned int u __rfuncarg__);
-		func const unsigned int get_unsigned_int(const type primitive pt);
+		func type primitive primitive_int(const signed int s __rfuncarg__);
+		func const signed int get_int(const type primitive* pt);
+
 		func type primitive primitive_uint(const unsigned int u __rfuncarg__);
-		func const unsigned int get_uint(const type primitive pt);
+		func const unsigned int get_uint(const type primitive* pt);
+
+		func type primitive primitive_byte(const signed byte b __rfuncarg__);
+		func const signed byte get_byte(const type primitive* pt);
+
+		func type primitive primitive_ubyte(const unsigned byte u __rfuncarg__);
+		func const unsigned byte get_ubyte(const type primitive* pt);
+
+		func type primitive primitive_char(const signed char c __rfuncarg__);
+		func const signed char get_char(const type primitive* pt);
+
+		func type primitive primitive_uchar(const unsigned char u __rfuncarg__);
+		func const unsigned char get_uchar(const type primitive* pt);
+
+		func type primitive primitive_bool(const bool b __rfuncarg__);
+		func const bool get_bool(const type primitive* pt);
+
+		func type primitive primitive_short(const signed short s __rfuncarg__);
+		func const signed short get_short(const type primitive* pt);
+
+		func type primitive primitive_ushort(const unsigned short u __rfuncarg__);
+		func const unsigned short get_ushort(const type primitive* pt);
+
+		func type primitive primitive_long(const signed long s __rfuncarg__);
+		func const signed long get_long(const type primitive* pt);
+
+		func type primitive primitive_ulong(const unsigned long u __rfuncarg__);
+		func const unsigned long get_ulong(const type primitive* pt);
+
+		func type primitive primitive_float(const float f __rfuncarg__);
+		func const float get_float(const type primitive* pt);
+
+		func type primitive primitive_double(const double d __rfuncarg__);
+		func const double get_double(const type primitive* pt);
 	}
 }

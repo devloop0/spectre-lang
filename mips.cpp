@@ -4882,12 +4882,13 @@ namespace spectre {
 						mc->add_insn(make_shared<insn>(insn::kind::KIND_ADDIU, to_use, register_file::register_objects::_zero_register, ow->contained_immediate_operand()));
 					else {
 						shared_ptr<register_wrapper> reg = allocate_general_purpose_register(mc);
-						mc->add_insn(make_shared<insn>(insn::kind::KIND_ADDIU, to_use, register_file::register_objects::_zero_register, ow->contained_immediate_operand()));
+						mc->add_insn(make_shared<insn>(insn::kind::KIND_ADDIU, reg->raw_register_operand(), register_file::register_objects::_zero_register, ow->contained_immediate_operand()));
 						mc->add_insn(make_shared<insn>(insn::kind::KIND_MTC1, reg->raw_register_operand(), to_use));
 						if (mc->current_frame()->dp_return_value())
 							mc->add_insn(make_shared<insn>(insn::kind::KIND_CVT_D_W, to_use, to_use));
 						else
 							mc->add_insn(make_shared<insn>(insn::kind::KIND_CVT_S_W, to_use, to_use));
+						free_general_purpose_register(mc, reg);
 					}
 				}
 				else if (ow->wrapper_operand_kind() == operand_wrapper::operand_kind::KIND_REGISTER) {
