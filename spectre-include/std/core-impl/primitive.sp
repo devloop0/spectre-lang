@@ -520,7 +520,7 @@ namespace std {
 				"mtc1 $11, $f5" :
 				"sdc1 $f4, 0($9)"
 			);
-			pt->error_code = primitive_constants::ERROR;
+			pt->error_code = primitive_constants::NO_ERROR;
 			return ret;
 		}
 	}
