@@ -3430,6 +3430,7 @@ namespace spectre {
 					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDIU, op, register_file2::_zero_register, make_shared<operand>(1)));
 					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_SW, op, static_check_label));
 					mc->current_frame()->add_insn_to_body(make_shared<insn>(initialization_end_label));
+					free_general_purpose_register(mc, op);
 				}
 			}
 		}
