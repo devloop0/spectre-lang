@@ -3,8 +3,8 @@ import <"std/string">
 namespace std {
 	namespace string {
 		
-		func const signed int strncmp(const char* str1 __rfuncarg__, const char* str2 __rfuncarg__,
-			const unsigned int n __rfuncarg__) {
+		func const signed int strncmp(const char* str1 , const char* str2 ,
+			const unsigned int n ) {
 			if(n == 0) return 0;
 			unsigned int counter = 0;
 			while(str1[counter] == str2[counter]) {

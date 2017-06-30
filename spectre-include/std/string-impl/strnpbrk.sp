@@ -4,8 +4,8 @@ import <"std/core">
 namespace std {
 	namespace string {
 
-		func char* strnpbrk(char* str1 __rfuncarg__, const char* str2 __rfuncarg__,
-			const unsigned int n __rfuncarg__) {
+		func char* strnpbrk(char* str1 , const char* str2 ,
+			const unsigned int n ) {
 			bool hit = false;
 			unsigned int ret = 0;
 			while(str1[ret] != '\0' && ret < n) {

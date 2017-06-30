@@ -58,51 +58,57 @@ namespace std {
 			static const unsigned int DOUBLE = 1 << 12;
 			static const unsigned int CHAR_PTR = 1 << 13;
 			static const unsigned int STRING = CHAR_PTR;
+			static const unsigned int NULL = 1 << 14;
 			
 			static const signed int NO_ERROR = 0;
 			static const signed int ERROR = -1;
 		}
 
-		func const unsigned int bits_from_float(const float f __rfuncarg__);
-		func const float float_from_bits(const unsigned int u __rfuncarg__);
+		func const unsigned int bits_from_float(const float f);
+		func const float float_from_bits(const unsigned int u);
 
-		func type primitive primitive_int(const signed int s __rfuncarg__);
+		func type primitive primitive_int(const signed int s);
 		func const signed int get_int(const type primitive* pt);
 
-		func type primitive primitive_uint(const unsigned int u __rfuncarg__);
+		func type primitive primitive_uint(const unsigned int u);
 		func const unsigned int get_uint(const type primitive* pt);
 
-		func type primitive primitive_byte(const signed byte b __rfuncarg__);
+		func type primitive primitive_byte(const signed byte b);
 		func const signed byte get_byte(const type primitive* pt);
 
-		func type primitive primitive_ubyte(const unsigned byte u __rfuncarg__);
+		func type primitive primitive_ubyte(const unsigned byte u);
 		func const unsigned byte get_ubyte(const type primitive* pt);
 
-		func type primitive primitive_char(const signed char c __rfuncarg__);
+		func type primitive primitive_char(const signed char c);
 		func const signed char get_char(const type primitive* pt);
 
-		func type primitive primitive_uchar(const unsigned char u __rfuncarg__);
+		func type primitive primitive_uchar(const unsigned char u);
 		func const unsigned char get_uchar(const type primitive* pt);
 
-		func type primitive primitive_bool(const bool b __rfuncarg__);
+		func type primitive primitive_bool(const bool b);
 		func const bool get_bool(const type primitive* pt);
 
-		func type primitive primitive_short(const signed short s __rfuncarg__);
+		func type primitive primitive_short(const signed short s);
 		func const signed short get_short(const type primitive* pt);
 
-		func type primitive primitive_ushort(const unsigned short u __rfuncarg__);
+		func type primitive primitive_ushort(const unsigned short u);
 		func const unsigned short get_ushort(const type primitive* pt);
 
-		func type primitive primitive_long(const signed long s __rfuncarg__);
+		func type primitive primitive_long(const signed long s);
 		func const signed long get_long(const type primitive* pt);
 
-		func type primitive primitive_ulong(const unsigned long u __rfuncarg__);
+		func type primitive primitive_ulong(const unsigned long u);
 		func const unsigned long get_ulong(const type primitive* pt);
 
-		func type primitive primitive_float(const float f __rfuncarg__);
+		func type primitive primitive_float(const float f);
 		func const float get_float(const type primitive* pt);
 
-		func type primitive primitive_double(const double d __rfuncarg__);
+		func type primitive primitive_double(const double d);
 		func const double get_double(const type primitive* pt);
+
+		func type primitive primitive_null();
+
+		func type primitive primitive_string(const char* str);
+		func const char* get_string(const type primitive* pt);
 	}
 }

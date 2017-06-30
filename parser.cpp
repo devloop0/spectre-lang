@@ -827,6 +827,31 @@ namespace spectre {
 					prev_vk = value_kind::VALUE_LVALUE;
 					ptl.push_back(make_shared<postfix_expression::postfix_type>(postfix_expression::kind::KIND_AT, prev_type));
 				}
+				else if (op.token_kind() == token::kind::TOKEN_AS) {
+					stream.push_back(p->pop());
+					type_parser tp(p);
+					if (!tp.valid() || !tp.contained_type()->valid()) {
+						p->report(error(error::kind::KIND_ERROR, "This type is invalid.", tp.stream(), 0));
+						_valid = false;
+						ptl.push_back(make_shared<postfix_expression::postfix_type>(postfix_expression::kind::KIND_AS, nullptr));
+						break;
+					}
+					shared_ptr<type> to_type = tp.contained_type();
+					vector<token> type_stream = tp.stream();
+					stream.insert(stream.end(), type_stream.begin(), type_stream.end());
+					shared_ptr<type> from_type = prev_type;
+					if (to_type->type_kind() == type::kind::KIND_FUNCTION || from_type->type_kind() == type::kind::KIND_FUNCTION) {
+						p->report(error(error::kind::KIND_ERROR, "Cannot cast to or from a function type.", type_stream, 0));
+						_valid = false;
+						ptl.push_back(make_shared<postfix_expression::postfix_type>(postfix_expression::kind::KIND_AS, to_type));
+						break;
+					}
+					else if (to_type->type_array_kind() != from_type->type_array_kind() || to_type->array_dimensions() != from_type->array_dimensions())
+						p->report(error(error::kind::KIND_WARNING, "Potentially unsafe cast.", type_stream, 0));
+					ptl.push_back(make_shared<postfix_expression::postfix_type>(postfix_expression::kind::KIND_AS, to_type));
+					prev_type = to_type;
+					prev_vk = value_kind::VALUE_RVALUE;
+				}
 				else if (op.token_kind() == token::kind::TOKEN_ARROW) {
 					stream.push_back(p->pop());
 					if (p->peek().token_kind() != token::kind::TOKEN_IDENTIFIER) {
@@ -2181,8 +2206,25 @@ namespace spectre {
 			shared_ptr<ternary_expression> false_path) {
 			if (!cond->valid() || !true_path->valid() || !false_path->valid())
 				return value_kind::VALUE_NONE;
-			if (true_path->expression_value_kind() == value_kind::VALUE_LVALUE && false_path->ternary_expression_value_kind() == value_kind::VALUE_LVALUE)
-				return value_kind::VALUE_LVALUE;
+			if (true_path->expression_value_kind() == value_kind::VALUE_LVALUE && false_path->ternary_expression_value_kind() == value_kind::VALUE_LVALUE) {
+				shared_ptr<type> t1 = true_path->expression_type(), t2 = false_path->ternary_expression_type();
+				if (t1->array_dimensions() != t2->array_dimensions() || t1->type_array_kind() != t2->type_array_kind() || t1->type_kind() != t2->type_kind())
+					return value_kind::VALUE_RVALUE;
+				if (t1->type_kind() == type::kind::KIND_PRIMITIVE) {
+					shared_ptr<primitive_type> pt1 = static_pointer_cast<primitive_type>(t1), pt2 = static_pointer_cast<primitive_type>(t2);
+					if (pt1->primitive_type_kind() == pt2->primitive_type_kind() && pt1->primitive_type_sign_kind() == pt2->primitive_type_sign_kind())
+						return value_kind::VALUE_LVALUE;
+					else
+						return value_kind::VALUE_RVALUE;
+				}
+				else if (t1->type_kind() == type::kind::KIND_STRUCT) {
+					shared_ptr<struct_type> st1 = static_pointer_cast<struct_type>(t1), st2 = static_pointer_cast<struct_type>(t2);
+					if (st1->struct_name().raw_text() == st2->struct_name().raw_text() && st1->struct_reference_number() == st2->struct_reference_number())
+						return value_kind::VALUE_LVALUE;
+					else
+						return value_kind::VALUE_RVALUE;
+				}
+			}
 			else
 				return value_kind::VALUE_RVALUE;
 			p->report_internal("This should unreachable.", __FUNCTION__, __LINE__, __FILE__);
@@ -2795,7 +2837,6 @@ namespace spectre {
 			}
 			stream.push_back(opar);
 			vector<shared_ptr<variable_declaration>> pl;
-			vector<bool> prl;
 			while (p->peek().token_kind() != token::kind::TOKEN_CLOSE_PARENTHESIS) {
 				variable_declaration_parser vp(p);
 				if (!vp.valid()) {
@@ -2826,9 +2867,6 @@ namespace spectre {
 				}
 				stream.insert(stream.end(), vd_stream.begin(), vd_stream.end());
 				pl.insert(pl.end(), vd_list.begin(), vd_list.end());
-				prl.push_back(p->peek().token_kind() == token::kind::TOKEN_RFUNCARG);
-				if (p->peek().token_kind() == token::kind::TOKEN_RFUNCARG)
-					stream.push_back(p->pop());
 				if (p->peek().token_kind() == token::kind::TOKEN_COMMA)
 					stream.push_back(p->pop());
 			}
@@ -2854,7 +2892,7 @@ namespace spectre {
 						bad = true;
 					}
 					if(!bad)
-						bad = !matching_function_symbol_and_partial_function_stmt(p, temp, make_shared<function_type>(ck, sk, rt, pl, prl, p->next_function_reference_number()), fn, stream);
+						bad = !matching_function_symbol_and_partial_function_stmt(p, temp, make_shared<function_type>(ck, sk, rt, pl, p->next_function_reference_number()), fn, stream);
 				}
 				if (bad) {
 					_contained_function_stmt = make_shared<function_stmt>(ft, fn, nullptr, vector<shared_ptr<stmt>>{}, function_stmt::defined_kind::KIND_NONE, fs, false,
@@ -2862,9 +2900,10 @@ namespace spectre {
 					_valid = false;
 					return;
 				}
+				ft = make_shared<function_type>(ck, sk, rt, pl, ft->function_reference_number());
 			}
 			else
-				ft = make_shared<function_type>(ck, sk, rt, pl, prl, p->next_function_reference_number());
+				ft = make_shared<function_type>(ck, sk, rt, pl, p->next_function_reference_number());
 			if (cpar.token_kind() != token::kind::TOKEN_CLOSE_PARENTHESIS) {
 				p->report(error(error::kind::KIND_ERROR, "Expected a close parenthesis (')') to finish a parameter list.", stream, 0));
 				_contained_function_stmt = make_shared<function_stmt>(ft, fn, nullptr, vector<shared_ptr<stmt>>{}, function_stmt::defined_kind::KIND_NONE, fs, false,
@@ -3062,7 +3101,7 @@ namespace spectre {
 			for (int i = 0; i < pl.size(); i++) {
 				shared_ptr<type> spar_t = sym_pl[i]->variable_declaration_type(),
 					par_t = pl[i]->variable_declaration_type();
-				if (spar_t->type_kind() != par_t->type_kind() || fsym->function_symbol_type()->parameter_rfuncarg_list()[i] != ft->parameter_rfuncarg_list()[i]) {
+				if (spar_t->type_kind() != par_t->type_kind()) {
 					p->report(error(error::kind::KIND_ERROR, "The function declaration and the given function statment's parameter lists differ.", s, 0));
 					p->report(error(error::kind::KIND_ERROR, "Originally declared here.", sym_stream, 0));
 					return false;
@@ -3077,7 +3116,8 @@ namespace spectre {
 				else if (spar_t->type_kind() == type::kind::KIND_STRUCT) {
 					shared_ptr<struct_type> spar_t_stype = static_pointer_cast<struct_type>(spar_t),
 						par_t_stype = static_pointer_cast<struct_type>(par_t);
-					if (spar_t_stype->struct_reference_number() != par_t_stype->struct_reference_number() || spar_t_stype->struct_name().raw_text() != par_t_stype->struct_name().raw_text()) {
+					if (spar_t_stype->struct_reference_number() != par_t_stype->struct_reference_number() || spar_t_stype->struct_name().raw_text() != par_t_stype->struct_name().raw_text() ||
+						spar_t_stype->type_array_kind() != par_t_stype->type_array_kind() || spar_t_stype->array_dimensions() != par_t_stype->array_dimensions()) {
 						p->report(error(error::kind::KIND_ERROR, "The function declaration and the given function statment's parameter lists differ.", s, 0));
 						p->report(error(error::kind::KIND_ERROR, "Originally declared here.", sym_stream, 0));
 						return false;
@@ -3770,7 +3810,7 @@ namespace spectre {
 				else if (ce_type->type_kind() == type::kind::KIND_STRUCT) {
 					shared_ptr<struct_type> ce_stype = static_pointer_cast<struct_type>(ce_type), s_stype = static_pointer_cast<struct_type>(p_type);
 					if (ce_stype->struct_reference_number() != s_stype->struct_reference_number() || ce_stype->struct_name().raw_text() != s_stype->struct_name().raw_text()) {
-						p->report(error(error::kind::KIND_ERROR, "Expected compatible ttypes for a switch scope's case.", stream, 0));
+						p->report(error(error::kind::KIND_ERROR, "Expected compatible types for a switch scope's case.", stream, 0));
 						p->report(error(error::kind::KIND_ERROR, "Original expression being compared against is here.", p_scope->parent_expression()->stream(), 0));
 						_valid = false;
 						return;

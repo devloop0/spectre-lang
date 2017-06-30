@@ -70,9 +70,9 @@ namespace spectre {
 			return _primitive_type_sign_kind;
 		}
 
-		function_type::function_type(type::const_kind ck, type::static_kind sk, shared_ptr<type> rt, vector<shared_ptr<variable_declaration>> pl, vector<bool> prl, int r) :
+		function_type::function_type(type::const_kind ck, type::static_kind sk, shared_ptr<type> rt, vector<shared_ptr<variable_declaration>> pl, int r) :
 			type(type::kind::KIND_FUNCTION, ck, sk), _return_type(rt), _parameter_list(pl), _valid(rt == nullptr || rt->type_kind() == type::kind::KIND_NONE),
-			_parameter_rfuncarg_list(prl), _function_reference_number(r) {
+			_function_reference_number(r) {
 
 		}
 
@@ -86,10 +86,6 @@ namespace spectre {
 
 		vector<shared_ptr<variable_declaration>> function_type::parameter_list() {
 			return _parameter_list;
-		}
-
-		vector<bool> function_type::parameter_rfuncarg_list() {
-			return _parameter_rfuncarg_list;
 		}
 
 		bool function_type::valid() {

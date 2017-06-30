@@ -38,12 +38,12 @@ namespace spectre {
 		const static string _type = "type";
 		const static string _new = "new";
 		const static string _sizeof = "sizeof";
-		const static string _rfuncarg = "__rfuncarg__";
 		const static string _namespace = "namespace";
 		const static string _using = "using";
 		const static string _asm_ = "__asm__";
 		const static string _import = "import";
 		const static string _include = "include";
+		const static string _as = "as";
 	}
 }
 

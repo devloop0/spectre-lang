@@ -5,16 +5,16 @@ namespace std {
 
 		namespace _detail {
 
-			func[static] const bool print_const_bool(const bool b __rfuncarg__) {
+			func[static] const bool print_const_bool(const bool b) {
 				return print_ubyte(b ? 0b1 : 0b0);
 			}
 		}
 
-		func const bool print_bool(const bool b __rfuncarg__) {
+		func const bool print_bool(const bool b) {
 			return _detail::print_const_bool(b);
 		}
 
-		func const bool print_bool_ln(const bool b __rfuncarg__) {
+		func const bool print_bool_ln(const bool b) {
 			return _detail::print_const_bool(b) && print_ln();
 		}
 	}

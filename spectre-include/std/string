@@ -9,43 +9,43 @@ namespace std {
 			}
 		}
 
-		func const unsigned int strlen(const char* str __rfuncarg__);
+		func const unsigned int strlen(const char* str);
 
-		func const signed int strcmp(const char* str1 __rfuncarg__, const char* str2 __rfuncarg__);
-		func const signed int strncmp(const char* str1 __rfuncarg__, const char* str2 __rfuncarg__,
-			const unsigned int n __rfuncarg__);
+		func const signed int strcmp(const char* str1, const char* str2);
+		func const signed int strncmp(const char* str1, const char* str2 ,
+			const unsigned int n );
 
-		func char* strcat(char* str1 __rfuncarg__, const char* str2 __rfuncarg__);
-		func char* strncat(char* str1 __rfuncarg__, const char* str2 __rfuncarg__,
-			const unsigned int n __rfuncarg__);
+		func char* strcat(char* str1 , const char* str2 );
+		func char* strncat(char* str1 , const char* str2 ,
+			const unsigned int n );
 
-		func char* strchr(char* str __rfuncarg__, const char c __rfuncarg__);
-		func const unsigned int strchr_i(const char* str __rfuncarg__, const char c __rfuncarg__);
-		func char* strrchr(char* str __rfuncarg__, const char c __rfuncarg__);
-		func const unsigned int strrchr_i(const char* str __rfuncarg__, const char c __rfuncarg__);
+		func char* strchr(char* str , const char c );
+		func const unsigned int strchr_i(const char* str , const char c );
+		func char* strrchr(char* str , const char c );
+		func const unsigned int strrchr_i(const char* str , const char c );
 
-		func char* strnchr(char* str __rfuncarg__, const char c __rfuncarg__,
-			const unsigned int n __rfuncarg__);
-		func const unsigned int strnchr_i(const char* str __rfuncarg__, const char c __rfuncarg__,
-			const unsigned int n __rfuncarg__);
+		func char* strnchr(char* str , const char c ,
+			const unsigned int n );
+		func const unsigned int strnchr_i(const char* str , const char c ,
+			const unsigned int n );
 
-		func char* strcpy(char* str1 __rfuncarg__, const char* str2 __rfuncarg__);
-		func char* strncpy(char* str1 __rfuncarg__, const char* str2 __rfuncarg__,
-			const unsigned int n __rfuncarg__);
+		func char* strcpy(char* str1 , const char* str2 );
+		func char* strncpy(char* str1 , const char* str2 ,
+			const unsigned int n );
 
-		func const unsigned int strcspn(const char* str1 __rfuncarg__, const char* str2 __rfuncarg__);
-		func const unsigned int strspn(const char* str1 __rfuncarg__, const char* str2 __rfuncarg__);
+		func const unsigned int strcspn(const char* str1 , const char* str2 );
+		func const unsigned int strspn(const char* str1 , const char* str2 );
 
-		func char* strstr(char* str1 __rfuncarg__, const char* str2 __rfuncarg__);
-		func const unsigned int strstr_i(const char* str1 __rfuncarg__, const char* str2 __rfuncarg__);
+		func char* strstr(char* str1 , const char* str2 );
+		func const unsigned int strstr_i(const char* str1 , const char* str2 );
 
-		func char* strpbrk(char* str1 __rfuncarg__, const char* str2 __rfuncarg__);
-		func char* strnpbrk(char* str1 __rfuncarg__, const char* str2 __rfuncarg__,
-			const unsigned int n __rfuncarg__);
-		func const unsigned int strpbrk_i(const char* str1 __rfuncarg__, const char* str2 __rfuncarg__);
-		func const unsigned int strnpbrk_i(char* str1 __rfuncarg__, const char* str2 __rfuncarg__,
-			const unsigned int n __rfuncarg__);
+		func char* strpbrk(char* str1 , const char* str2 );
+		func char* strnpbrk(char* str1 , const char* str2 ,
+			const unsigned int n );
+		func const unsigned int strpbrk_i(const char* str1 , const char* str2 );
+		func const unsigned int strnpbrk_i(char* str1 , const char* str2 ,
+			const unsigned int n );
 
-		func char* strtok(char* str __rfuncarg__, const char* delims __rfuncarg__);
+		func char* strtok(char* str , const char* delims );
 	}
 }

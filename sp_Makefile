@@ -27,7 +27,7 @@ core: $(CORE_IMPL)/asm_syscall.s $(CORE_IMPL)/primitive.s
 
 io: $(IO_IMPL)/print_char.s $(IO_IMPL)/print_char.s $(IO_IMPL)/print_byte.s $(IO_IMPL)/print_bool.s \
 	$(IO_IMPL)/print_short.s $(IO_IMPL)/print_int.s $(IO_IMPL)/print_long.s $(IO_IMPL)/print_float.s \
-	$(IO_IMPL)/print_double.s $(IO_IMPL)/print_string.s $(IO_IMPL)/print_ln.s
+	$(IO_IMPL)/print_double.s $(IO_IMPL)/print_string.s $(IO_IMPL)/print_ln.s $(IO_IMPL)/printf.s
 	mv $(IO_IMPL)/*.s spectre-outputs
 
 string: $(STRING_IMPL)/strlen.s $(STRING_IMPL)/strcmp.s $(STRING_IMPL)/strcat.s $(STRING_IMPL)/strchr.s \
@@ -50,7 +50,7 @@ $(IO_IMPL)/print_char.s: $(IO_IMPL)/print_char.sp $(STD_IO) $(STD_CORE)
 $(IO_IMPL)/print_byte.s: $(IO_IMPL)/print_byte.sp $(STD_IO) $(STD_CORE)
 	$(SP) $(IO_IMPL)/print_byte.sp
 
-$(IO_IMPL)/print_bool.s: $(IO_IMPL)/print_bool.sp $(STD_IO)
+$(IO_IMPL)/print_bool.s: $(IO_IMPL)/print_bool.sp $(STD_IO) $(STD_CORE)
 	$(SP) $(IO_IMPL)/print_bool.sp
 
 $(IO_IMPL)/print_short.s: $(IO_IMPL)/print_short.sp $(STD_IO) $(STD_CORE)
@@ -73,6 +73,9 @@ $(IO_IMPL)/print_string.s: $(IO_IMPL)/print_string.sp $(STD_IO) $(STD_CORE)
 
 $(IO_IMPL)/print_ln.s: $(IO_IMPL)/print_ln.sp $(STD_IO) $(STD_CORE)
 	$(SP) $(IO_IMPL)/print_ln.sp
+
+$(IO_IMPL)/printf.s: $(IO_IMPL)/printf.sp $(STD_IO) $(STD_CORE)
+	$(SP) $(IO_IMPL)/printf.sp
 
 $(STRING_IMPL)/strlen.s: $(STRING_IMPL)/strlen.sp $(STD_STRING)
 	$(SP) $(STRING_IMPL)/strlen.sp

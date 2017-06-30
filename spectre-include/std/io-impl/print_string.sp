@@ -6,16 +6,16 @@ namespace std {
 
 		namespace _detail {
 
-			func[static] const bool print_const_char_pointer(const char* str __rfuncarg__) {
+			func[static] const bool print_const_char_pointer(const char* str) {
 				return std::core::asm_syscall(4);
 			}
 		}
 
-		func const bool print_string(const char* str __rfuncarg__) {
+		func const bool print_string(const char* str) {
 			return _detail::print_const_char_pointer(str);
 		}
 
-		func const bool print_string_ln(const char* str __rfuncarg__) {
+		func const bool print_string_ln(const char* str) {
 			return _detail::print_const_char_pointer(str) && print_ln();
 		}
 	}

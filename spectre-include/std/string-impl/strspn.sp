@@ -3,7 +3,7 @@ import <"std/string">
 namespace std {
 	namespace string {
 
-		func const unsigned int strspn(const char* str1 __rfuncarg__, const char* str2 __rfuncarg__) {
+		func const unsigned int strspn(const char* str1 , const char* str2 ) {
 			unsigned int i = 0;
 			while(str1[i] != '\0') {
 				unsigned int j = 0;

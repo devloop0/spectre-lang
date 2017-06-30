@@ -777,8 +777,8 @@ namespace spectre {
 					tok = token(_parent_directory, _file_name, _current_line_number, start, _current_column_number, token::kind::TOKEN_NEW, ident);
 				else if (ident == keywords::_sizeof)
 					tok = token(_parent_directory, _file_name, _current_line_number, start, _current_column_number, token::kind::TOKEN_SIZEOF, ident);
-				else if (ident == keywords::_rfuncarg)
-					tok = token(_parent_directory, _file_name, _current_line_number, start, _current_column_number, token::kind::TOKEN_RFUNCARG, ident);
+				else if (ident == keywords::_as)
+					tok = token(_parent_directory, _file_name, _current_line_number, start, _current_column_number, token::kind::TOKEN_AS, ident);
 				else if (ident == keywords::_namespace)
 					tok = token(_parent_directory, _file_name, _current_line_number, start, _current_column_number, token::kind::TOKEN_NAMESPACE, ident);
 				else if (ident == keywords::_using)

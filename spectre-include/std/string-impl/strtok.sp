@@ -8,8 +8,8 @@ namespace std {
 		_helper.str_to_process = std::core::char_nullptr;
 		_helper.current_index = 0;
 
-		func[static] const unsigned int strtok_helper(char* to_use __rfuncarg__,
-			const char* delims __rfuncarg__, unsigned int index __rfuncarg__) {
+		func[static] const unsigned int strtok_helper(char* to_use ,
+			const char* delims , unsigned int index ) {
 			while(to_use[index] != '\0') {
 				unsigned int j = 0;
 				bool d = false;
@@ -27,7 +27,7 @@ namespace std {
 			return index;
 		}
 
-		func char* strtok(char* str __rfuncarg__, const char* delims __rfuncarg__) {
+		func char* strtok(char* str , const char* delims ) {
 			using std::core::char_nullptr;
 			char* to_use;
 			unsigned int index, starting_index;

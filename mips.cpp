@@ -3,6 +3,10 @@
 // BUG!!!: passing struct's through multiple __rfuncarg__ functions results in errors.
 // -- both of these mean -> avoid complex ternary expressions for now.
 
+#define SPECTRE_MIPS_1_DEPRECATED
+
+#ifndef SPECTRE_MIPS_1_DEPRECATED
+
 #include "mips.hpp"
 #include <algorithm>
 #include <memory>
@@ -5102,3 +5106,5 @@ namespace spectre {
 		}
 	}
 }
+
+#endif

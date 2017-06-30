@@ -13,6 +13,7 @@
 #include "mips.hpp"
 #include "mips_instruction_set.hpp"
 #include "file_io.hpp"
+#include "mips2.hpp"
 #include <string>
 #include <memory>
 #include <stdio.h>
@@ -25,16 +26,18 @@ using namespace spectre::ast::debug;
 using namespace spectre::lir::insns;
 using namespace spectre::lir;
 using namespace spectre::mips;
+using namespace spectre::mips2;
 using namespace spectre::file_io;
 using std::string;
 using std::make_shared;
 using std::getline;
 using std::cerr;
 using std::exit;
+using std::cin;
 
 int main(int argc, char* argv[]) {
-	/*string src = "", line = "";
-	while (cout << ">>> ", getline(cin, line)) {
+	string src = "", line = "";
+	/*while (cout << ">>> ", getline(cin, line)) {
 		if (line == "$$EOF$$") break;
 		else src += line + "\n";
 	}
@@ -46,6 +49,7 @@ int main(int argc, char* argv[]) {
 	for (string arg : vector<string>(argv + 1, argv + argc)) {
 		string full_path = construct_file_name(vector<string>{ current_working_directory(), arg });
 		string fn = get_file_name(full_path), src = get_file_source(full_path);
+		// string fn = "";
 		buffer b(current_working_directory(), fn, make_shared<diagnostics>(), src);
 		shared_ptr<parser> p = make_shared<parser>(b);
 		bool b_ = p->parse_stmt();
@@ -60,13 +64,22 @@ int main(int argc, char* argv[]) {
 				for (string s : lc->raw_instruction_list())
 					cout << s << '\n';
 			}*/
-			shared_ptr<mips_code> mc = make_shared<mips_code>(p);
-			generate_mips(mc, p);
+			/*shared_ptr<spectre::mips::mips_code> mc = make_shared<spectre::mips::mips_code>(p);
+			spectre::mips::generate_mips(mc, p);
+			string gen = "";
+			for (string s : mc->raw_insn_list()) gen += s + "\n";
+			string pd = get_parent_path(full_path), s = get_file_stem(full_path) + ".s";
+			string asm_file = construct_file_name(vector<string>{ pd, s });
+			write_to_file(asm_file, gen);*/
+			shared_ptr<spectre::mips2::mips_code> mc = make_shared<spectre::mips2::mips_code>(p);
+			spectre::mips2::generate_mips(mc, p);
 			string gen = "";
 			for (string s : mc->raw_insn_list()) gen += s + "\n";
 			string pd = get_parent_path(full_path), s = get_file_stem(full_path) + ".s";
 			string asm_file = construct_file_name(vector<string>{ pd, s });
 			write_to_file(asm_file, gen);
+			/*cout << '\n' << "============Generated Code============" << '\n';
+			for(string s : mc->raw_insn_list()) cout << s << '\n';*/
 		}
 	}
 }

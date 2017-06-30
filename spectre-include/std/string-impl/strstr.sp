@@ -4,7 +4,7 @@ import <"std/core">
 namespace std {
 	namespace string {
 
-		func char* strstr(char* str1 __rfuncarg__, const char* str2 __rfuncarg__) {
+		func char* strstr(char* str1 , const char* str2 ) {
 			bool hit = false;
 			while(str1@ != '\0') {
 				unsigned int i = 0;

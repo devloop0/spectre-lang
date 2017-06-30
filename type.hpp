@@ -90,15 +90,13 @@ namespace spectre {
 		private:
 			shared_ptr<type> _return_type;
 			vector<shared_ptr<variable_declaration>> _parameter_list;
-			vector<bool> _parameter_rfuncarg_list;
 			bool _valid;
 			int _function_reference_number;
 		public:
-			function_type(type::const_kind ck, type::static_kind sk, shared_ptr<type> rt, vector<shared_ptr<variable_declaration>> pl, vector<bool> prl, int r);
+			function_type(type::const_kind ck, type::static_kind sk, shared_ptr<type> rt, vector<shared_ptr<variable_declaration>> pl, int r);
 			~function_type();
 			shared_ptr<type> return_type();
 			vector<shared_ptr<variable_declaration>> parameter_list();
-			vector<bool> parameter_rfuncarg_list();
 			bool valid();
 			int function_reference_number();
 		};

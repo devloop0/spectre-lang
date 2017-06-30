@@ -4,7 +4,7 @@ import <"std/core">
 namespace std {
 	namespace string {
 
-		func char* strrchr(char* str __rfuncarg__, const char c __rfuncarg__) {
+		func char* strrchr(char* str , const char c ) {
 			bool hit = false;
 			unsigned int i = 0, last_occ = 0;
 			while(str[i] != '\0') {
