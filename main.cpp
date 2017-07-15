@@ -78,8 +78,8 @@ int main(int argc, char* argv[]) {
 			string pd = get_parent_path(full_path), s = get_file_stem(full_path) + ".s";
 			string asm_file = construct_file_name(vector<string>{ pd, s });
 			write_to_file(asm_file, gen);
-			/*cout << '\n' << "============Generated Code============" << '\n';
-			for(string s : mc->raw_insn_list()) cout << s << '\n';*/
+			// cout << '\n' << "============Generated Code============" << '\n';
+			// for(string s : mc->raw_insn_list()) cout << s << '\n';
 		}
 	}
 }

@@ -475,13 +475,13 @@ namespace std {
 		func type primitive primitive_float(const float f) {
 			type primitive pt;
 			pt.__dummy = bits_from_float(f);
-			pt.tag = primitive_constants::FLOAT;
+			pt.tag = 1 << 11;
 			pt.error_code = primitive_constants::NO_ERROR;
 			return pt;
 		}
 
 		func const float get_float(const type primitive* pt) {
-			if(pt->tag != std::core::primitive_constants::FLOAT) {
+			if(pt->tag != (1 << 11)) {
 				pt->error_code = std::core::primitive_constants::ERROR;
 				return 0;
 			}
@@ -497,13 +497,13 @@ namespace std {
 				"lw $8, 0($8)" :
 				"sdc1 $f12, 0($8)"
 			);
-			pt.tag = primitive_constants::DOUBLE;
+			pt.tag = 1 << 12;
 			pt.error_code = primitive_constants::NO_ERROR;
 			return pt;
 		}
 
 		func const double get_double(const type primitive* pt) {
-			if(pt->tag != primitive_constants::DOUBLE) {
+			if(pt->tag != (1 << 12)) {
 				pt->error_code = primitive_constants::ERROR;
 				return 0;
 			}

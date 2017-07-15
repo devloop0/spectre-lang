@@ -568,6 +568,8 @@ namespace spectre {
 			shared_ptr<include_stmt> contained_include_stmt();
 			bool valid();
 		};
+
+		bool is_constant_expression(shared_ptr<parser> p, shared_ptr<assignment_expression> aexpr);
 	}
 }
 

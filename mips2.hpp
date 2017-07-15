@@ -1,11 +1,14 @@
 #ifndef SPECTRE_MIPS2_HPP
 #define SPECTRE_MIPS2_HPP
 
+#define REAL_MIPS_SYSTEM
+
 #include <vector>
 #include <string>
 #include <memory>
 #include <stack>
 #include <algorithm>
+#include <variant>
 #include "mips_instruction_set.hpp"
 #include "parser.hpp"
 
@@ -14,12 +17,12 @@ using std::string;
 using std::shared_ptr;
 using std::stack;
 using std::pair;
+using std::variant;
 
 namespace spectre {
 	namespace mips2 {
 
 		const static string label_prefix = "$L";
-		const static string spectre_global_variable_initialization = "__spectre_global_variable_initialization__";
 
 		class operand {
 		public:
@@ -128,7 +131,7 @@ namespace spectre {
 		class directive {
 		public:
 			enum class kind {
-				KIND_HEADER, KIND_GLOBL, KIND_ALIGN, KIND_SPACE, KIND_FLOAT, KIND_DOUBLE, KIND_STRING, KIND_WORD, KIND_NONE
+				KIND_HEADER, KIND_GLOBL, KIND_ALIGN, KIND_SPACE, KIND_FLOAT, KIND_DOUBLE, KIND_STRING, KIND_WORD, KIND_HALF, KIND_BYTE, KIND_NONE
 			};
 		private:
 			string _label_name, _immediate_string;
@@ -137,7 +140,10 @@ namespace spectre {
 			int _allocated_space, _alignment_boundary;
 			string _header_name;
 			kind _directive_kind;
-			bool _word;
+			bool _word, _half, _byte;
+			vector<shared_ptr<operand>> _word_list, _half_list, _byte_list;
+			vector<double> _double_list;
+			vector<float> _float_list;
 		public:
 			directive(bool h, string hn);
 			directive(string ln, string is);
@@ -146,6 +152,9 @@ namespace spectre {
 			directive(string ln, int as, bool w = false);
 			directive(string ln);
 			directive(int ab);
+			directive(kind k, string ln, vector<shared_ptr<operand>> ol);
+			directive(string ln, vector<double> vd);
+			directive(string ln, vector<float> vf);
 			string label_name();
 			string immediate_string();
 			double immediate_double();
@@ -156,6 +165,13 @@ namespace spectre {
 			kind directive_kind();
 			string raw_directive();
 			bool word();
+			bool half();
+			bool byte();
+			vector<shared_ptr<operand>> word_list();
+			vector<shared_ptr<operand>> half_list();
+			vector<shared_ptr<operand>> byte_list();
+			vector<double> double_list();
+			vector<float> float_list();
 		};
 
 		class mips_code;
@@ -316,8 +332,11 @@ namespace spectre {
 		void generate_case_default_stmt_mips(shared_ptr<mips_code> mc, shared_ptr<case_default_stmt> cds);
 		void generate_do_while_stmt_mips(shared_ptr<mips_code> mc, shared_ptr<while_stmt> dws);
 		void generate_for_stmt_mips(shared_ptr<mips_code> mc, shared_ptr<for_stmt> fs);
-		void generate_global_variable_initialization_mips(shared_ptr<mips_code> mc, vector<shared_ptr<stmt>> sl);
 		void generate_asm_stmt_mips(shared_ptr<mips_code> mc, shared_ptr<asm_stmt> as);
+
+		variant<bool, int, unsigned int, float, double, string> evaluate_constant_expression(shared_ptr<mips_code> mc, shared_ptr<assignment_expression> ae);
+		template<typename C, typename TL, typename TR> auto raw_arithmetic_binary_expression_evaluator(shared_ptr<mips_code> mc, TL lhs, TR rhs, binary_expression::operator_kind ok);
+		template<typename C, typename TL, typename TR> bool raw_logical_binary_expression_evaluator(shared_ptr<mips_code> mc, TL lhs, TR rhs, binary_expression::operator_kind ok);
 	}
 }
 

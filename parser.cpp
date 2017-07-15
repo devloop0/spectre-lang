@@ -377,13 +377,12 @@ namespace spectre {
 			}
 			_pos--;
 			stmt_parser sp = stmt_parser(shared_from_this());
-			if (sp.valid() && sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_EXPRESSION && sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_FUNCTION &&
-				sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_STRUCT && sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_VARIABLE_DECLARATION &&
-				sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_NAMESPACE && sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_EMPTY &&
-				sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_USING && sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_ASM &&
+			if (sp.valid() && sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_FUNCTION && sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_STRUCT &&
+				sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_VARIABLE_DECLARATION && sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_NAMESPACE &&
+				sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_EMPTY && sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_USING &&
 				sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_INCLUDE) {
-				report(error(error::kind::KIND_ERROR, "Only raw assembly, namespaces, using statements, expressions, functions, struct's, and variable declarations are " 
-					"allowed at the global scope.", sp.contained_stmt()->stream(), 0));
+				report(error(error::kind::KIND_ERROR, "Only includes/imports, namespaces, using statements, functions, struct's, and variable declarations are allowed at the global scope.",
+					sp.contained_stmt()->stream(), 0));
 			}
 			_stmt_list.push_back(sp.contained_stmt());
 			return sp.valid();
@@ -846,8 +845,6 @@ namespace spectre {
 						ptl.push_back(make_shared<postfix_expression::postfix_type>(postfix_expression::kind::KIND_AS, to_type));
 						break;
 					}
-					else if (to_type->type_array_kind() != from_type->type_array_kind() || to_type->array_dimensions() != from_type->array_dimensions())
-						p->report(error(error::kind::KIND_WARNING, "Potentially unsafe cast.", type_stream, 0));
 					ptl.push_back(make_shared<postfix_expression::postfix_type>(postfix_expression::kind::KIND_AS, to_type));
 					prev_type = to_type;
 					prev_vk = value_kind::VALUE_RVALUE;
@@ -2451,6 +2448,12 @@ namespace spectre {
 						return;
 					}
 					vector<token> estream = ae->stream();
+					if ((p->current_scope()->scope_kind() == scope::kind::KIND_GLOBAL || p->current_scope()->scope_kind() == scope::kind::KIND_NAMESPACE) && !is_constant_expression(p, ae)) {
+						p->report(error(error::kind::KIND_ERROR, "Expected a constant initializer for a global or namespace variable.", estream, 0));
+						_contained_variable_declaration_list.push_back(make_shared<variable_declaration>(decl_type, current_name, ae, false, current_stream));
+						_valid = false;
+						return;
+					}
 					_stream.insert(_stream.end(), estream.begin(), estream.end());
 					current_stream.insert(current_stream.end(), estream.begin(), estream.end());
 					vd = check_declaration_initializer_is_correct(p, make_shared<variable_declaration>(decl_type, current_name, ae, true, current_stream));
@@ -4169,10 +4172,10 @@ namespace spectre {
 					_valid = false;
 					return;
 				}
-				if (s->stmt_kind() != stmt::kind::KIND_EXPRESSION && s->stmt_kind() != stmt::kind::KIND_FUNCTION && s->stmt_kind() != stmt::kind::KIND_VARIABLE_DECLARATION &&
+				if (s->stmt_kind() != stmt::kind::KIND_FUNCTION && s->stmt_kind() != stmt::kind::KIND_VARIABLE_DECLARATION &&
 					s->stmt_kind() != stmt::kind::KIND_NAMESPACE && s->stmt_kind() != stmt::kind::KIND_EMPTY && s->stmt_kind() != stmt::kind::KIND_STRUCT &&
-					s->stmt_kind() != stmt::kind::KIND_USING && s->stmt_kind() != stmt::kind::KIND_ASM && s->stmt_kind() != stmt::kind::KIND_INCLUDE) {
-					p->report(error(error::kind::KIND_ERROR, "Only raw assembly, namespaces, using statements, expressions, functions, struct's, import statements and variable declarations are"
+					s->stmt_kind() != stmt::kind::KIND_USING && s->stmt_kind() != stmt::kind::KIND_INCLUDE) {
+					p->report(error(error::kind::KIND_ERROR, "Only namespaces, using statements, functions, struct's, import/include statements and variable declarations are"
 						"allowed at the namespace scope.", stream, 0));
 					_contained_namespace_stmt = make_shared<namespace_stmt>(k, dk, nn, n_scope, n_symbol, nsl, false, stream);
 					_valid = false;
@@ -4610,6 +4613,74 @@ namespace spectre {
 
 		bool include_stmt_parser::valid() {
 			return _valid;
+		}
+
+		bool is_constant_expression(shared_ptr<parser> p, shared_ptr<assignment_expression> aexpr) {
+			function<bool(shared_ptr<expression>)> descend_expression;
+			function<bool(shared_ptr<assignment_expression>)> descend_assignment_expression;
+			function<bool(shared_ptr<ternary_expression>)> descend_ternary_expression;
+			function<bool(shared_ptr<binary_expression>)> descend_binary_expression;
+			auto descend_primary_expression = [&](shared_ptr<primary_expression> pe) {
+				if (pe->primary_expression_kind() == primary_expression::kind::KIND_NEW || pe->primary_expression_kind() == primary_expression::kind::KIND_IDENTIFIER) return false;
+				else if (pe->primary_expression_kind() == primary_expression::kind::KIND_SIZEOF_TYPE || pe->primary_expression_kind() == primary_expression::kind::KIND_LITERAL) return true;
+				else if (pe->primary_expression_kind() == primary_expression::kind::KIND_PARENTHESIZED_EXPRESSION ||
+					pe->primary_expression_kind() == primary_expression::kind::KIND_SIZEOF_EXPRESSION)
+					return descend_expression(pe->parenthesized_expression());
+				else if (pe->primary_expression_kind() == primary_expression::kind::KIND_ARRAY_INITIALIZER) {
+					for (shared_ptr<assignment_expression> ae : pe->array_initializer())
+						if (!descend_assignment_expression(ae)) return false;
+					return true;
+				}
+				return false;
+			};
+			auto descend_postfix_expression = [&](shared_ptr<postfix_expression> pe) {
+				bool primary_constant = descend_primary_expression(pe->contained_primary_expression());
+				if (!primary_constant) return false;
+				shared_ptr<type> prev_type = pe->contained_primary_expression()->primary_expression_type();
+				for (shared_ptr<postfix_expression::postfix_type> pt : pe->postfix_type_list()) {
+					if (pt->postfix_type_kind() != postfix_expression::kind::KIND_AS)
+						return false;
+					else {
+						shared_ptr<type> to_type = pt->postfix_type_type();
+						if (to_type->type_kind() == type::kind::KIND_STRUCT && to_type->type_array_kind() == type::array_kind::KIND_NON_ARRAY) return false;
+						else if (prev_type->type_kind() == type::kind::KIND_STRUCT && prev_type->type_array_kind() == type::array_kind::KIND_NON_ARRAY) return false;
+						else if ((prev_type->array_dimensions() == to_type->array_dimensions() && prev_type->type_array_kind() == to_type->type_array_kind()));
+						else if (prev_type->type_kind() == type::kind::KIND_PRIMITIVE && prev_type->type_array_kind() == type::array_kind::KIND_NON_ARRAY);
+						else return false;
+					}
+					prev_type = pt->postfix_type_type();
+				}
+				return true;
+			};
+			auto descend_unary_expression = [&](shared_ptr<unary_expression> ue) {
+				bool post_constant = descend_postfix_expression(ue->contained_postfix_expression());
+				if (!post_constant) return post_constant;
+				for (unary_expression::kind uek : ue->unary_expression_kind_list())
+					if (uek == unary_expression::kind::KIND_INCREMENT || uek == unary_expression::kind::KIND_DECREMENT) return false;
+				return true;
+			};
+			descend_binary_expression = [&](shared_ptr<binary_expression> be) {
+				if (be->binary_expression_kind() == binary_expression::kind::KIND_UNARY_EXPRESSION) return descend_unary_expression(be->single_lhs());
+				bool lhs = descend_binary_expression(be->lhs()), rhs = descend_binary_expression(be->rhs());
+				return lhs && rhs;
+			};
+			descend_ternary_expression = [&](shared_ptr<ternary_expression> te) {
+				bool cond_constant = descend_binary_expression(te->condition());
+				if (te->ternary_expression_kind() == ternary_expression::kind::KIND_BINARY) return cond_constant;
+				bool true_constant = descend_expression(te->true_path()), false_constant = descend_ternary_expression(te->false_path());
+				return cond_constant && true_constant && false_constant;
+			};
+			descend_assignment_expression = [&](shared_ptr<assignment_expression> ae) {
+				if (ae->assignment_expression_kind() == assignment_expression::kind::KIND_ASSIGNMENT) return false;
+				return descend_ternary_expression(ae->conditional_expression());
+			};
+			descend_expression = [&](shared_ptr<expression> e) {
+				bool constant = true;
+				for (shared_ptr<assignment_expression> ae : e->assignment_expression_list())
+					constant = constant && descend_assignment_expression(ae);
+				return constant;
+			};
+			return descend_assignment_expression(aexpr);
 		}
 	}
 }
