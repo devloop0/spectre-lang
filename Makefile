@@ -1,6 +1,6 @@
 CXX_FLAGS = --std=c++17
 CXX_LINKER_FLAGS = -lstdc++fs
-CC = /opt/mips-toolchain/bin/mips-linux-gnu-g++
+CC = g++-7
 
 all: outputs/spectre
 
