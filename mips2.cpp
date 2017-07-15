@@ -3976,8 +3976,12 @@ namespace spectre {
 			mc->current_frame()->add_insn_to_prologue(make_shared<insn>(insn::kind::KIND_SW, fp, make_shared<operand>(operand::offset_kind::KIND_TOP, -8, sp->register_number(),
 				sp->register_name())), true);
 			mc->current_frame()->add_insn_to_prologue(make_shared<insn>(insn::kind::KIND_ADDIU, sp, sp, make_shared<operand>(-mc->current_frame()->frame_size())), true);
-			if(main_function)
+			if (main_function)
+#ifdef REAL_MIPS_SYSTEM
+				;
+#else
 				mc->current_frame()->add_insn_to_prologue(make_shared<insn>(insn::kind::KIND_ADDIU, sp, sp, make_shared<operand>(-4)), true);
+#endif
 			mc->current_frame()->add_insn_to_prologue(make_shared<insn>(make_shared<operand>(false, fsym)), true);
 			mc->current_frame()->add_insn_to_prologue(make_shared<insn>(""), true);
 			mc->current_frame()->add_insn_to_epilogue(make_shared<insn>(ret_lab.second));
@@ -3988,7 +3992,9 @@ namespace spectre {
 			mc->current_frame()->add_insn_to_epilogue(make_shared<insn>(insn::kind::KIND_ADDIU, sp, sp, make_shared<operand>(mc->current_frame()->frame_size())));
 			if (main_function) {
 				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDU, register_file2::_v0_register, register_file2::_zero_register, register_file2::_zero_register));
+#ifndef REAL_MIPS_SYSTEM
 				mc->current_frame()->add_insn_to_epilogue(make_shared<insn>(insn::kind::KIND_ADDIU, sp, sp, make_shared<operand>(4)));
+#endif
 				mc->current_frame()->add_insn_to_epilogue(make_shared<insn>(insn::kind::KIND_ADDU, register_file2::_a0_register, register_file2::_v0_register, register_file2::_zero_register));
 #ifdef REAL_MIPS_SYSTEM
 				mc->current_frame()->add_insn_to_epilogue(make_shared<insn>(insn::kind::KIND_ADDIU, register_file2::_v0_register, register_file2::_zero_register, make_shared<operand>(4001)));
