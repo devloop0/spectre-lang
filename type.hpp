@@ -94,6 +94,7 @@ namespace spectre {
 			int _function_reference_number;
 		public:
 			function_type(type::const_kind ck, type::static_kind sk, shared_ptr<type> rt, vector<shared_ptr<variable_declaration>> pl, int r);
+			function_type(type::const_kind ck, type::static_kind sk, shared_ptr<type> rt, vector<shared_ptr<variable_declaration>> pl, int r, int ad);
 			~function_type();
 			shared_ptr<type> return_type();
 			vector<shared_ptr<variable_declaration>> parameter_list();

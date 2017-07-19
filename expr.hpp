@@ -31,7 +31,7 @@ namespace spectre {
 		class primary_expression {
 		public:
 			enum class kind {
-				KIND_IDENTIFIER, KIND_LITERAL, KIND_PARENTHESIZED_EXPRESSION, KIND_ARRAY_INITIALIZER, KIND_NEW, KIND_SIZEOF_EXPRESSION, KIND_SIZEOF_TYPE, KIND_NONE
+				KIND_IDENTIFIER, KIND_LITERAL, KIND_PARENTHESIZED_EXPRESSION, KIND_ARRAY_INITIALIZER, KIND_NEW, KIND_STK, KIND_RESV, KIND_SIZEOF_EXPRESSION, KIND_SIZEOF_TYPE, KIND_NONE
 			};
 		private:
 			kind _primary_expression_kind;
@@ -43,7 +43,7 @@ namespace spectre {
 			vector<token> _stream;
 			bool _valid;
 			value_kind _primary_expression_value_kind;
-			shared_ptr<type> _new_type, _sizeof_type;
+			shared_ptr<type> _mem_type, _sizeof_type;
 		public:
 			primary_expression(kind pek, token lt, shared_ptr<type> pet, bool v, vector<token> s, value_kind vk);
 			primary_expression(kind pek, shared_ptr<expression> e, shared_ptr<type> pet, bool v, vector<token> s, value_kind vk);
@@ -63,7 +63,7 @@ namespace spectre {
 			value_kind primary_expression_value_kind();
 			shared_ptr<symbol> identifier_symbol();
 			vector<shared_ptr<assignment_expression>> array_initializer();
-			shared_ptr<type> new_type();
+			shared_ptr<type> mem_type();
 			shared_ptr<type> sizeof_type();
 		};
 

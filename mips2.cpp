@@ -994,7 +994,7 @@ namespace spectre {
 
 		mips_code::mips_code(shared_ptr<spectre::parser::parser> p) : _insn_list(vector<shared_ptr<insn>>{}), _data_directive_list(vector<shared_ptr<directive>>{}), 
 			_globl_directive_list(vector<shared_ptr<directive>>{}), _ast_parser(p), _label_counter(0), _frame_stack(stack<shared_ptr<mips_frame>>{}), _global_variable_name_list(vector<string>{}),
-			_misc_counter(0) {
+			_misc_counter(0), _inside_function(false) {
 			_frame_stack.push(make_shared<mips_frame>(false, true, false, false));
 		}
 
@@ -1088,6 +1088,14 @@ namespace spectre {
 
 		shared_ptr<struct_symbol> mips_code::find_struct_symbol(token n, int r) {
 			return _ast_parser->find_struct_symbol(n, r);
+		}
+
+		void mips_code::set_inside_function(bool b) {
+			_inside_function = b;
+		}
+
+		bool mips_code::inside_function() {
+			return _inside_function;
 		}
 
 		shared_ptr<operand> allocate_general_purpose_register(shared_ptr<mips_code> mc) {
@@ -2670,12 +2678,34 @@ namespace spectre {
 			}
 				break;
 			case token::kind::TOKEN_STRING: {
+				if (!mc->inside_function()) {
+					mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+					return nullptr;
+				}
 				int counter = mc->next_misc_counter();
 				string s_lit = "__sp_lit_" + to_string(counter);
+				raw_lit = raw_lit.substr(1, raw_lit.length() - 2);
+				shared_ptr<operand> fp = register_file2::_fp_register;
+				vector<string> chars;
+				for (int i = 0; i < raw_lit.length(); i++)
+					if (raw_lit[i] == '\\')
+						chars.push_back("'" + string(1, raw_lit[i]) + string(1, raw_lit[i + 1]) + "'"), i++;
+					else
+						chars.push_back("'" + string(1, raw_lit[i]) + "'");
+				chars.push_back("0");
 				mc->add_data_directive(make_shared<directive>(2));
-				mc->add_data_directive(make_shared<directive>(s_lit, raw_lit));
+				mc->add_data_directive(make_shared<directive>(s_lit, chars.size(), false));
 				shared_ptr<operand> reg = allocate_general_purpose_register(mc);
 				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LA, reg, make_shared<operand>(false, s_lit)));
+				int curr_off = 0;
+				shared_ptr<operand> tmp = allocate_general_purpose_register(mc);
+				for (string s : chars) {
+					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDIU, tmp, register_file2::_zero_register, make_shared<operand>(false, s)));
+					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_SB, tmp, make_shared<operand>(operand::offset_kind::KIND_TRUE, curr_off, reg->register_number(),
+							reg->register_name())));
+					curr_off++;
+				}
+				free_general_purpose_register(mc, tmp);
 				return reg;
 			}
 				break;
@@ -2735,9 +2765,15 @@ namespace spectre {
 					adjusted_elem_sz = elem_sz;
 				int actual_sz = adjusted_elem_sz * arr_list.size();
 				int counter = mc->next_misc_counter();
+				if (!mc->inside_function()) {
+					mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+					return nullptr;
+				}
 				string lab = "__temp_arr_init_" + to_string(counter);
 				shared_ptr<operand> lab_op = make_shared<operand>(false, lab);
 				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LA, res, lab_op));
+				mc->add_data_directive(make_shared<directive>(3));
+				mc->add_data_directive(make_shared<directive>(lab, actual_sz));
 				int curr = 0;
 				shared_ptr<type> parent_type = pe->primary_expression_type();
 				if (parent_type->type_kind() == type::kind::KIND_PRIMITIVE) {
@@ -2752,8 +2788,6 @@ namespace spectre {
 					mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 					return nullptr;
 				}
-				mc->add_data_directive(make_shared<directive>(3));
-				mc->add_data_directive(make_shared<directive>(lab, actual_sz));
 				insn::kind s = load_store_insn_from_type(mc, parent_type, false);
 				for (shared_ptr<assignment_expression> ae : arr_list) {
 					shared_ptr<type> curr_type = ae->assignment_expression_type();
@@ -2787,8 +2821,46 @@ namespace spectre {
 				return res;
 			}
 				break;
+			case primary_expression::kind::KIND_RESV:
+			case primary_expression::kind::KIND_STK: {
+				shared_ptr<type> t = pe->mem_type();
+				int sz = (int)calculate_type_size(mc, t);
+				variant<bool, int, unsigned int, float, double, string> res;
+				for (shared_ptr<assignment_expression> ae : pe->parenthesized_expression()->assignment_expression_list())
+					res = evaluate_constant_expression(mc, ae);
+				if (holds_alternative<bool>(res))
+					sz *= (int)get<bool>(res);
+				else if (holds_alternative<int>(res))
+					sz *= get<int>(res);
+				else if (holds_alternative<unsigned int>(res))
+					sz *= (int)get<unsigned int>(res);
+				else if (holds_alternative<float>(res))
+					sz *= (int)get<float>(res);
+				else if (holds_alternative<double>(res))
+					sz *= (int)get<double>(res);
+				else {
+					mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+				}
+				shared_ptr<operand> reg = allocate_general_purpose_register(mc);
+				sz = sz % 8 == 0 ? sz : (sz / 8 + 1) * 8;
+				if (pe->primary_expression_kind() == primary_expression::kind::KIND_STK) {
+					int off = -(mc->current_frame()->middle_section_size() + sz);
+					mc->current_frame()->update_middle_section_size(sz);
+					shared_ptr<operand> imm = make_shared<operand>(off);
+					imm->set_operand_offset_kind(operand::offset_kind::KIND_MIDDLE);
+					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDIU, reg, register_file2::_fp_register, imm));
+				}
+				else {
+					string lab = "__temp_resv_" + to_string(mc->next_misc_counter());
+					mc->add_data_directive(make_shared<directive>(3));
+					mc->add_data_directive(make_shared<directive>(lab, sz));
+					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LA, reg, make_shared<operand>(false, lab)));
+				}
+				return reg;
+			}
+				break;
 			case primary_expression::kind::KIND_NEW: {
-				shared_ptr<type> t = pe->new_type();
+				shared_ptr<type> t = pe->mem_type();
 				int sz = (int)calculate_type_size(mc, t);
 				shared_ptr<operand> e = generate_expression_mips(mc, pe->parenthesized_expression(), false);
 				if(e->operand_kind() != operand::kind::KIND_INT_IMMEDIATE)
@@ -2809,17 +2881,25 @@ namespace spectre {
 						free_general_purpose_register(mc, temp);
 					}
 				}
+				vector<int> _4_2_store;
 				bool _4_in_use = mc->current_frame()->is_register_in_use(4), _2_in_use = mc->current_frame()->is_register_in_use(2);
 				if (_4_in_use) {
+					int o = -(mc->current_frame()->middle_section_size() + 8);
+					_4_2_store.push_back(o);
 					mc->current_frame()->update_middle_section_size(8);
 					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_SW, _4, make_shared<operand>(operand::offset_kind::KIND_MIDDLE,
-						mc->current_frame()->middle_section_size(), _30->register_number(), _30->register_name())));
+						o, _30->register_number(), _30->register_name())));
 				}
+				else
+					_4_2_store.push_back(-1);
 				if (_2_in_use) {
+					int o = -(mc->current_frame()->middle_section_size() + 8);
 					mc->current_frame()->update_middle_section_size(8);
 					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_SW, _2, make_shared<operand>(operand::offset_kind::KIND_MIDDLE,
-						mc->current_frame()->middle_section_size(), _30->register_number(), _30->register_name())));
+						o, _30->register_number(), _30->register_name())));
 				}
+				else
+					_4_2_store.push_back(-1);
 #ifdef REAL_MIPS_SYSTEM
 				vector<int> which_to_store;
 				int _t0 = register_file2::_t0_register->register_number(), _t1 = register_file2::_t1_register->register_number(),
@@ -2901,10 +2981,10 @@ namespace spectre {
 				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDU, reg, register_file2::_zero_register, _2));
 				if (_4_in_use)
 					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LW, _4, make_shared<operand>(operand::offset_kind::KIND_MIDDLE,
-						mc->current_frame()->middle_section_size(), _30->register_number(), _30->register_name())));
+						_4_2_store[0], _30->register_number(), _30->register_name())));
 				if (_2_in_use)
 					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LW, _2, make_shared<operand>(operand::offset_kind::KIND_MIDDLE,
-						mc->current_frame()->middle_section_size(), _2->register_number(), _2->register_name())));
+						_4_2_store[1], _2->register_number(), _2->register_name())));
 				if (e->register_number() > 31)
 					free_general_purpose_fp_register(mc, e);
 				else
@@ -3965,8 +4045,10 @@ namespace spectre {
 					}
 				}
 			}
+			mc->set_inside_function(true);
 			for (shared_ptr<stmt> s : fs->function_body())
 				generate_stmt_mips(mc, s);
+			mc->set_inside_function(false);
 			mc->current_frame()->set_frame_size_set(true);
 			mc->current_frame()->set_frame_size(mc->current_frame()->top_section_size() + mc->current_frame()->middle_section_size() + mc->current_frame()->frame_size());
 			mc->current_frame()->restore_saved_registers(mc);
@@ -4409,6 +4491,25 @@ namespace spectre {
 				}
 				else if (pexpr->primary_expression_kind() == primary_expression::kind::KIND_PARENTHESIZED_EXPRESSION) {
 					result = evaluate_expression(pexpr->parenthesized_expression());
+					return result;
+				}
+				else if (pexpr->primary_expression_kind() == primary_expression::kind::KIND_RESV) {
+					variant<bool, int, unsigned int, float, double, string> par = evaluate_expression(pexpr->parenthesized_expression());
+					int sz = (int)calculate_type_size(mc, pexpr->mem_type());
+					if (holds_alternative<bool>(par)) sz *= (int)get<bool>(par);
+					else if (holds_alternative<int>(par)) sz *= get<int>(par);
+					else if (holds_alternative<unsigned int>(par)) sz *= (int)get<unsigned int>(par);
+					else if (holds_alternative<float>(par)) sz *= (int)get<float>(par);
+					else if (holds_alternative<double>(par)) sz *= (int)get<double>(par);
+					else {
+						mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+						return dummy;
+					}
+					sz = sz % 8 == 0 ? sz : (sz / 8 + 1) * 8;
+					string lab = "__resv_const_" + to_string(mc->next_misc_counter());
+					mc->add_data_directive(make_shared<directive>(3));
+					mc->add_data_directive(make_shared<directive>(lab, sz));
+					result = lab;
 					return result;
 				}
 				else if (pexpr->primary_expression_kind() == primary_expression::kind::KIND_ARRAY_INITIALIZER) {

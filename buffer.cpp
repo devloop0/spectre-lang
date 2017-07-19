@@ -789,6 +789,10 @@ namespace spectre {
 					tok = token(_parent_directory, _file_name, _current_line_number, start, _current_column_number, token::kind::TOKEN_IMPORT, ident);
 				else if (ident == keywords::_include)
 					tok = token(_parent_directory, _file_name, _current_line_number, start, _current_column_number, token::kind::TOKEN_INCLUDE, ident);
+				else if (ident == keywords::_stk)
+					tok = token(_parent_directory, _file_name, _current_line_number, start, _current_column_number, token::kind::TOKEN_STK, ident);
+				else if (ident == keywords::_resv)
+					tok = token(_parent_directory, _file_name, _current_line_number, start, _current_column_number, token::kind::TOKEN_RESV, ident);
 				else
 					tok = token(_parent_directory, _file_name, _current_line_number, start, _current_column_number, token::kind::TOKEN_IDENTIFIER, ident);
 				_consumed_token_list.push_back(tok);

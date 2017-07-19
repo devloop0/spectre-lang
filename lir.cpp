@@ -1275,7 +1275,7 @@ namespace spectre {
 			}
 				break;
 			case primary_expression::kind::KIND_NEW: {
-				shared_ptr<type> nt = pe->new_type();
+				shared_ptr<type> nt = pe->mem_type();
 				string nts = type_2_string(lc, nt, true);
 				shared_ptr<operand> op = lc->generate_next_register_operand();
 				shared_ptr<operand> n = generate_expression_lir(lc, pe->parenthesized_expression(), false);

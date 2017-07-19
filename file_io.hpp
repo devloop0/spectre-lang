@@ -11,9 +11,9 @@ namespace spectre {
 	namespace file_io {
 
 #ifdef _WIN32
-		const static string system_include_path = "C:\\spectre\\include";
+		const static string system_include_path = "C:\\libspectre";
 #else
-		const static string system_include_path = "/usr/include/spectre";
+		const static string system_include_path = "/usr/include/libspectre";
 #endif
 
 		string current_working_directory();

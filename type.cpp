@@ -76,6 +76,12 @@ namespace spectre {
 
 		}
 
+		function_type::function_type(type::const_kind ck, type::static_kind sk, shared_ptr<type> rt, vector<shared_ptr<variable_declaration>> pl, int r, int ad) :
+			type(type::kind::KIND_FUNCTION, ck, sk, ad), _return_type(rt), _parameter_list(pl), _valid(rt == nullptr || rt->type_kind() == type::kind::KIND_NONE),
+			_function_reference_number(r) {
+
+		}
+
 		function_type::~function_type() {
 
 		}

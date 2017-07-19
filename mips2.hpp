@@ -264,6 +264,7 @@ namespace spectre {
 			shared_ptr<spectre::parser::parser> _ast_parser;
 			stack<shared_ptr<mips_frame>> _frame_stack;
 			int _label_counter, _misc_counter;
+			bool _inside_function;
 		public:
 			mips_code(shared_ptr<spectre::parser::parser> p);
 			~mips_code();
@@ -287,6 +288,8 @@ namespace spectre {
 			void report_internal(string msg, string fn, int ln, string fl);
 			int next_misc_counter();
 			shared_ptr<struct_symbol> find_struct_symbol(token n, int r);
+			void set_inside_function(bool b);
+			bool inside_function();
 		};
 
 		unsigned int calculate_type_size(shared_ptr<mips_code> mc, shared_ptr<type> t);

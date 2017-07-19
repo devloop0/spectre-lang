@@ -647,14 +647,16 @@ namespace spectre {
 				_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_ARRAY_INITIALIZER, array_initializer, t, t->valid(),
 					stream);
 			}
-			else if (tok.token_kind() == token::kind::TOKEN_NEW) {
+			else if (tok.token_kind() == token::kind::TOKEN_NEW || tok.token_kind() == token::kind::TOKEN_STK || tok.token_kind() == token::kind::TOKEN_RESV) {
+				primary_expression::kind which = tok.token_kind() == token::kind::TOKEN_NEW ? primary_expression::kind::KIND_NEW : 
+					(tok.token_kind() == token::kind::TOKEN_RESV ? primary_expression::kind::KIND_RESV : primary_expression::kind::KIND_STK);
 				vector<token> stream;
 				stream.push_back(tok);
 				type_parser tp(p);
 				shared_ptr<type> nt = tp.contained_type();
 				if (!tp.valid() || !nt->valid()) {
 					p->report(error(error::kind::KIND_ERROR, "Expected a valid type to allocate.", stream, stream.size() - 1));
-					_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_NEW, nt, nullptr, make_shared<type>(type::kind::KIND_NONE,
+					_contained_primary_expression = make_shared<primary_expression>(which, nt, nullptr, make_shared<type>(type::kind::KIND_NONE,
 						type::const_kind::KIND_NONE, type::static_kind::KIND_NONE), false, stream);
 					_valid = false;
 					return;
@@ -663,7 +665,7 @@ namespace spectre {
 				stream.insert(stream.end(), nt_stream.begin(), nt_stream.end());
 				if (nt->type_kind() == type::kind::KIND_PRIMITIVE && static_pointer_cast<primitive_type>(nt)->primitive_type_kind() == primitive_type::kind::KIND_VOID) {
 					p->report(error(error::kind::KIND_ERROR, "Cannot allocate a void type.", nt_stream, 0));
-					_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_NEW, nt, nullptr, make_shared<type>(type::kind::KIND_NONE,
+					_contained_primary_expression = make_shared<primary_expression>(which, nt, nullptr, make_shared<type>(type::kind::KIND_NONE,
 						type::const_kind::KIND_NONE, type::static_kind::KIND_NONE), false, stream);
 					_valid = false;
 					return;
@@ -672,16 +674,44 @@ namespace spectre {
 				shared_ptr<expression> e = expression_parser(p).contained_expression();
 				if (!e->valid()) {
 					p->report(error(error::kind::KIND_ERROR, "Expected a valid expression for the amount of memory to allocate.", stream, 0));
-					_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_NEW, nt, e, make_shared<type>(type::kind::KIND_NONE,
+					_contained_primary_expression = make_shared<primary_expression>(which, nt, e, make_shared<type>(type::kind::KIND_NONE,
 						type::const_kind::KIND_NONE, type::static_kind::KIND_NONE), false, stream);
 					_valid = false;
 					return;
+				}
+				if (!(e->expression_type()->type_kind() == type::kind::KIND_PRIMITIVE && e->expression_type()->type_array_kind() == type::array_kind::KIND_NON_ARRAY)) {
+					p->report(error(error::kind::KIND_ERROR, "Expected an integral expression for the amount of memory to allocate.", stream, 0));
+					_contained_primary_expression = make_shared<primary_expression>(which, nt, e, make_shared<type>(type::kind::KIND_NONE,
+						type::const_kind::KIND_NONE, type::static_kind::KIND_NONE), false, stream);
+					_valid = false;
+					return;
+				}
+				shared_ptr<primitive_type> prim_e_type = static_pointer_cast<primitive_type>(e->expression_type());
+				if (prim_e_type->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE || prim_e_type->primitive_type_kind() == primitive_type::kind::KIND_FLOAT ||
+					prim_e_type->primitive_type_kind() == primitive_type::kind::KIND_VOID || prim_e_type->primitive_type_kind() == primitive_type::kind::KIND_BOOL) {
+					p->report(error(error::kind::KIND_ERROR, "Expected an integral expression for the amount of memory to allocate.", stream, 0));
+					_contained_primary_expression = make_shared<primary_expression>(which, nt, e, make_shared<type>(type::kind::KIND_NONE,
+						type::const_kind::KIND_NONE, type::static_kind::KIND_NONE), false, stream);
+					_valid = false;
+					return;
+				}
+				if (which == primary_expression::kind::KIND_STK || which == primary_expression::kind::KIND_RESV) {
+					bool c = true;
+					for (shared_ptr<assignment_expression> ae : e->assignment_expression_list())
+						c = c && is_constant_expression(p, ae);
+					if (!c) {
+						p->report(error(error::kind::KIND_ERROR, "Expected a constant expression for the amount of stack or static space to allocate.", stream, 0));
+						_contained_primary_expression = make_shared<primary_expression>(which, nt, e, make_shared<type>(type::kind::KIND_NONE,
+							type::const_kind::KIND_NONE, type::static_kind::KIND_NONE), false, stream);
+						_valid = false;
+						return;
+					}
 				}
 				vector<token> e_stream = e->stream();
 				stream.insert(stream.end(), e_stream.begin(), e_stream.end());
 				if (p->peek().token_kind() != token::kind::TOKEN_CLOSE_PARENTHESIS) {
 					p->report(error(error::kind::KIND_ERROR, "Expected a close parenthesis (')') to end the declaration of how much memory to allocate.", stream, 0));
-					_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_NEW, nt, e, make_shared<type>(type::kind::KIND_NONE,
+					_contained_primary_expression = make_shared<primary_expression>(which, nt, e, make_shared<type>(type::kind::KIND_NONE,
 						type::const_kind::KIND_NONE, type::static_kind::KIND_NONE), false, stream);
 					_valid = false;
 					return;
@@ -700,7 +730,7 @@ namespace spectre {
 				}
 				else
 					p->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
-				_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_NEW, nt, e, pet, true, stream);
+				_contained_primary_expression = make_shared<primary_expression>(which, nt, e, pet, true, stream);
 				_valid = true;
 			}
 			else {
@@ -776,6 +806,7 @@ namespace spectre {
 						prev_type = make_shared<struct_type>(ss->type_const_kind(), ss->type_static_kind(), ss->struct_name(), ss->struct_reference_number(), ss->valid(),
 							ss->array_dimensions() + 1);
 					}
+					// TODO
 					else if (prev_type->type_kind() == type::kind::KIND_FUNCTION) {
 						p->report(error(error::kind::KIND_ERROR, "Cannot take the address of a function.", stream, 0));
 						_valid = false;
@@ -813,8 +844,9 @@ namespace spectre {
 						prev_type = make_shared<struct_type>(ss->type_const_kind(), ss->type_static_kind(), ss->struct_name(), ss->struct_reference_number(), ss->valid(),
 							ss->array_dimensions() - 1);
 					}
+					// TODO
 					else if (prev_type->type_kind() == type::kind::KIND_FUNCTION) {
-						p->report(error(error::kind::KIND_ERROR, "Cannot take the address of a function.", stream, 0));
+						p->report(error(error::kind::KIND_ERROR, "Cannot dereference a function.", stream, 0));
 						_valid = false;
 						ptl.push_back(make_shared<postfix_expression::postfix_type>(postfix_expression::kind::KIND_AT, nullptr));
 						break;
@@ -839,6 +871,7 @@ namespace spectre {
 					vector<token> type_stream = tp.stream();
 					stream.insert(stream.end(), type_stream.begin(), type_stream.end());
 					shared_ptr<type> from_type = prev_type;
+					// TODO
 					if (to_type->type_kind() == type::kind::KIND_FUNCTION || from_type->type_kind() == type::kind::KIND_FUNCTION) {
 						p->report(error(error::kind::KIND_ERROR, "Cannot cast to or from a function type.", type_stream, 0));
 						_valid = false;
@@ -1650,6 +1683,7 @@ namespace spectre {
 					p->set_buffer_position(start);
 					ternary_expression_parser tep(p);
 					shared_ptr<ternary_expression> te = tep.contained_ternary_expression();
+					// TODO
 					if (te->ternary_expression_type()->type_kind() == type::kind::KIND_FUNCTION) {
 						p->report(error(error::kind::KIND_ERROR, "Cannot have a bare function type as the final value of an expression.", stream, 0));
 						return make_shared<assignment_expression>(te->ternary_expression_type(), te, te->stream(), false, te->ternary_expression_value_kind());
@@ -1687,6 +1721,7 @@ namespace spectre {
 					p->set_buffer_position(start);
 					ternary_expression_parser tep(p);
 					shared_ptr<ternary_expression> te = tep.contained_ternary_expression();
+					// TODO
 					if (te->ternary_expression_type()->type_kind() == type::kind::KIND_FUNCTION) {
 						p->report(error(error::kind::KIND_ERROR, "Cannot have a bare function type as the final value of an expression.", stream, 0));
 						return make_shared<assignment_expression>(te->ternary_expression_type(), te, te->stream(), false, te->ternary_expression_value_kind());
@@ -1699,6 +1734,7 @@ namespace spectre {
 				for (token t : ae->stream()) stream.push_back(t);
 				value_kind vk = value_kind::VALUE_LVALUE;
 				shared_ptr<type> t = deduce_assignment_expression_type(p, ue, op, ae);
+				// TODO
 				if (t->type_kind() == type::kind::KIND_FUNCTION) {
 					p->report(error(error::kind::KIND_ERROR, "Cannot have a bare function type as the final value of an expression.", stream, 0));
 					return make_shared<assignment_expression>(t, ue, op_kind, ae, stream, false, vk);
@@ -1737,6 +1773,7 @@ namespace spectre {
 					break;
 				}
 			}
+			// TODO
 			else if (t->type_kind() == type::kind::KIND_FUNCTION) {
 				switch (op.token_kind()) {
 				case token::kind::TOKEN_INCREMENT:
@@ -1992,6 +2029,7 @@ namespace spectre {
 				return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
 			}
 			shared_ptr<type> t1 = true_path->expression_type(), t2 = false_path->ternary_expression_type();
+			// TODO
 			if (t1->type_kind() == type::kind::KIND_FUNCTION || t2->type_kind() == type::kind::KIND_FUNCTION) {
 				p->report(error(error::kind::KIND_ERROR, "Cannot use a ternary expression on a bare function type.", stream, 0));
 				return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
@@ -2066,6 +2104,7 @@ namespace spectre {
 			for (token t : lhs->stream()) stream.push_back(t);
 			stream.push_back(op);
 			for (token t : ae->stream()) stream.push_back(t);
+			// TODO
 			if (lhs->unary_expression_type()->type_kind() == type::kind::KIND_FUNCTION || ae->assignment_expression_type()->type_kind() == type::kind::KIND_FUNCTION) {
 				p->report(error(error::kind::KIND_ERROR, "Assignment cannot involve bare function types.", stream, lhs->stream().size()));
 				return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
@@ -2229,6 +2268,7 @@ namespace spectre {
 		}
 
 		type_parser::type_parser(shared_ptr<parser> p) : _valid(false), _contained_type(nullptr), _stream(vector<token>()) {
+			// TODO
 			int start = p->get_buffer_position();
 			token tok = p->pop();
 			bool signed_unsigned_hit = false, const_hit = false, static_hit = false, primitive_hit = false, struct_hit = false;
@@ -2528,6 +2568,7 @@ namespace spectre {
 					return false;
 				}
 			}
+			// TODO
 			else if (t->type_kind() == type::kind::KIND_FUNCTION) {
 				p->report(error(error::kind::KIND_ERROR, "Cannot have a function declaration type.", tp->stream(), 0));
 				return false;
@@ -2543,6 +2584,7 @@ namespace spectre {
 				vd->initialization(), false, vd->stream());
 			if (vd->variable_declaration_initialization_kind() == variable_declaration::initialization_kind::KIND_PRESENT) {
 				shared_ptr<type> decl_type = vd->variable_declaration_type(), i_type = vd->initialization()->assignment_expression_type();
+				// TODO
 				if (decl_type->type_kind() == type::kind::KIND_FUNCTION || i_type->type_kind() == type::kind::KIND_FUNCTION) {
 					p->report(error(error::kind::KIND_ERROR, "A declaration cannot involve a function type.", vd->initialization()->stream(), 0));
 					return bad_variable;
@@ -2808,6 +2850,7 @@ namespace spectre {
 				_valid = false;
 				return;
 			}
+			// TODO
 			if (rt->type_kind() == type::kind::KIND_FUNCTION) {
 				p->report(error(error::kind::KIND_ERROR, "Cannot return a function type from a function.", stream, 0));
 				_contained_function_stmt = make_shared<function_stmt>(nullptr, bad_token, nullptr, vector<shared_ptr<stmt>>{}, function_stmt::defined_kind::KIND_NONE,
@@ -3253,6 +3296,12 @@ namespace spectre {
 				shared_ptr<primitive_type> prt = static_pointer_cast<primitive_type>(rt), pfrt = static_pointer_cast<primitive_type>(frt);
 				if (pfrt->primitive_type_kind() == primitive_type::kind::KIND_VOID && prt->primitive_type_kind() != pfrt->primitive_type_kind()) {
 					p->report(error(error::kind::KIND_ERROR, "Cannot return a non-void type from a void function.", stream, 0));
+					_contained_return_stmt = make_shared<return_stmt>(rv, false, stream);
+					_valid = false;
+					return;
+				}
+				if (prt->primitive_type_kind() == primitive_type::kind::KIND_VOID && pfrt->primitive_type_kind() != primitive_type::kind::KIND_VOID) {
+					p->report(error(error::kind::KIND_ERROR, "Cannot return void from a non-void function.", stream, 0));
 					_contained_return_stmt = make_shared<return_stmt>(rv, false, stream);
 					_valid = false;
 					return;
@@ -4621,10 +4670,11 @@ namespace spectre {
 			function<bool(shared_ptr<ternary_expression>)> descend_ternary_expression;
 			function<bool(shared_ptr<binary_expression>)> descend_binary_expression;
 			auto descend_primary_expression = [&](shared_ptr<primary_expression> pe) {
-				if (pe->primary_expression_kind() == primary_expression::kind::KIND_NEW || pe->primary_expression_kind() == primary_expression::kind::KIND_IDENTIFIER) return false;
+				if (pe->primary_expression_kind() == primary_expression::kind::KIND_NEW || pe->primary_expression_kind() == primary_expression::kind::KIND_IDENTIFIER ||
+					pe->primary_expression_kind() == primary_expression::kind::KIND_STK) return false;
 				else if (pe->primary_expression_kind() == primary_expression::kind::KIND_SIZEOF_TYPE || pe->primary_expression_kind() == primary_expression::kind::KIND_LITERAL) return true;
 				else if (pe->primary_expression_kind() == primary_expression::kind::KIND_PARENTHESIZED_EXPRESSION ||
-					pe->primary_expression_kind() == primary_expression::kind::KIND_SIZEOF_EXPRESSION)
+					pe->primary_expression_kind() == primary_expression::kind::KIND_SIZEOF_EXPRESSION || pe->primary_expression_kind() == primary_expression::kind::KIND_RESV)
 					return descend_expression(pe->parenthesized_expression());
 				else if (pe->primary_expression_kind() == primary_expression::kind::KIND_ARRAY_INITIALIZER) {
 					for (shared_ptr<assignment_expression> ae : pe->array_initializer())

@@ -44,6 +44,8 @@ namespace spectre {
 		const static string _import = "import";
 		const static string _include = "include";
 		const static string _as = "as";
+		const static string _stk = "stk";
+		const static string _resv = "resv";
 	}
 }
 
