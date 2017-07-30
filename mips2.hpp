@@ -1,8 +1,6 @@
 #ifndef SPECTRE_MIPS2_HPP
 #define SPECTRE_MIPS2_HPP
 
-#define REAL_MIPS_SYSTEM
-
 #include <vector>
 #include <string>
 #include <memory>
@@ -11,6 +9,7 @@
 #include <variant>
 #include "mips_instruction_set.hpp"
 #include "parser.hpp"
+#include "config.hpp"
 
 using std::vector;
 using std::string;
@@ -81,11 +80,14 @@ namespace spectre {
 				KIND_AND, KIND_ANDI,
 				KIND_BEQ, KIND_BGEZ, KIND_BGEZAL, KIND_BGTZ, KIND_BLEZ, KIND_BLTZ, KIND_BLTZAL, KIND_BNE,
 				KIND_DIV, KIND_DIVU,
-				KIND_JAL, KIND_J, KIND_JR,
+				KIND_JAL, KIND_J, KIND_JR, KIND_JALR,
 				KIND_LA,
 				KIND_LB, KIND_LH, KIND_LW, KIND_LHU, KIND_LBU,
 				KIND_LUI,
 				KIND_MFLO, KIND_MFHI, KIND_MULT, KIND_MULTU,
+#if SYSTEM == 2
+				KIND_REM, KIND_REMU,
+#endif
 				KIND_NOOP,
 				KIND_NOR, KIND_OR, KIND_ORI,
 				KIND_SB, KIND_SH, KIND_SW,
@@ -340,6 +342,9 @@ namespace spectre {
 		variant<bool, int, unsigned int, float, double, string> evaluate_constant_expression(shared_ptr<mips_code> mc, shared_ptr<assignment_expression> ae);
 		template<typename C, typename TL, typename TR> auto raw_arithmetic_binary_expression_evaluator(shared_ptr<mips_code> mc, TL lhs, TR rhs, binary_expression::operator_kind ok);
 		template<typename C, typename TL, typename TR> bool raw_logical_binary_expression_evaluator(shared_ptr<mips_code> mc, TL lhs, TR rhs, binary_expression::operator_kind ok);
+
+		tuple<vector<int>, vector<int>, int> save_to_middle(shared_ptr<mips_code> mc);
+		void restore_from_middle(shared_ptr<mips_code> mc, vector<int> which_to_store, vector<int> middle_offsets);
 	}
 }
 

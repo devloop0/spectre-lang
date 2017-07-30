@@ -596,23 +596,24 @@ namespace spectre {
 				if (!get<0>(tup)) {
 					p->report(error(error::kind::KIND_ERROR, "Invalid identifier here.", stream, 0));
 					_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_IDENTIFIER, tok, s, make_shared<type>(type::kind::KIND_NONE,
-						type::const_kind::KIND_NONE, type::static_kind::KIND_NONE), false, stream);
+						type::const_kind::KIND_NONE, type::static_kind::KIND_NONE), false, stream, value_kind::VALUE_NONE);
 					_valid = false;
 					return;
 				}
+				value_kind vk;
 				shared_ptr<type> t = nullptr;
 				if (s->symbol_kind() == symbol::kind::KIND_VARIABLE)
-					t = static_pointer_cast<variable_symbol>(s)->variable_type();
+					t = static_pointer_cast<variable_symbol>(s)->variable_type(), vk = value_kind::VALUE_LVALUE;
 				else if (s->symbol_kind() == symbol::kind::KIND_FUNCTION)
-					t = static_pointer_cast<function_symbol>(s)->function_symbol_type();
+					t = static_pointer_cast<function_symbol>(s)->function_symbol_type(), vk = value_kind::VALUE_RVALUE;
 				else if (s->symbol_kind() == symbol::kind::KIND_STRUCT) {
 					p->report(error(error::kind::KIND_ERROR, "A raw struct type cannot be part of an expression.", stream, 0));
 					_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_IDENTIFIER, tok, s, make_shared<type>(type::kind::KIND_NONE,
-						type::const_kind::KIND_NONE, type::static_kind::KIND_NONE), false, stream);
+						type::const_kind::KIND_NONE, type::static_kind::KIND_NONE), false, stream, value_kind::VALUE_NONE);
 					_valid = false;
 					return;
 				}
-				_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_IDENTIFIER, tok, s, t, true, stream);
+				_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_IDENTIFIER, tok, s, t, true, stream, vk);
 				_valid = true;
 			}
 			else if (tok.token_kind() == token::kind::TOKEN_OPEN_BRACKET) {
@@ -728,6 +729,11 @@ namespace spectre {
 					pet = make_shared<struct_type>(snt->type_const_kind(), snt->type_static_kind(), snt->struct_name(), snt->struct_reference_number(), snt->valid(),
 						snt->array_dimensions() + 1);
 				}
+				else if (nt->type_kind() == type::kind::KIND_FUNCTION) {
+					shared_ptr<function_type> fnt = static_pointer_cast<function_type>(nt);
+					pet = make_shared<function_type>(fnt->type_const_kind(), fnt->type_static_kind(), fnt->return_type(), fnt->parameter_list(), fnt->function_reference_number(),
+						fnt->array_dimensions() + 1);
+				}
 				else
 					p->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 				_contained_primary_expression = make_shared<primary_expression>(which, nt, e, pet, true, stream);
@@ -806,12 +812,10 @@ namespace spectre {
 						prev_type = make_shared<struct_type>(ss->type_const_kind(), ss->type_static_kind(), ss->struct_name(), ss->struct_reference_number(), ss->valid(),
 							ss->array_dimensions() + 1);
 					}
-					// TODO
 					else if (prev_type->type_kind() == type::kind::KIND_FUNCTION) {
-						p->report(error(error::kind::KIND_ERROR, "Cannot take the address of a function.", stream, 0));
-						_valid = false;
-						ptl.push_back(make_shared<postfix_expression::postfix_type>(postfix_expression::kind::KIND_ADDRESS, nullptr));
-						break;
+						shared_ptr<function_type> ff = static_pointer_cast<function_type>(prev_type);
+						prev_type = make_shared<function_type>(ff->type_const_kind(), ff->type_static_kind(), ff->return_type(), ff->parameter_list(), ff->function_reference_number(),
+							ff->array_dimensions() + 1);
 					}
 					else {
 						p->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
@@ -844,12 +848,10 @@ namespace spectre {
 						prev_type = make_shared<struct_type>(ss->type_const_kind(), ss->type_static_kind(), ss->struct_name(), ss->struct_reference_number(), ss->valid(),
 							ss->array_dimensions() - 1);
 					}
-					// TODO
 					else if (prev_type->type_kind() == type::kind::KIND_FUNCTION) {
-						p->report(error(error::kind::KIND_ERROR, "Cannot dereference a function.", stream, 0));
-						_valid = false;
-						ptl.push_back(make_shared<postfix_expression::postfix_type>(postfix_expression::kind::KIND_AT, nullptr));
-						break;
+						shared_ptr<function_type> ff = static_pointer_cast<function_type>(prev_type);
+						prev_type = make_shared<function_type>(ff->type_const_kind(), ff->type_static_kind(), ff->return_type(), ff->parameter_list(), ff->function_reference_number(),
+							ff->array_dimensions() - 1);
 					}
 					else {
 						p->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
@@ -871,13 +873,6 @@ namespace spectre {
 					vector<token> type_stream = tp.stream();
 					stream.insert(stream.end(), type_stream.begin(), type_stream.end());
 					shared_ptr<type> from_type = prev_type;
-					// TODO
-					if (to_type->type_kind() == type::kind::KIND_FUNCTION || from_type->type_kind() == type::kind::KIND_FUNCTION) {
-						p->report(error(error::kind::KIND_ERROR, "Cannot cast to or from a function type.", type_stream, 0));
-						_valid = false;
-						ptl.push_back(make_shared<postfix_expression::postfix_type>(postfix_expression::kind::KIND_AS, to_type));
-						break;
-					}
 					ptl.push_back(make_shared<postfix_expression::postfix_type>(postfix_expression::kind::KIND_AS, to_type));
 					prev_type = to_type;
 					prev_vk = value_kind::VALUE_RVALUE;
@@ -992,10 +987,6 @@ namespace spectre {
 				}
 				else if (op.token_kind() == token::kind::TOKEN_OPEN_PARENTHESIS) {
 					stream.push_back(p->pop());
-					if (last_symbol == nullptr) {
-						p->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
-						return;
-					}
 					vector<shared_ptr<assignment_expression>> al;
 					if (p->peek().token_kind() == token::kind::TOKEN_CLOSE_PARENTHESIS)
 						stream.push_back(p->pop());
@@ -1004,7 +995,7 @@ namespace spectre {
 						if (!ae->valid()) {
 							p->report(error(error::kind::KIND_ERROR, "Expected a valid expression to for a function argument.", stream, stream.size() - 1));
 							_valid = false;
-							ptl.push_back(make_shared<postfix_expression::postfix_type>(last_symbol, al, nullptr));
+							ptl.push_back(make_shared<postfix_expression::postfix_type>(prev_type, al, nullptr));
 							break;
 						}
 						vector<token> ae_stream = ae->stream();
@@ -1016,7 +1007,7 @@ namespace spectre {
 							if (!arg->valid()) {
 								p->report(error(error::kind::KIND_ERROR, "Expected a valid expression for a function argument.", stream, stream.size() - 1));
 								_valid = false;
-								ptl.push_back(make_shared<postfix_expression::postfix_type>(last_symbol, al, nullptr));
+								ptl.push_back(make_shared<postfix_expression::postfix_type>(prev_type, al, nullptr));
 								break;
 							}
 							vector<token> arg_stream = arg->stream();
@@ -1028,17 +1019,16 @@ namespace spectre {
 						if (p->peek().token_kind() != token::kind::TOKEN_CLOSE_PARENTHESIS) {
 							p->report(error(error::kind::KIND_ERROR, "Expected a close parenthesis (')') at the end of a function argument list.", stream, stream.size() - 1));
 							_valid = false;
-							ptl.push_back(make_shared<postfix_expression::postfix_type>(last_symbol, al, nullptr));
+							ptl.push_back(make_shared<postfix_expression::postfix_type>(prev_type, al, nullptr));
 							break;
 						}
 						stream.push_back(p->pop());
 					}
 					if (prev_type->type_kind() != type::kind::KIND_FUNCTION || prev_type->array_dimensions() != 0 ||
-						prev_type->type_array_kind() == type::array_kind::KIND_ARRAY || prev_vk != value_kind::VALUE_LVALUE ||
-						last_symbol->symbol_kind() != symbol::kind::KIND_FUNCTION) {
+						prev_type->type_array_kind() == type::array_kind::KIND_ARRAY) {
 						p->report(error(error::kind::KIND_ERROR, "Expected a raw function type for a function call.", stream, stream.size() - 1));
 						_valid = false;
-						ptl.push_back(make_shared<postfix_expression::postfix_type>(last_symbol, al, nullptr));
+						ptl.push_back(make_shared<postfix_expression::postfix_type>(prev_type, al, nullptr));
 						break;
 					}
 					else {
@@ -1047,7 +1037,7 @@ namespace spectre {
 							p->report(error(error::kind::KIND_ERROR, "The argument number at the call site does not match the declared number of parameters.",
 								stream, 0));
 							_valid = false;
-							ptl.push_back(make_shared<postfix_expression::postfix_type>(last_symbol, al, nullptr));
+							ptl.push_back(make_shared<postfix_expression::postfix_type>(prev_type, al, nullptr));
 							break;
 						}
 						for (int i = 0; i < al.size(); i++) {
@@ -1081,9 +1071,17 @@ namespace spectre {
 									break;
 								}
 							}
+							else if (par_type->type_kind() == type::kind::KIND_FUNCTION) {
+								if (!matching_function_types(p, par_type, arg_type)) {
+									p->report(error(error::kind::KIND_ERROR, "Expected matching function types between a function parameters and a given function argument.",
+										stream, 0));
+									_valid = false;
+									break;
+								}
+							}
 						}
+						ptl.push_back(make_shared<postfix_expression::postfix_type>(prev_type, al, t->return_type()));
 						prev_type = t->return_type();
-						ptl.push_back(make_shared<postfix_expression::postfix_type>(last_symbol, al, prev_type));
 						prev_vk = value_kind::VALUE_RVALUE;
 					}
 				}
@@ -1132,6 +1130,11 @@ namespace spectre {
 						shared_ptr<struct_type> prev_st = static_pointer_cast<struct_type>(prev_type);
 						prev_type = make_shared<struct_type>(prev_st->type_const_kind(), prev_st->type_static_kind(), prev_st->struct_name(), prev_st->struct_reference_number(),
 							prev_st->valid(), prev_st->array_dimensions() - 1);
+					}
+					else if (prev_type->type_kind() == type::kind::KIND_FUNCTION) {
+						shared_ptr<function_type> ff = static_pointer_cast<function_type>(prev_type);
+						prev_type = make_shared<function_type>(ff->type_const_kind(), ff->type_static_kind(), ff->return_type(), ff->parameter_list(), ff->function_reference_number(),
+							ff->array_dimensions() - 1);
 					}
 					else {
 						p->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
@@ -1683,11 +1686,6 @@ namespace spectre {
 					p->set_buffer_position(start);
 					ternary_expression_parser tep(p);
 					shared_ptr<ternary_expression> te = tep.contained_ternary_expression();
-					// TODO
-					if (te->ternary_expression_type()->type_kind() == type::kind::KIND_FUNCTION) {
-						p->report(error(error::kind::KIND_ERROR, "Cannot have a bare function type as the final value of an expression.", stream, 0));
-						return make_shared<assignment_expression>(te->ternary_expression_type(), te, te->stream(), false, te->ternary_expression_value_kind());
-					}
 					return make_shared<assignment_expression>(te->ternary_expression_type(), te, te->stream(), te->valid(), te->ternary_expression_value_kind());
 				}
 				for (token t : ue->stream()) stream.push_back(t);
@@ -1721,11 +1719,6 @@ namespace spectre {
 					p->set_buffer_position(start);
 					ternary_expression_parser tep(p);
 					shared_ptr<ternary_expression> te = tep.contained_ternary_expression();
-					// TODO
-					if (te->ternary_expression_type()->type_kind() == type::kind::KIND_FUNCTION) {
-						p->report(error(error::kind::KIND_ERROR, "Cannot have a bare function type as the final value of an expression.", stream, 0));
-						return make_shared<assignment_expression>(te->ternary_expression_type(), te, te->stream(), false, te->ternary_expression_value_kind());
-					}
 					return make_shared<assignment_expression>(te->ternary_expression_type(), te, te->stream(), te->valid(), te->ternary_expression_value_kind());
 				}
 				stream.push_back(op);
@@ -1734,11 +1727,6 @@ namespace spectre {
 				for (token t : ae->stream()) stream.push_back(t);
 				value_kind vk = value_kind::VALUE_LVALUE;
 				shared_ptr<type> t = deduce_assignment_expression_type(p, ue, op, ae);
-				// TODO
-				if (t->type_kind() == type::kind::KIND_FUNCTION) {
-					p->report(error(error::kind::KIND_ERROR, "Cannot have a bare function type as the final value of an expression.", stream, 0));
-					return make_shared<assignment_expression>(t, ue, op_kind, ae, stream, false, vk);
-				}
 				return make_shared<assignment_expression>(t, ue, op_kind, ae, stream, t->valid() && ae->valid() && ue->valid(), vk);
 			}
 		}
@@ -1773,7 +1761,6 @@ namespace spectre {
 					break;
 				}
 			}
-			// TODO
 			else if (t->type_kind() == type::kind::KIND_FUNCTION) {
 				switch (op.token_kind()) {
 				case token::kind::TOKEN_INCREMENT:
@@ -1878,12 +1865,35 @@ namespace spectre {
 				return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
 			shared_ptr<type> lhs_type = lhs->binary_expression_type(), rhs_type = rhs->binary_expression_type();
 			if (lhs_type->type_kind() == type::kind::KIND_FUNCTION || rhs_type->type_kind() == type::kind::KIND_FUNCTION) {
-				p->report(error(error::kind::KIND_ERROR, "Cannot apply any binary operators on a function type.", stream, lhs->stream().size()));
-				return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
+				if (lhs_type->type_kind() != type::kind::KIND_FUNCTION || rhs_type->type_kind() != type::kind::KIND_FUNCTION) {
+					p->report(error(error::kind::KIND_ERROR, "Cannot apply any binary operators on a function type and any other type.", stream, lhs->stream().size()));
+					return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
+				}
+				if (op.token_kind() != token::kind::TOKEN_EQUALS_EQUALS && op.token_kind() != token::kind::TOKEN_NOT_EQUALS) {
+					p->report(error(error::kind::KIND_ERROR, "The only binary operators you can apply on function types are '==' and '!='.", stream, lhs->stream().size()));
+					return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
+				}
+				if (!matching_function_types(p, lhs_type, rhs_type)) {
+					p->report(error(error::kind::KIND_ERROR, "Expected matching function types to compare for equality or inequality.", stream, lhs->stream().size()));
+					return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
+				}
+				return make_shared<primitive_type>(primitive_type::kind::KIND_BOOL, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, primitive_type::sign_kind::KIND_NONE);
 			}
 			else if (lhs_type->type_kind() == type::kind::KIND_STRUCT || rhs_type->type_kind() == type::kind::KIND_STRUCT) {
-				p->report(error(error::kind::KIND_ERROR, "Cannot apply any binary operators on a struct type.", stream, lhs->stream().size()));
-				return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
+				if (lhs_type->type_kind() != type::kind::KIND_STRUCT || rhs_type->type_kind() != type::kind::KIND_STRUCT) {
+					p->report(error(error::kind::KIND_ERROR, "Cannot apply any binary operators on a struct type and any other type.", stream, lhs->stream().size()));
+					return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
+				}
+				if (op.token_kind() != token::kind::TOKEN_EQUALS_EQUALS && op.token_kind() != token::kind::TOKEN_NOT_EQUALS) {
+					p->report(error(error::kind::KIND_ERROR, "The only binary operators you can apply on struct types are '==' and '!='.", stream, lhs->stream().size()));
+					return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
+				}
+				shared_ptr<struct_type> s1 = static_pointer_cast<struct_type>(lhs_type), s2 = static_pointer_cast<struct_type>(rhs_type);
+				if(s1->struct_reference_number() != s2->struct_reference_number() || s1->struct_name().raw_text() != s2->struct_name().raw_text()) {
+					p->report(error(error::kind::KIND_ERROR, "Expected matching struct types to compare for equality or inequality.", stream, lhs->stream().size()));
+					return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
+				}
+				return make_shared<primitive_type>(primitive_type::kind::KIND_BOOL, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, primitive_type::sign_kind::KIND_NONE);
 			}
 			if (lhs_type->type_kind() == type::kind::KIND_PRIMITIVE && rhs_type->type_kind() == type::kind::KIND_PRIMITIVE) {
 				shared_ptr<primitive_type> lhs_pt = static_pointer_cast<primitive_type>(lhs_type), rhs_pt = static_pointer_cast<primitive_type>(rhs_type);
@@ -2029,11 +2039,6 @@ namespace spectre {
 				return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
 			}
 			shared_ptr<type> t1 = true_path->expression_type(), t2 = false_path->ternary_expression_type();
-			// TODO
-			if (t1->type_kind() == type::kind::KIND_FUNCTION || t2->type_kind() == type::kind::KIND_FUNCTION) {
-				p->report(error(error::kind::KIND_ERROR, "Cannot use a ternary expression on a bare function type.", stream, 0));
-				return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
-			}
 			if (t1->type_array_kind() != t2->type_array_kind()) {
 				p->report(error(error::kind::KIND_ERROR, "Cannot have array and non-array types.", stream, 0));
 				return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
@@ -2089,6 +2094,15 @@ namespace spectre {
 				}
 				return make_shared<struct_type>(ck, sk, s1->struct_name(), s1->struct_reference_number(), true, s1->array_dimensions());
 			}
+			else if (t1->type_kind() == type::kind::KIND_FUNCTION && t2->type_kind() == type::kind::KIND_FUNCTION) {
+				if (!matching_function_types(p, t1, t2))
+					p->report(error(error::kind::KIND_ERROR, "Expected matching function types between this colon.", stream, cond->stream().size() + true_path->stream().size() + 1));
+				shared_ptr<function_type> ft1 = static_pointer_cast<function_type>(t1), ft2 = static_pointer_cast<function_type>(t2);
+				if (ft2->type_const_kind() == type::const_kind::KIND_CONST)
+					return ft2;
+				else
+					return ft1;
+			}
 			else {
 				p->report(error(error::kind::KIND_ERROR, "Expected 2 matching types between this colon.", stream, cond->stream().size() + true_path->stream().size() + 1));
 				return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
@@ -2104,11 +2118,6 @@ namespace spectre {
 			for (token t : lhs->stream()) stream.push_back(t);
 			stream.push_back(op);
 			for (token t : ae->stream()) stream.push_back(t);
-			// TODO
-			if (lhs->unary_expression_type()->type_kind() == type::kind::KIND_FUNCTION || ae->assignment_expression_type()->type_kind() == type::kind::KIND_FUNCTION) {
-				p->report(error(error::kind::KIND_ERROR, "Assignment cannot involve bare function types.", stream, lhs->stream().size()));
-				return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
-			}
 			if (lhs->unary_expression_value_kind() != value_kind::VALUE_LVALUE) {
 				p->report(error(error::kind::KIND_ERROR, "Cannot assign to a rvalue expression.", stream, lhs->stream().size()));
 				return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
@@ -2189,6 +2198,13 @@ namespace spectre {
 				}
 				return lhs->unary_expression_type();
 			}
+			else if (lhs->unary_expression_type()->type_kind() == type::kind::KIND_FUNCTION && ae->assignment_expression_type()->type_kind() == type::kind::KIND_FUNCTION) {
+				if (!matching_function_types(p, lhs->unary_expression_type(), ae->assignment_expression_type())) {
+					p->report(error(error::kind::KIND_ERROR, "Expected two compatible function types to assign between.", stream, lhs->stream().size() - 1));
+					return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
+				}
+				return lhs->unary_expression_type();
+			}
 			p->report_internal("This should unreachable.", __FUNCTION__, __LINE__, __FILE__);
 			return nullptr;
 		}
@@ -2260,6 +2276,12 @@ namespace spectre {
 					else
 						return value_kind::VALUE_RVALUE;
 				}
+				else if (t1->type_kind() == type::kind::KIND_FUNCTION) {
+					if (matching_function_types(p, t1, t2))
+						return value_kind::VALUE_LVALUE;
+					else
+						return value_kind::VALUE_RVALUE;
+				}
 			}
 			else
 				return value_kind::VALUE_RVALUE;
@@ -2268,21 +2290,22 @@ namespace spectre {
 		}
 
 		type_parser::type_parser(shared_ptr<parser> p) : _valid(false), _contained_type(nullptr), _stream(vector<token>()) {
-			// TODO
 			int start = p->get_buffer_position();
 			token tok = p->pop();
-			bool signed_unsigned_hit = false, const_hit = false, static_hit = false, primitive_hit = false, struct_hit = false;
+			bool signed_unsigned_hit = false, const_hit = false, static_hit = false, primitive_hit = false, struct_hit = false, function_hit = false;
 			shared_ptr<symbol> s_symbol = nullptr;
+			shared_ptr<type> r_type = nullptr;
+			vector<shared_ptr<variable_declaration>> param_list;
 			token important = bad_token, important_sign = bad_token;
 			while (true) {
 				_stream.push_back(tok);
 				if (tok.token_kind() == token::kind::TOKEN_SIGNED || tok.token_kind() == token::kind::TOKEN_UNSIGNED) {
 					signed_unsigned_hit = true;
 					important_sign = tok;
-					if (struct_hit) {
+					if (struct_hit || function_hit) {
 						_contained_type = make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
 						_valid = false;
-						p->report(error(error::kind::KIND_ERROR, "Cannot have a signed or unsigned 'struct' type.", _stream, _stream.size() - 1));
+						p->report(error(error::kind::KIND_ERROR, "Cannot have a signed or unsigned 'struct' or function types.", _stream, _stream.size() - 1));
 						return;
 					}
 				}
@@ -2293,7 +2316,7 @@ namespace spectre {
 				else if (tok.token_kind() == token::kind::TOKEN_BYTE || tok.token_kind() == token::kind::TOKEN_CHAR || tok.token_kind() == token::kind::TOKEN_SHORT ||
 					tok.token_kind() == token::kind::TOKEN_INT || tok.token_kind() == token::kind::TOKEN_LONG || tok.token_kind() == token::kind::TOKEN_DOUBLE ||
 					tok.token_kind() == token::kind::TOKEN_FLOAT || tok.token_kind() == token::kind::TOKEN_BOOL || tok.token_kind() == token::kind::TOKEN_VOID) {
-					if (primitive_hit || struct_hit) {
+					if (primitive_hit || struct_hit || function_hit) {
 						_contained_type = make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
 						_valid = false;
 						p->report(error(error::kind::KIND_ERROR, "Repeated type specifiers.", _stream, _stream.size() - 1));
@@ -2305,7 +2328,7 @@ namespace spectre {
 					}
 				}
 				else if (tok.token_kind() == token::kind::TOKEN_TYPE) {
-					if (primitive_hit || struct_hit) {
+					if (primitive_hit || struct_hit || function_hit) {
 						_contained_type = make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
 						_valid = false;
 						p->report(error(error::kind::KIND_ERROR, "Repeated type specifiers.", _stream, _stream.size() - 1));
@@ -2339,6 +2362,61 @@ namespace spectre {
 						s_symbol = s;
 					}
 				}
+				else if (tok.token_kind() == token::kind::TOKEN_FN) {
+					if (primitive_hit || struct_hit || function_hit) {
+						_contained_type = make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
+						_valid = false;
+						p->report(error(error::kind::KIND_ERROR, "Repeated type specifiers.", _stream, _stream.size() - 1));
+						return;
+					}
+					function_hit = true;
+					type_parser rt_parser(p);
+					if (!rt_parser.valid()) {
+						_valid = false;
+						p->report(error(error::kind::KIND_ERROR, "Invalid return type for a function type.", _stream, _stream.size() - 1));
+						return;
+					}
+					r_type = rt_parser.contained_type();
+					if (p->peek().token_kind() != token::kind::TOKEN_OPEN_PARENTHESIS) {
+						_valid = false;
+						p->report(error(error::kind::KIND_ERROR, "Expected a function parameter type list following a return type for a function variable.", _stream, _stream.size() - 1));
+						return;
+					}
+					_stream.push_back(p->pop());
+					while (p->peek().token_kind() != token::kind::TOKEN_CLOSE_PARENTHESIS) {
+						type_parser param_type_parser(p);
+						if (!param_type_parser.valid()) {
+							_valid = false;
+							p->report(error(error::kind::KIND_ERROR, "Expected a valid function parameter type in a function type's parameter list.", _stream, _stream.size() - 1));
+							return;
+						}
+						vector<token> param_stream = param_type_parser.stream();
+						_stream.insert(_stream.end(), param_stream.begin(), param_stream.end());
+						shared_ptr<type> param_type = param_type_parser.contained_type();
+						shared_ptr<variable_declaration> param = make_shared<variable_declaration>(param_type, bad_token, true, param_stream);
+						if (!check_declaration_type_is_correct(p, make_shared<type_parser>(param_type_parser))) {
+							_valid = false;
+							p->report(error(error::kind::KIND_ERROR, "Expected a valid type that a function could take.", param_stream, 0));
+							return;
+						}
+						param_list.push_back(param);
+						if (p->peek().token_kind() == token::kind::TOKEN_COMMA) {
+							token comma = p->pop();
+							if (p->peek().token_kind() == token::kind::TOKEN_CLOSE_PARENTHESIS) {
+								_valid = false;
+								p->report(error(error::kind::KIND_ERROR, "After a comma, there were no more function arguments.", vector<token>{ comma, p->peek() }, 0));
+								return;
+							}
+							_stream.push_back(comma);
+						}
+					}
+					if (p->peek().token_kind() != token::kind::TOKEN_CLOSE_PARENTHESIS) {
+						_valid = false;
+						p->report(error(error::kind::KIND_ERROR, "Expected a close parenthesis ')' to finish a function parameter list.", _stream, _stream.size() - 1));
+						break;
+					}
+					_stream.push_back(p->pop());
+				}
 				else
 					break;
 				tok = p->pop();
@@ -2364,7 +2442,7 @@ namespace spectre {
 				arr_open = p->pop();
 			}
 			p->backtrack();
-			if(!primitive_hit && !struct_hit) {
+			if(!primitive_hit && !struct_hit && !function_hit) {
 				_contained_type = make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
 				_valid = false;
 				p->set_buffer_position(start);
@@ -2430,6 +2508,12 @@ namespace spectre {
 				shared_ptr<struct_symbol> ss = static_pointer_cast<struct_symbol>(s_symbol);
 				_contained_type = make_shared<struct_type>(const_hit ? type::const_kind::KIND_CONST : type::const_kind::KIND_NON_CONST, static_hit ? type::static_kind::KIND_STATIC :
 					type::static_kind::KIND_NON_STATIC, important, ss->struct_symbol_type()->struct_reference_number(), true, ad);
+				_valid = true;
+				return;
+			}
+			else if (function_hit) {
+				_contained_type = make_shared<function_type>(const_hit ? type::const_kind::KIND_CONST : type::const_kind::KIND_NON_CONST, static_hit ? type::static_kind::KIND_STATIC :
+					type::static_kind::KIND_NON_STATIC, r_type, param_list, -1, ad);
 				_valid = true;
 				return;
 			}
@@ -2568,12 +2652,6 @@ namespace spectre {
 					return false;
 				}
 			}
-			// TODO
-			else if (t->type_kind() == type::kind::KIND_FUNCTION) {
-				p->report(error(error::kind::KIND_ERROR, "Cannot have a function declaration type.", tp->stream(), 0));
-				return false;
-			}
-			else if (t->type_kind() == type::kind::KIND_STRUCT);
 			return true;
 		}
 
@@ -2584,11 +2662,6 @@ namespace spectre {
 				vd->initialization(), false, vd->stream());
 			if (vd->variable_declaration_initialization_kind() == variable_declaration::initialization_kind::KIND_PRESENT) {
 				shared_ptr<type> decl_type = vd->variable_declaration_type(), i_type = vd->initialization()->assignment_expression_type();
-				// TODO
-				if (decl_type->type_kind() == type::kind::KIND_FUNCTION || i_type->type_kind() == type::kind::KIND_FUNCTION) {
-					p->report(error(error::kind::KIND_ERROR, "A declaration cannot involve a function type.", vd->initialization()->stream(), 0));
-					return bad_variable;
-				}
 				if (decl_type->type_kind() != i_type->type_kind()) {
 					p->report(error(error::kind::KIND_ERROR, "Initialization of declaration cannot occur between two incompatible types.", vd->initialization()->stream(), 0));
 					return bad_variable;
@@ -2640,6 +2713,13 @@ namespace spectre {
 					shared_ptr<struct_type> d_stype = static_pointer_cast<struct_type>(decl_type), i_stype = static_pointer_cast<struct_type>(i_type);
 					if (d_stype->struct_reference_number() != i_stype->struct_reference_number() || d_stype->struct_name().raw_text() != i_stype->struct_name().raw_text()) {
 						p->report(error(error::kind::KIND_ERROR, "Expected compatible struct types between an initializer and a declaration type.", vd->stream(), 0));
+						return bad_variable;
+					}
+					return vd;
+				}
+				if (decl_type->type_kind() == type::kind::KIND_FUNCTION && i_type->type_kind() == type::kind::KIND_FUNCTION) {
+					if (!matching_function_types(p, decl_type, i_type)) {
+						p->report(error(error::kind::KIND_ERROR, "Expected compatible function types between an initializer and a declaration type.", vd->stream(), 0));
 						return bad_variable;
 					}
 					return vd;
@@ -2845,14 +2925,6 @@ namespace spectre {
 			vector<token> rt_stream = rtp.stream();
 			if(!rtp.valid()) {
 				p->report(error(error::kind::KIND_ERROR, "Expected a valid return type for a function.", stream, 0));
-				_contained_function_stmt = make_shared<function_stmt>(nullptr, bad_token, nullptr, vector<shared_ptr<stmt>>{}, function_stmt::defined_kind::KIND_NONE,
-					nullptr, false, stream);
-				_valid = false;
-				return;
-			}
-			// TODO
-			if (rt->type_kind() == type::kind::KIND_FUNCTION) {
-				p->report(error(error::kind::KIND_ERROR, "Cannot return a function type from a function.", stream, 0));
 				_contained_function_stmt = make_shared<function_stmt>(nullptr, bad_token, nullptr, vector<shared_ptr<stmt>>{}, function_stmt::defined_kind::KIND_NONE,
 					nullptr, false, stream);
 				_valid = false;
@@ -3169,6 +3241,13 @@ namespace spectre {
 						return false;
 					}
 				}
+				else if (spar_t->type_kind() == type::kind::KIND_FUNCTION) {
+					if (!matching_function_types(p, spar_t, par_t, true)) {
+						p->report(error(error::kind::KIND_ERROR, "The function declaration and the given function statment's parameter lists differ.", s, 0));
+						p->report(error(error::kind::KIND_ERROR, "Originally declared here.", sym_stream, 0));
+						return false;
+					}
+				}
 				else {
 					p->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 					return false;
@@ -3219,6 +3298,16 @@ namespace spectre {
 					deduced = make_shared<struct_type>(type::const_kind::KIND_NON_CONST, type::static_kind::KIND_NON_STATIC, dst->struct_name(), dst->struct_reference_number(), true,
 						dst->array_dimensions());
 				}
+				else if (deduced->type_kind() == type::kind::KIND_FUNCTION) {
+					shared_ptr<function_type> dft = static_pointer_cast<function_type>(t);
+					if (!matching_function_types(p, deduced, t, true)) {
+						p->report(error(error::kind::KIND_ERROR, "Expected comparable types in an array initializer list.", e->stream(), 0));
+						p->report(error(error::kind::KIND_NOTE, "From this initializer list.", stream, 0));
+						return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE, 0);
+					}
+					dft = make_shared<function_type>(type::const_kind::KIND_NON_CONST, type::static_kind::KIND_NON_STATIC, dft->return_type(), dft->parameter_list(),
+						dft->function_reference_number(), dft->array_dimensions());
+				}
 				else {
 					p->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 					return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE, 0);
@@ -3233,6 +3322,11 @@ namespace spectre {
 				shared_ptr<struct_type> d = static_pointer_cast<struct_type>(deduced);
 				return make_shared<struct_type>(type::const_kind::KIND_NON_CONST, type::static_kind::KIND_NON_STATIC, d->struct_name(), d->struct_reference_number(), true,
 					d->array_dimensions() + 1);
+			}
+			else if (deduced->type_kind() == type::kind::KIND_FUNCTION) {
+				shared_ptr<function_type> d = static_pointer_cast<function_type>(deduced);
+				return make_shared<function_type>(type::const_kind::KIND_NON_CONST, type::static_kind::KIND_NON_STATIC, d->return_type(), d->parameter_list(),
+					d->function_reference_number(), d->array_dimensions() + 1);
 			}
 			else {
 				p->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
@@ -3322,6 +3416,14 @@ namespace spectre {
 			else if (rt->type_kind() == type::kind::KIND_STRUCT) {
 				shared_ptr<struct_type> srt = static_pointer_cast<struct_type>(rt), sfrt = static_pointer_cast<struct_type>(frt);
 				if (srt->struct_reference_number() != sfrt->struct_reference_number() || srt->struct_name().raw_text() != sfrt->struct_name().raw_text()) {
+					p->report(error(error::kind::KIND_ERROR, "A return statement inside of a function cannot contradict a function declaration's return type.", stream, 0));
+					_contained_return_stmt = make_shared<return_stmt>(rv, false, stream);
+					_valid = false;
+					return;
+				}
+			}
+			else if (rt->type_kind() == type::kind::KIND_FUNCTION) {
+				if (!matching_function_types(p, rt, frt)) {
 					p->report(error(error::kind::KIND_ERROR, "A return statement inside of a function cannot contradict a function declaration's return type.", stream, 0));
 					_contained_return_stmt = make_shared<return_stmt>(rv, false, stream);
 					_valid = false;
@@ -3862,6 +3964,14 @@ namespace spectre {
 				else if (ce_type->type_kind() == type::kind::KIND_STRUCT) {
 					shared_ptr<struct_type> ce_stype = static_pointer_cast<struct_type>(ce_type), s_stype = static_pointer_cast<struct_type>(p_type);
 					if (ce_stype->struct_reference_number() != s_stype->struct_reference_number() || ce_stype->struct_name().raw_text() != s_stype->struct_name().raw_text()) {
+						p->report(error(error::kind::KIND_ERROR, "Expected compatible types for a switch scope's case.", stream, 0));
+						p->report(error(error::kind::KIND_ERROR, "Original expression being compared against is here.", p_scope->parent_expression()->stream(), 0));
+						_valid = false;
+						return;
+					}
+				}
+				else if (ce_type->type_kind() == type::kind::KIND_FUNCTION) {
+					if (!matching_function_types(p, ce_type, p_type)) {
 						p->report(error(error::kind::KIND_ERROR, "Expected compatible types for a switch scope's case.", stream, 0));
 						p->report(error(error::kind::KIND_ERROR, "Original expression being compared against is here.", p_scope->parent_expression()->stream(), 0));
 						_valid = false;
@@ -4731,6 +4841,40 @@ namespace spectre {
 				return constant;
 			};
 			return descend_assignment_expression(aexpr);
+		}
+
+		bool exact_type_match(shared_ptr<parser> p, shared_ptr<type> t1, shared_ptr<type> t2) {
+			if (t1->type_kind() != t2->type_kind() || t1->type_array_kind() != t2->type_array_kind() || t1->array_dimensions() != t2->array_dimensions() ||
+				t1->type_const_kind() != t2->type_const_kind() || t1->type_static_kind() != t2->type_static_kind())
+				return false;
+			if (t1->type_kind() == type::kind::KIND_PRIMITIVE)
+				return primitive_types_equal(p, t1, t2);
+			else if (t1->type_kind() == type::kind::KIND_FUNCTION)
+				return matching_function_types(p, t1, t2, true);
+			else if (t1->type_kind() == type::kind::KIND_STRUCT) {
+				shared_ptr<struct_type> s1 = static_pointer_cast<struct_type>(t1), s2 = static_pointer_cast<struct_type>(t2);
+				return s1->struct_reference_number() == s2->struct_reference_number() && s1->struct_name().raw_text() == s2->struct_name().raw_text();
+			}
+			return false;
+		}
+
+		bool matching_function_types(shared_ptr<parser> p, shared_ptr<type> t1, shared_ptr<type> t2, bool e) {
+			if (t1->type_kind() != type::kind::KIND_FUNCTION || t2->type_kind() != type::kind::KIND_FUNCTION) {
+				p->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+				return false;
+			}
+			if (t1->type_array_kind() != t2->type_array_kind() || t1->array_dimensions() != t2->array_dimensions())
+				return false;
+			if((t1->type_const_kind() != t2->type_const_kind() || t1->type_static_kind() != t2->type_static_kind()) && e)
+				return false;
+			shared_ptr<function_type> ft1 = static_pointer_cast<function_type>(t1), ft2 = static_pointer_cast<function_type>(t2);
+			if (!exact_type_match(p, ft1->return_type(), ft2->return_type()))
+				return false;
+			if (ft1->parameter_list().size() != ft2->parameter_list().size())
+				return false;
+			for (int i = 0; i < ft1->parameter_list().size(); i++)
+				if (!exact_type_match(p, ft1->parameter_list()[i]->variable_declaration_type(), ft2->parameter_list()[i]->variable_declaration_type())) return false;
+			return true;
 		}
 	}
 }

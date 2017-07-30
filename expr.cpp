@@ -18,9 +18,9 @@ namespace spectre {
 
 		}
 
-		primary_expression::primary_expression(kind pek, token lt, shared_ptr<symbol> is, shared_ptr<type> pet, bool v, vector<token> s) :
+		primary_expression::primary_expression(kind pek, token lt, shared_ptr<symbol> is, shared_ptr<type> pet, bool v, vector<token> s, value_kind vk) :
 			_primary_expression_kind(pek), _parenthesized_expression(nullptr), _primary_expression_type(pet), _valid(v), _stream(s),
-			_primary_expression_value_kind(value_kind::VALUE_LVALUE), _literal_token(lt), _identifier_symbol(is) {
+			_primary_expression_value_kind(vk), _literal_token(lt), _identifier_symbol(is) {
 		}
 
 		primary_expression::primary_expression() : _primary_expression_kind(primary_expression::kind::KIND_NONE), _literal_token(bad_token),
@@ -140,8 +140,8 @@ namespace spectre {
 
 		}
 		
-		postfix_expression::postfix_type::postfix_type(shared_ptr<symbol> f, vector<shared_ptr<assignment_expression>> al, shared_ptr<type> t) :
-			_postfix_type_kind(postfix_expression::kind::KIND_FUNCTION_CALL), _function(f),
+		postfix_expression::postfix_type::postfix_type(shared_ptr<type> ft, vector<shared_ptr<assignment_expression>> al, shared_ptr<type> t) :
+			_postfix_type_kind(postfix_expression::kind::KIND_FUNCTION_CALL), _function_type(ft),
 			_argument_list(al), _member(bad_token), _postfix_type_type(t) {
 
 		}
@@ -168,8 +168,8 @@ namespace spectre {
 			return _argument_list;
 		}
 
-		shared_ptr<symbol> postfix_expression::postfix_type::function() {
-			return _function;
+		shared_ptr<type> postfix_expression::postfix_type::function_type() {
+			return _function_type;
 		}
 
 		shared_ptr<expression> postfix_expression::postfix_type::subscript() {

@@ -46,6 +46,7 @@ namespace spectre {
 		const static string _as = "as";
 		const static string _stk = "stk";
 		const static string _resv = "resv";
+		const static string _fn = "fn";
 	}
 }
 

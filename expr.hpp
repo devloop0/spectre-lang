@@ -47,7 +47,7 @@ namespace spectre {
 		public:
 			primary_expression(kind pek, token lt, shared_ptr<type> pet, bool v, vector<token> s, value_kind vk);
 			primary_expression(kind pek, shared_ptr<expression> e, shared_ptr<type> pet, bool v, vector<token> s, value_kind vk);
-			primary_expression(kind pek, token lt, shared_ptr<symbol> is, shared_ptr<type> pet, bool v, vector<token> s);
+			primary_expression(kind pek, token lt, shared_ptr<symbol> is, shared_ptr<type> pet, bool v, vector<token> s, value_kind vk);
 			primary_expression(kind pek, vector<shared_ptr<assignment_expression>> ai, shared_ptr<type> pet, bool v, vector<token> s);
 			primary_expression(kind pek, shared_ptr<type> nt, shared_ptr<expression> e, shared_ptr<type> pet, bool v, vector<token> s);
 			primary_expression(kind pek, shared_ptr<type> t, shared_ptr<type> pet, bool v, vector<token> s);
@@ -75,23 +75,23 @@ namespace spectre {
 			class postfix_type {
 			private:
 				kind _postfix_type_kind;
-				shared_ptr<symbol> _function;
+				shared_ptr<type> _function_type;
 				vector<shared_ptr<assignment_expression>> _argument_list;
 				shared_ptr<expression> _subscript;
 				shared_ptr<type> _postfix_type_type;
 				token _member;
 			public:
 				postfix_type(kind k, shared_ptr<type> t);
-				postfix_type(shared_ptr<symbol> f, vector<shared_ptr<assignment_expression>> al, shared_ptr<type> t);
+				postfix_type(shared_ptr<type> ft, vector<shared_ptr<assignment_expression>> al, shared_ptr<type> t);
 				postfix_type(shared_ptr<expression> s, shared_ptr<type> t);
 				postfix_type(kind k, token m, shared_ptr<type> t);
 				~postfix_type();
 				kind postfix_type_kind();
 				vector<shared_ptr<assignment_expression>> argument_list();
-				shared_ptr<symbol> function();
 				shared_ptr<expression> subscript();
 				token member();
 				shared_ptr<type> postfix_type_type();
+				shared_ptr<type> function_type();
 			};
 		private:
 			shared_ptr<primary_expression> _contained_primary_expression;

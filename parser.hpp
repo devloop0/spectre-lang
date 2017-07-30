@@ -570,6 +570,8 @@ namespace spectre {
 		};
 
 		bool is_constant_expression(shared_ptr<parser> p, shared_ptr<assignment_expression> aexpr);
+		bool matching_function_types(shared_ptr<parser> p, shared_ptr<type> t1, shared_ptr<type> t2, bool e = false);
+		bool exact_type_match(shared_ptr<parser> p, shared_ptr<type> t1, shared_ptr<type> t2);
 	}
 }
 

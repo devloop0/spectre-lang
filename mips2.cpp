@@ -33,12 +33,15 @@ namespace spectre {
 			{ insn::kind::KIND_BEQ, insns1::_beq }, { insn::kind::KIND_BGEZ, insns1::_bgez }, { insn::kind::KIND_BGEZAL, insns1::_bgezal }, { insn::kind::KIND_BGTZ, insns1::_bgtz },
 				{ insn::kind::KIND_BLEZ, insns1::_blez }, { insn::kind::KIND_BLTZ, insns1::_bltz }, { insn::kind::KIND_BLTZAL, insns1::_bltzal }, { insn::kind::KIND_BNE, insns1::_bne },
 			{ insn::kind::KIND_DIV, insns1::_div }, { insn::kind::KIND_DIVU, insns1::_divu },
-			{ insn::kind::KIND_JAL, insns1::_jal }, { insn::kind::KIND_J, insns1::_j }, { insn::kind::KIND_JR, insns1::_jr },
+			{ insn::kind::KIND_JAL, insns1::_jal }, { insn::kind::KIND_J, insns1::_j }, { insn::kind::KIND_JR, insns1::_jr }, { insn::kind::KIND_JALR, insns1::_jalr },
 			{ insn::kind::KIND_LA, insns1::_la },
 			{ insn::kind::KIND_LB, insns1::_lb }, { insn::kind::KIND_LH, insns1::_lh }, { insn::kind::KIND_LW, insns1::_lw },
 			{ insn::kind::KIND_LHU, insns1::_lhu }, { insn::kind::KIND_LBU, insns1::_lbu },
 			{ insn::kind::KIND_LUI, insns1::_lui },
 			{ insn::kind::KIND_MFLO, insns1::_mflo }, { insn::kind::KIND_MFHI, insns1::_mfhi }, { insn::kind::KIND_MULT, insns1::_mult }, { insn::kind::KIND_MULTU, insns1::_multu },
+#if SYSTEM == 2
+			{ insn::kind::KIND_REM, insns1::_rem }, { insn::kind::KIND_REMU, insns1::_remu },
+#endif
 			{ insn::kind::KIND_NOOP, insns1::_noop },
 			{ insn::kind::KIND_NOR, insns1::_nor }, { insn::kind::KIND_OR, insns1::_or }, { insn::kind::KIND_ORI, insns1::_ori },
 			{ insn::kind::KIND_SB, insns1::_sb }, { insn::kind::KIND_SH, insns1::_sh }, { insn::kind::KIND_SW, insns1::_sw },
@@ -75,6 +78,7 @@ namespace spectre {
 
 		namespace register_file2 {
 
+#if SYSTEM == 0 || SYSTEM == 1
 			const static shared_ptr<operand> _zero_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_0), register_file1::_0);
 			const static shared_ptr<operand> _at_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_1), register_file1::_1);
 			const static shared_ptr<operand> _v0_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_2), register_file1::_2);
@@ -107,6 +111,40 @@ namespace spectre {
 			const static shared_ptr<operand> _sp_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_29), register_file1::_29);
 			const static shared_ptr<operand> _fp_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_30), register_file1::_30);
 			const static shared_ptr<operand> _ra_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_31), register_file1::_31);
+#elif SYSTEM == 2
+			const static shared_ptr<operand> _zero_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_0), register_file1::_0);
+			const static shared_ptr<operand> _ra_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_1), register_file1::_1);
+			const static shared_ptr<operand> _sp_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_2), register_file1::_2);
+			const static shared_ptr<operand> _gp_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_3), register_file1::_3);
+			const static shared_ptr<operand> _tp_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_4), register_file1::_4);
+			const static shared_ptr<operand> _t0_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_5), register_file1::_5);
+			const static shared_ptr<operand> _t1_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_6), register_file1::_6);
+			const static shared_ptr<operand> _t2_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_7), register_file1::_7);
+			const static shared_ptr<operand> _s0_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_8), register_file1::_8), _fp_register = _s0_register;
+			const static shared_ptr<operand> _s1_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_9), register_file1::_9);
+			const static shared_ptr<operand> _a0_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_10), register_file1::_10);
+			const static shared_ptr<operand> _a1_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_11), register_file1::_11);
+			const static shared_ptr<operand> _a2_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_12), register_file1::_12);
+			const static shared_ptr<operand> _a3_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_13), register_file1::_13);
+			const static shared_ptr<operand> _a4_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_14), register_file1::_14);
+			const static shared_ptr<operand> _a5_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_15), register_file1::_15);
+			const static shared_ptr<operand> _a6_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_16), register_file1::_16);
+			const static shared_ptr<operand> _a7_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_17), register_file1::_17);
+			const static shared_ptr<operand> _s2_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_18), register_file1::_18);
+			const static shared_ptr<operand> _s3_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_19), register_file1::_19);
+			const static shared_ptr<operand> _s4_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_20), register_file1::_20);
+			const static shared_ptr<operand> _s5_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_21), register_file1::_21);
+			const static shared_ptr<operand> _s6_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_22), register_file1::_22);
+			const static shared_ptr<operand> _s7_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_23), register_file1::_23);
+			const static shared_ptr<operand> _s8_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_24), register_file1::_24);
+			const static shared_ptr<operand> _s9_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_25), register_file1::_25);
+			const static shared_ptr<operand> _s10_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_26), register_file1::_26);
+			const static shared_ptr<operand> _s11_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_27), register_file1::_27);
+			const static shared_ptr<operand> _t3_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_28), register_file1::_28);
+			const static shared_ptr<operand> _t4_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_29), register_file1::_29);
+			const static shared_ptr<operand> _t5_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_30), register_file1::_30);
+			const static shared_ptr<operand> _t6_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_31), register_file1::_31);
+#endif
 
 			const static shared_ptr<operand> _f0_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_f0), register_file1::_f0);
 			const static shared_ptr<operand> _f1_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_f1), register_file1::_f1);
@@ -142,6 +180,7 @@ namespace spectre {
 			const static shared_ptr<operand> _f31_register = make_shared<operand>(register_file1::register_2_int.at(register_file1::_f31), register_file1::_f31);
 
 			map<int, shared_ptr<operand>> int_2_register_object = {
+#if SYSTEM == 0 || SYSTEM == 1
 				{ register_file1::register_2_int.at(register_file1::_0), _zero_register },
 				{ register_file1::register_2_int.at(register_file1::_1), _at_register },
 				{ register_file1::register_2_int.at(register_file1::_2), _v0_register },
@@ -174,6 +213,40 @@ namespace spectre {
 				{ register_file1::register_2_int.at(register_file1::_29), _sp_register },
 				{ register_file1::register_2_int.at(register_file1::_30), _fp_register },
 				{ register_file1::register_2_int.at(register_file1::_31), _ra_register },
+#elif SYSTEM == 2
+				{ register_file1::register_2_int.at(register_file1::_0), _zero_register },
+				{ register_file1::register_2_int.at(register_file1::_1), _ra_register },
+				{ register_file1::register_2_int.at(register_file1::_2), _sp_register },
+				{ register_file1::register_2_int.at(register_file1::_3), _gp_register },
+				{ register_file1::register_2_int.at(register_file1::_4), _tp_register },
+				{ register_file1::register_2_int.at(register_file1::_5), _t0_register },
+				{ register_file1::register_2_int.at(register_file1::_6), _t1_register },
+				{ register_file1::register_2_int.at(register_file1::_7), _t2_register },
+				{ register_file1::register_2_int.at(register_file1::_8), _s0_register },
+				{ register_file1::register_2_int.at(register_file1::_9), _s1_register },
+				{ register_file1::register_2_int.at(register_file1::_10), _a0_register },
+				{ register_file1::register_2_int.at(register_file1::_11), _a1_register },
+				{ register_file1::register_2_int.at(register_file1::_12), _a2_register },
+				{ register_file1::register_2_int.at(register_file1::_13), _a3_register },
+				{ register_file1::register_2_int.at(register_file1::_14), _a4_register },
+				{ register_file1::register_2_int.at(register_file1::_15), _a5_register },
+				{ register_file1::register_2_int.at(register_file1::_16), _a6_register },
+				{ register_file1::register_2_int.at(register_file1::_17), _a7_register },
+				{ register_file1::register_2_int.at(register_file1::_18), _s2_register },
+				{ register_file1::register_2_int.at(register_file1::_19), _s3_register },
+				{ register_file1::register_2_int.at(register_file1::_20), _s4_register },
+				{ register_file1::register_2_int.at(register_file1::_21), _s5_register },
+				{ register_file1::register_2_int.at(register_file1::_22), _s6_register },
+				{ register_file1::register_2_int.at(register_file1::_23), _s7_register },
+				{ register_file1::register_2_int.at(register_file1::_24), _s8_register },
+				{ register_file1::register_2_int.at(register_file1::_25), _s9_register },
+				{ register_file1::register_2_int.at(register_file1::_26), _s10_register },
+				{ register_file1::register_2_int.at(register_file1::_27), _s11_register },
+				{ register_file1::register_2_int.at(register_file1::_28), _t3_register },
+				{ register_file1::register_2_int.at(register_file1::_29), _t4_register },
+				{ register_file1::register_2_int.at(register_file1::_30), _t5_register },
+				{ register_file1::register_2_int.at(register_file1::_31), _t6_register },
+#endif
 				{ register_file1::register_2_int.at(register_file1::_f0), _f0_register },
 				{ register_file1::register_2_int.at(register_file1::_f1), _f1_register },
 				{ register_file1::register_2_int.at(register_file1::_f2), _f2_register },
@@ -209,6 +282,7 @@ namespace spectre {
 			};
 
 			map<string, shared_ptr<operand>> register_2_register_object = {
+#if SYSTEM == 0 || SYSTEM == 1
 				{ register_file1::_0, _zero_register },
 				{ register_file1::_1, _at_register },
 				{ register_file1::_2, _v0_register },
@@ -241,6 +315,40 @@ namespace spectre {
 				{ register_file1::_29, _sp_register },
 				{ register_file1::_30, _fp_register },
 				{ register_file1::_31, _ra_register },
+#elif SYSTEM == 2
+				{ register_file1::_0, _zero_register },
+				{ register_file1::_1, _ra_register },
+				{ register_file1::_2, _sp_register },
+				{ register_file1::_3, _gp_register },
+				{ register_file1::_4, _tp_register },
+				{ register_file1::_5, _t0_register },
+				{ register_file1::_6, _t1_register },
+				{ register_file1::_7, _t2_register },
+				{ register_file1::_8, _s0_register },
+				{ register_file1::_9, _s1_register },
+				{ register_file1::_10, _a0_register },
+				{ register_file1::_11, _a1_register },
+				{ register_file1::_12, _a2_register },
+				{ register_file1::_13, _a3_register },
+				{ register_file1::_14, _a4_register },
+				{ register_file1::_15, _a5_register },
+				{ register_file1::_16, _a6_register },
+				{ register_file1::_17, _a7_register },
+				{ register_file1::_18, _s2_register },
+				{ register_file1::_19, _s3_register },
+				{ register_file1::_20, _s4_register },
+				{ register_file1::_21, _s5_register },
+				{ register_file1::_22, _s6_register },
+				{ register_file1::_23, _s7_register },
+				{ register_file1::_24, _s8_register },
+				{ register_file1::_25, _s9_register },
+				{ register_file1::_26, _s10_register },
+				{ register_file1::_27, _s11_register },
+				{ register_file1::_28, _t3_register },
+				{ register_file1::_29, _t4_register },
+				{ register_file1::_30, _t5_register },
+				{ register_file1::_31, _t6_register },
+#endif
 				{ register_file1::_f0, _f0_register },
 				{ register_file1::_f1, _f1_register },
 				{ register_file1::_f2, _f2_register },
@@ -704,10 +812,17 @@ namespace spectre {
 				{ 51, false }, { 52, false }, { 53, false }, { 54, false }, { 55, false }, { 56, false }, { 57, false }, { 58, false }, { 59, false }, { 60, false },
 				{ 61, false }, { 62, false }, { 63, false }
 			};
+#if SYSTEM == 0 || SYSTEM == 1
 			_saved_register_initially_stored_map = map<int, bool>{
 				{ 0, false }, { 1, false }, { 2, false }, { 3, false }, { 4, false }, { 5, false }, { 6, false }, { 7, false },
 				{ 8, false }, { 9, false }, { 10, false }, { 11, false }, { 12, false }, { 13, false }
 			};
+#elif SYSTEM == 2
+			_saved_register_initially_stored_map = map<int, bool>{
+				{ 9, false }, { 18, false }, { 19, false }, { 20, false }, { 21, false }, { 22, false }, { 23, false }, { 24, false }, { 25, false }, { 26, false }, { 27, false },
+				{ 40, false }, { 41, false }, { 50, false }, { 51, false }, { 52, false }, { 53, false }, { 54, false }, { 55, false }, { 56, false }, { 57, false }, { 58, false }, { 59, false }
+			};
+#endif
 		}
 
 		mips_frame::~mips_frame() {
@@ -954,29 +1069,56 @@ namespace spectre {
 		}
 
 		int mips_frame::current_overflow_register() {
+#if SYSTEM == 0 || SYSTEM == 1
 			return _overflow_register_counter++ % 24;
+#elif SYSTEM == 2
+			return _overflow_register_counter++ % 26;
+#endif
 		}
 
 		int mips_frame::current_fp_overflow_register() {
+#if SYSTEM == 0 || SYSTEM == 1
 			return _fp_overflow_register_counter++ % 12;
+#elif SYSTEM == 2
+			return _fp_overflow_register_counter++ % 32;
+#endif
 		}
 
 		void mips_frame::restore_saved_registers(shared_ptr<mips_code> mc) {
 			if(!_frame_size_set) return;
 			shared_ptr<operand> fp = register_file2::register_2_register_object.at(register_file1::_fp);
 			string sfp = register_file1::_fp;
+#if SYSTEM == 0 || SYSTEM == 1
 			int s0 = register_file1::register_2_int.at(register_file1::_s0), f20 = register_file1::register_2_int.at(register_file1::_f20);
 			for(int i = 0; i < 8; i++) {
+#elif SYSTEM == 2
+			int s1 = register_file1::register_2_int.at(register_file1::_s1);
+			vector<int> stored_indices = { 9, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27 },
+				fstored_indices = { 40, 41, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59 };
+			for(int i = 0; i < 11; i++) {
+#endif
 				if(_saved_register_initially_stored_map[i]) {
+#if SYSTEM == 0 || SYSTEM == 1
 					shared_ptr<operand> l = find_first_operand(s0 + i);
+#elif SYSTEM == 2
+					shared_ptr<operand> l = find_first_operand(stored_indices[i]);
+#endif
 					if(l == nullptr || !l->on_stack()) mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 					int m = l->middle_stack_offset();
+#if SYSTEM == 0 || SYSTEM == 1
 					string s = register_file1::int_2_register.at(s0 + i);
 					mc->current_frame()->add_insn_to_epilogue(make_shared<insn>(insn::kind::KIND_LW, make_shared<operand>(s0 + i, s),
 								make_shared<operand>(operand::offset_kind::KIND_MIDDLE, m, register_file1::register_2_int.at(sfp), sfp)));
 					_saved_register_initially_stored_map[s0 + i] = false;
+#elif SYSTEM == 2
+					string s = register_file1::int_2_register.at(s1 + i);
+					mc->current_frame()->add_insn_to_epilogue(make_shared<insn>(insn::kind::KIND_LW, make_shared<operand>(stored_indices[i], s),
+								make_shared<operand>(operand::offset_kind::KIND_MIDDLE, m, register_file1::register_2_int.at(sfp), sfp)));
+					_saved_register_initially_stored_map[stored_indices[i]] = false;
+#endif
 				}
 			}
+#if SYSTEM == 0 || SYSTEM == 1
 			for(int i = 8; i < 14; i++) {
 				int curr = f20 + (i - 8) * 2;
 				string scurr = register_file1::int_2_register.at(curr);
@@ -990,6 +1132,21 @@ namespace spectre {
 					_saved_register_initially_stored_map[curr] = false;
 				}
 			}
+#elif SYSTEM == 2
+			for(int i = 0; i < 12; i++) {
+				int curr = fstored_indices[i];
+				string scurr = register_file1::int_2_register.at(curr);
+				if(_saved_register_initially_stored_map[fstored_indices[i]]) {
+					shared_ptr<operand> l = find_first_operand(curr);
+					if(l == nullptr || !l->on_stack()) mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+					int m = l->middle_stack_offset();
+					string s = register_file1::int_2_register.at(curr);
+					mc->current_frame()->add_insn_to_epilogue(make_shared<insn>(insn::kind::KIND_LDC1, make_shared<operand>(curr, scurr),
+								make_shared<operand>(operand::offset_kind::KIND_MIDDLE, m, register_file1::register_2_int.at(sfp), sfp)));
+					_saved_register_initially_stored_map[curr] = false;
+				}
+			}
+#endif
 		}
 
 		mips_code::mips_code(shared_ptr<spectre::parser::parser> p) : _insn_list(vector<shared_ptr<insn>>{}), _data_directive_list(vector<shared_ptr<directive>>{}), 
@@ -1099,6 +1256,7 @@ namespace spectre {
 		}
 
 		shared_ptr<operand> allocate_general_purpose_register(shared_ptr<mips_code> mc) {
+#if SYSTEM == 0 || SYSTEM == 1
 			int t0 = register_file1::register_2_int.at(register_file1::_t0), t1 = register_file1::register_2_int.at(register_file1::_t1),
 			    t2 = register_file1::register_2_int.at(register_file1::_t2), t3 = register_file1::register_2_int.at(register_file1::_t3),
 			    t4 = register_file1::register_2_int.at(register_file1::_t4), t5 = register_file1::register_2_int.at(register_file1::_t5),
@@ -1107,10 +1265,6 @@ namespace spectre {
 			int v0 = register_file1::register_2_int.at(register_file1::_v0), v1 = register_file1::register_2_int.at(register_file1::_v1);
 			int a0 = register_file1::register_2_int.at(register_file1::_a0), a1 = register_file1::register_2_int.at(register_file1::_a1),
 			    a2 = register_file1::register_2_int.at(register_file1::_a2), a3 = register_file1::register_2_int.at(register_file1::_a3);
-			int s0 = register_file1::register_2_int.at(register_file1::_s0), s1 = register_file1::register_2_int.at(register_file1::_s1),
-			    s2 = register_file1::register_2_int.at(register_file1::_s2), s3 = register_file1::register_2_int.at(register_file1::_s3),
-			    s4 = register_file1::register_2_int.at(register_file1::_s4), s5 = register_file1::register_2_int.at(register_file1::_s5),
-			    s6 = register_file1::register_2_int.at(register_file1::_s6), s7 = register_file1::register_2_int.at(register_file1::_s7);
 			shared_ptr<operand> fp = register_file2::register_2_register_object.at(register_file1::_fp);
 			string sfp = fp->register_name();
 			for(int r : { t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, v0, v1, a0, a1, a2, a3 }) {
@@ -1121,6 +1275,31 @@ namespace spectre {
 					return o;
 				}
 			}
+#elif SYSTEM == 2
+			int t0 = register_file1::register_2_int.at(register_file1::_t0), t1 = register_file1::register_2_int.at(register_file1::_t1),
+				t2 = register_file1::register_2_int.at(register_file1::_t2), t3 = register_file1::register_2_int.at(register_file1::_t3),
+				t4 = register_file1::register_2_int.at(register_file1::_t4), t5 = register_file1::register_2_int.at(register_file1::_t5),
+				t6 = register_file1::register_2_int.at(register_file1::_t6);
+			int a0 = register_file1::register_2_int.at(register_file1::_a0), a1 = register_file1::register_2_int.at(register_file1::_a1),
+				a2 = register_file1::register_2_int.at(register_file1::_a2), a3 = register_file1::register_2_int.at(register_file1::_a3),
+				a4 = register_file1::register_2_int.at(register_file1::_a4), a5 = register_file1::register_2_int.at(register_file1::_a5),
+				a6 = register_file1::register_2_int.at(register_file1::_a6), a7 = register_file1::register_2_int.at(register_file1::_a7);
+			shared_ptr<operand> fp = register_file2::register_2_register_object.at(register_file1::_fp);
+			string sfp = fp->register_name();
+			for(int r : { t0, t1, t2, t3, t4, t5, t6, a0, a1, a2, a3, a4, a5, a6, a7 }) {
+				if(!mc->current_frame()->is_register_in_use(r)) {
+					shared_ptr<operand> o = make_shared<operand>(r, register_file1::int_2_register.at(r));
+					mc->current_frame()->add_operand(o);
+					mc->current_frame()->mark_register(r);
+					return o;
+				}
+			}
+#endif
+#if SYSTEM == 0 || SYSTEM == 1
+			int s0 = register_file1::register_2_int.at(register_file1::_s0), s1 = register_file1::register_2_int.at(register_file1::_s1),
+			    s2 = register_file1::register_2_int.at(register_file1::_s2), s3 = register_file1::register_2_int.at(register_file1::_s3),
+			    s4 = register_file1::register_2_int.at(register_file1::_s4), s5 = register_file1::register_2_int.at(register_file1::_s5),
+			    s6 = register_file1::register_2_int.at(register_file1::_s6), s7 = register_file1::register_2_int.at(register_file1::_s7);
 			for(int r : { s0, s1, s2, s3, s4, s5, s6, s7 }) {
 				if(mc->current_frame()->is_saved_register_initially_stored(r - s0) && !mc->current_frame()->is_register_in_use(r)) {
 					shared_ptr<operand> o = make_shared<operand>(r, register_file1::int_2_register.at(r));
@@ -1130,6 +1309,24 @@ namespace spectre {
 					return o;
 				}
 			}
+#elif SYSTEM == 2
+			int s1 = register_file1::register_2_int.at(register_file1::_s1), s2 = register_file1::register_2_int.at(register_file1::_s2),
+				s3 = register_file1::register_2_int.at(register_file1::_s3), s4 = register_file1::register_2_int.at(register_file1::_s4),
+				s5 = register_file1::register_2_int.at(register_file1::_s5), s6 = register_file1::register_2_int.at(register_file1::_s6),
+				s7 = register_file1::register_2_int.at(register_file1::_s7), s8 = register_file1::register_2_int.at(register_file1::_s8),
+				s9 = register_file1::register_2_int.at(register_file1::_s9), s10 = register_file1::register_2_int.at(register_file1::_s10),
+				s11 = register_file1::register_2_int.at(register_file1::_s11);
+			for(int r : { s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11 }) {
+				if(mc->current_frame()->is_saved_register_initially_stored(r - s1) && !mc->current_frame()->is_register_in_use(r)) {
+					shared_ptr<operand> o = make_shared<operand>(r, register_file1::int_2_register.at(r));
+					mc->current_frame()->add_operand(o);
+					mc->current_frame()->mark_saved_register_initially_stored(r);
+					mc->current_frame()->mark_register(r);
+					return o;
+				}
+			}
+#endif
+#if SYSTEM == 0 || SYSTEM == 1
 			for(int r : { s0, s1, s2, s3, s4, s5, s6, s7 }) {
 				if(!mc->current_frame()->is_saved_register_initially_stored(r - s0)) {
 					shared_ptr<operand> l = mc->current_frame()->find_last_operand(r);
@@ -1147,9 +1344,29 @@ namespace spectre {
 					return ret;
 				}
 			}
+#elif SYSTEM == 2
+			for(int r : { s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11 }) {
+				if(!mc->current_frame()->is_saved_register_initially_stored(r - s1)) {
+					shared_ptr<operand> l = mc->current_frame()->find_last_operand(r);
+					if(l != nullptr) mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+					shared_ptr<operand> o = make_shared<operand>(r, register_file1::int_2_register.at(r));
+					o->set_on_stack(true);
+					o->set_middle_stack_offset(-(mc->current_frame()->middle_section_size() + 8));
+					mc->current_frame()->update_middle_section_size(8);
+					mc->current_frame()->mark_saved_register_initially_stored(r);
+					mc->current_frame()->add_operand(o);
+					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_SW, o, make_shared<operand>(operand::offset_kind::KIND_MIDDLE, o->middle_stack_offset(), fp->register_number(), sfp)));
+					shared_ptr<operand> ret = make_shared<operand>(r, register_file1::int_2_register.at(r));
+					mc->current_frame()->mark_register(r);
+					mc->current_frame()->add_operand(ret);
+					return ret;
+				}
+			}
+#endif
 			int curr = mc->current_frame()->current_overflow_register();
 			int actual_register;
 			shared_ptr<operand> l;
+#if SYSTEM == 0 || SYSTEM == 1
 			if(0 <= curr && curr <= 9)
 				l = mc->current_frame()->find_last_operand(actual_register = curr + t0);
 			else if(10 <= curr && curr <= 17)
@@ -1158,6 +1375,18 @@ namespace spectre {
 				l = mc->current_frame()->find_last_operand(actual_register = (curr - 18) + v0);
 			else
 				l = mc->current_frame()->find_last_operand(actual_register = (curr - 20) + a0);
+#elif SYSTEM == 2
+			if(0 <= curr && curr <= 2)
+				l = mc->current_frame()->find_last_operand(actual_register = curr + t0);
+			else if(curr == 3)
+				l = mc->current_frame()->find_last_operand(actual_register = (curr - 3) + s1);
+			else if(4 <= curr && curr <= 11)
+				l = mc->current_frame()->find_last_operand(actual_register = (curr - 4) + a0);
+			else if(12 <= curr && curr <= 21)
+				l = mc->current_frame()->find_last_operand(actual_register = (curr - 12) + a0); 
+			else
+				l = mc->current_frame()->find_last_operand(actual_register = (curr - 22) + a0); 
+#endif
 			if(l != nullptr && mc->current_frame()->is_register_in_use(l->register_number())) {
 				l->set_on_stack(true);
 				l->set_middle_stack_offset(-(mc->current_frame()->middle_section_size() + 8));
@@ -1171,12 +1400,10 @@ namespace spectre {
 		}
 
 		shared_ptr<operand> allocate_general_purpose_fp_register(shared_ptr<mips_code> mc) {
+#if SYSTEM == 0 || SYSTEM == 1
 			int f4 = register_file1::register_2_int.at(register_file1::_f4), f6 = register_file1::register_2_int.at(register_file1::_f6),
 			    f8 = register_file1::register_2_int.at(register_file1::_f8), f10 = register_file1::register_2_int.at(register_file1::_f10),
 			    f16 = register_file1::register_2_int.at(register_file1::_f16), f18 = register_file1::register_2_int.at(register_file1::_f18);
-			int f20 = register_file1::register_2_int.at(register_file1::_f20), f22 = register_file1::register_2_int.at(register_file1::_f22),
-			    f24 = register_file1::register_2_int.at(register_file1::_f24), f26 = register_file1::register_2_int.at(register_file1::_f26),
-			    f28 = register_file1::register_2_int.at(register_file1::_f28), f30 = register_file1::register_2_int.at(register_file1::_f30);
 			shared_ptr<operand> fp = register_file2::register_2_register_object.at(register_file1::_fp);
 			string sfp = fp->register_name();
 			for(int r : { f4, f6, f8, f10, f16, f18 }) {
@@ -1188,6 +1415,33 @@ namespace spectre {
 					return o;
 				}
 			}
+#elif SYSTEM == 2
+			int f0 = register_file1::register_2_int.at(register_file1::_f0), f1 = register_file1::register_2_int.at(register_file1::_f1),
+				f2 = register_file1::register_2_int.at(register_file1::_f2), f3 = register_file1::register_2_int.at(register_file1::_f3),
+				f4 = register_file1::register_2_int.at(register_file1::_f4), f5 = register_file1::register_2_int.at(register_file1::_f5),
+				f6 = register_file1::register_2_int.at(register_file1::_f6), f7 = register_file1::register_2_int.at(register_file1::_f7),
+				f10 = register_file1::register_2_int.at(register_file1::_f10), f11 = register_file1::register_2_int.at(register_file1::_f11),
+				f12 = register_file1::register_2_int.at(register_file1::_f12), f13 = register_file1::register_2_int.at(register_file1::_f13),
+				f14 = register_file1::register_2_int.at(register_file1::_f14), f15 = register_file1::register_2_int.at(register_file1::_f15),
+				f16 = register_file1::register_2_int.at(register_file1::_f16), f17 = register_file1::register_2_int.at(register_file1::_f17),
+				f28 = register_file1::register_2_int.at(register_file1::_f28), f29 = register_file1::register_2_int.at(register_file1::_f29),
+				f30 = register_file1::register_2_int.at(register_file1::_f30), f31 = register_file1::register_2_int.at(register_file1::_f31);
+			shared_ptr<operand> fp = register_file2::register_2_register_object.at(register_file1::_fp);
+			string sfp = fp->register_name();
+			for(int r : { f0, f1, f2, f3, f4, f5, f6, f7, f28, f29, f30, f31, f10, f11, f12, f13, f14, f15, f16, f17 }) {
+				shared_ptr<operand> l = mc->current_frame()->find_last_operand(r);
+				if(!mc->current_frame()->is_register_in_use(r)) {
+					shared_ptr<operand> o = make_shared<operand>(r, register_file1::int_2_register.at(r));
+					mc->current_frame()->add_operand(o);
+					mc->current_frame()->mark_register(r);
+					return o;
+				}
+			}
+#endif
+#if SYSTEM == 0 || SYSTEM == 1
+			int f20 = register_file1::register_2_int.at(register_file1::_f20), f22 = register_file1::register_2_int.at(register_file1::_f22),
+			    f24 = register_file1::register_2_int.at(register_file1::_f24), f26 = register_file1::register_2_int.at(register_file1::_f26),
+			    f28 = register_file1::register_2_int.at(register_file1::_f28), f30 = register_file1::register_2_int.at(register_file1::_f30);
 			for(int r : { f20, f22, f24, f26, f28, f30 }) {
 				if(mc->current_frame()->is_saved_register_initially_stored(8 + (r - f20) / 2) && !mc->current_frame()->is_register_in_use(r)) {
 					shared_ptr<operand> o = make_shared<operand>(r, register_file1::int_2_register.at(r));
@@ -1196,6 +1450,23 @@ namespace spectre {
 					return o;
 				}
 			}
+#elif SYSTEM == 2
+			int f8 = register_file1::register_2_int.at(register_file1::_f8), f9 = register_file1::register_2_int.at(register_file1::_f9),
+				f18 = register_file1::register_2_int.at(register_file1::_f18), f19 = register_file1::register_2_int.at(register_file1::_f19),
+				f20 = register_file1::register_2_int.at(register_file1::_f20), f21 = register_file1::register_2_int.at(register_file1::_f21),
+				f22 = register_file1::register_2_int.at(register_file1::_f22), f23 = register_file1::register_2_int.at(register_file1::_f23),
+				f24 = register_file1::register_2_int.at(register_file1::_f24), f25 = register_file1::register_2_int.at(register_file1::_f25),
+				f26 = register_file1::register_2_int.at(register_file1::_f26), f27 = register_file1::register_2_int.at(register_file1::_f27);
+			for(int r : { f8, f9, f18, f19, f20, f21, f22, f23, f24, f25, f26, f27 }) {
+				if(mc->current_frame()->is_saved_register_initially_stored(r) && !mc->current_frame()->is_register_in_use(r)) {
+					shared_ptr<operand> o = make_shared<operand>(r, register_file1::int_2_register.at(r));
+					mc->current_frame()->add_operand(o);
+					mc->current_frame()->mark_register(r);
+					return o;
+				}
+			}
+#endif
+#if SYSTEM == 0 || SYSTEM == 1
 			for(int r : { f20, f22, f24, f26, f28, f30 }) {
 				if(!mc->current_frame()->is_saved_register_initially_stored(8 + (r - f20) / 2)) {
 					shared_ptr<operand> l = mc->current_frame()->find_last_operand(r);
@@ -1213,15 +1484,38 @@ namespace spectre {
 					return ret;
 				}
 			}
+#elif SYSTEM == 2
+			for(int r : { f8, f9, f18, f19, f20, f21, f22, f23, f24, f25, f26, f27 }) {
+				if(!mc->current_frame()->is_saved_register_initially_stored(r)) {
+					shared_ptr<operand> l = mc->current_frame()->find_last_operand(r);
+					if(l != nullptr) mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+					shared_ptr<operand> o = make_shared<operand>(r, register_file1::int_2_register.at(r));
+					o->set_on_stack(true);
+					o->set_middle_stack_offset(-(mc->current_frame()->middle_section_size() + 8));
+					mc->current_frame()->update_middle_section_size(8);
+					mc->current_frame()->mark_saved_register_initially_stored(r);
+					mc->current_frame()->add_operand(o);
+					shared_ptr<operand> ret = make_shared<operand>(r, register_file1::int_2_register.at(r));
+					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_SDC1, o, make_shared<operand>(operand::offset_kind::KIND_MIDDLE, o->middle_stack_offset(), fp->register_number(), sfp)));
+					mc->current_frame()->mark_register(r);
+					mc->current_frame()->add_operand(ret);
+					return ret;
+				}
+			}
+#endif
 			int curr = mc->current_frame()->current_fp_overflow_register();
 			int actual_register;
 			shared_ptr<operand> l;
+#if SYSTEM == 0 || SYSTEM == 1
 			if(0 <= curr && curr <= 3)
 				l = mc->current_frame()->find_last_operand(actual_register = curr * 2 + f4);
 			else if(curr == 4 || curr == 5)
 				l = mc->current_frame()->find_last_operand(actual_register = (curr - 4) * 2 + f16);
 			else
 				l = mc->current_frame()->find_last_operand(actual_register = (curr - 6) * 2 + f20);
+#elif SYSTEM == 2
+			l = mc->current_frame()->find_last_operand(actual_register = curr + f0);
+#endif
 			if(l != nullptr && mc->current_frame()->is_register_in_use(l->register_number())) {
 				l->set_on_stack(true);
 				l->set_middle_stack_offset(-(mc->current_frame()->middle_section_size() + 8));
@@ -1431,6 +1725,16 @@ namespace spectre {
 						shared_ptr<operand> imm = make_shared<operand>(op->offset());
 						imm->set_operand_offset_kind(op->operand_offset_kind());
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDIU, reg, register_file2::int_2_register_object.at(op->register_number()), imm));
+						free_general_purpose_register(mc, register_file2::int_2_register_object.at(op->register_number()));
+					}
+					else
+						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LA, reg, op));
+					return reg;
+				}
+				else if (t->type_kind() == type::kind::KIND_FUNCTION && t->type_array_kind() != type::array_kind::KIND_ARRAY) {
+					shared_ptr<operand> reg = allocate_general_purpose_register(mc);
+					if (op->operand_kind() == operand::kind::KIND_MEMORY) {
+						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LW, reg, op));
 						free_general_purpose_register(mc, register_file2::int_2_register_object.at(op->register_number()));
 					}
 					else
@@ -1861,8 +2165,6 @@ namespace spectre {
 			switch (be->binary_expression_kind()) {
 			case binary_expression::kind::KIND_BINARY_EXPRESSION: {
 				switch (be->binary_expression_operator_kind()) {
-				case binary_expression::operator_kind::KIND_MULTIPLY:
-				case binary_expression::operator_kind::KIND_DIVIDE:
 				case binary_expression::operator_kind::KIND_SUBTRACT:
 				case binary_expression::operator_kind::KIND_MODULUS:
 				case binary_expression::operator_kind::KIND_BITWISE_XOR:
@@ -1877,6 +2179,8 @@ namespace spectre {
 					return binary_expression_helper_1(mc, o1, be->binary_expression_operator_kind(), o2, be->binary_expression_type(), false);
 				}
 					break;
+				case binary_expression::operator_kind::KIND_MULTIPLY:
+				case binary_expression::operator_kind::KIND_DIVIDE:
 				case binary_expression::operator_kind::KIND_EQUALS_EQUALS:
 				case binary_expression::operator_kind::KIND_NOT_EQUALS:
 				case binary_expression::operator_kind::KIND_GREATER_THAN_OR_EQUAL_TO:
@@ -2093,8 +2397,25 @@ namespace spectre {
 					break;
 				case postfix_expression::kind::KIND_AS: {
 					shared_ptr<type> from_type = prev_type, to_type = pt->postfix_type_type();
-					if (!already_loaded && op->operand_kind() == operand::kind::KIND_REGISTER)
-						op = make_shared<operand>(operand::offset_kind::KIND_TRUE, 0, op->register_number(), op->register_name());
+					if (!already_loaded) {
+						if (op->operand_kind() == operand::kind::KIND_REGISTER)
+							op = make_shared<operand>(operand::offset_kind::KIND_TRUE, 0, op->register_number(), op->register_name());
+					}
+					else {
+						if (op->operand_kind() == operand::kind::KIND_LABEL) {
+							shared_ptr<operand> reg = allocate_general_purpose_register(mc);
+							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LA, reg, op));
+							op = reg;
+						}
+						else if (op->operand_kind() == operand::kind::KIND_MEMORY) {
+							shared_ptr<operand> reg = allocate_general_purpose_register(mc);
+							shared_ptr<operand> imm = make_shared<operand>(op->offset());
+							imm->set_operand_offset_kind(op->operand_offset_kind());
+							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDIU, reg, register_file2::int_2_register_object.at(op->register_number()), imm));
+							free_general_purpose_register(mc, register_file2::int_2_register_object.at(op->register_number()));
+							op = reg;
+						}
+					}
 					op = load_value_into_register(mc, op, from_type);
 					if (from_type->type_kind() == type::kind::KIND_PRIMITIVE && to_type->type_kind() == type::kind::KIND_PRIMITIVE &&
 						from_type->type_array_kind() == type::array_kind::KIND_NON_ARRAY && to_type->type_array_kind() == type::array_kind::KIND_NON_ARRAY) {
@@ -2150,9 +2471,14 @@ namespace spectre {
 							else {
 								shared_ptr<operand> t = allocate_general_purpose_register(mc);
 								mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDIU, t, register_file2::_zero_register, make_shared<operand>(adjusted_sz)));
+#if SYSTEM == 0 || SYSTEM == 1
 								mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_MULTU, e, t));
 								free_general_purpose_register(mc, t);
 								mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_MFLO, e));
+#elif SYSTEM == 2
+								mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_MULTU, e, e, t));
+								free_general_purpose_register(mc, t);
+#endif
 								mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDU, addr, addr, e));
 							}
 							free_general_purpose_register(mc, reg);
@@ -2182,9 +2508,14 @@ namespace spectre {
 							else {
 								shared_ptr<operand> t = allocate_general_purpose_register(mc);
 								mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDIU, t, register_file2::_zero_register, make_shared<operand>(adjusted_sz)));
+#if SYSTEM == 0 || SYSTEM == 1
 								mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_MULTU, e, t));
 								free_general_purpose_register(mc, t);
 								mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_MFLO, e));
+#elif SYSTEM == 2
+								mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_MULTU, e, e, t));
+								free_general_purpose_register(mc, t);
+#endif
 								mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDU, temp, temp, e));
 							}
 							op = make_shared<operand>(operand::offset_kind::KIND_TRUE, 0, temp->register_number(), temp->register_name());
@@ -2216,9 +2547,14 @@ namespace spectre {
 							else {
 								shared_ptr<operand> t = allocate_general_purpose_register(mc);
 								mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDIU, t, register_file2::_zero_register, make_shared<operand>(adjusted_sz)));
+#if SYSTEM == 0 || SYSTEM == 1
 								mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_MULTU, e, t));
 								free_general_purpose_register(mc, t);
 								mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_MFLO, e));
+#elif SYSTEM == 2
+								mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_MULTU, e, e, t));
+								free_general_purpose_register(mc, t);
+#endif
 								mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDU, addr, addr, e));
 							}
 							op = make_shared<operand>(operand::offset_kind::KIND_TRUE, 0, addr->register_number(), addr->register_name());
@@ -2345,49 +2681,13 @@ namespace spectre {
 				}
 					break;
 				case postfix_expression::kind::KIND_FUNCTION_CALL: {
-					vector<int> which_to_store;
-					int _t0 = register_file2::_t0_register->register_number(), _t1 = register_file2::_t1_register->register_number(),
-						_t2 = register_file2::_t2_register->register_number(), _t3 = register_file2::_t3_register->register_number(),
-						_t4 = register_file2::_t4_register->register_number(), _t5 = register_file2::_t5_register->register_number(),
-						_t6 = register_file2::_t6_register->register_number(), _t7 = register_file2::_t7_register->register_number(),
-						_f4 = register_file2::_f4_register->register_number(), _f6 = register_file2::_f6_register->register_number(),
-						_f8 = register_file2::_f8_register->register_number(), _f10 = register_file2::_f10_register->register_number(),
-						_f12 = register_file2::_f12_register->register_number(), _f14 = register_file2::_f14_register->register_number(),
-						_v0 = register_file2::_v0_register->register_number(), _a0 = register_file2::_a0_register->register_number(),
-						_a1 = register_file2::_a1_register->register_number(), _a2 = register_file2::_a2_register->register_number(),
-						_a3 = register_file2::_a3_register->register_number();
-					shared_ptr<operand> fp = register_file2::_fp_register, f12 = register_file2::_f12_register, a0 = register_file2::_a0_register, v0 = register_file2::_v0_register,
-						f0 = register_file2::_f0_register;
-					int pre_offset = 0;
-					for (int r : { _t0, _t1, _t2, _t3, _t4, _t5, _t6, _t7, _v0, _a0, _a1, _a2, _a3, _f4, _f6, _f8, _f10, _f12, _f14 })
-						if (mc->current_frame()->is_register_in_use(r)) {
-							if (mc->current_frame()->is_register_in_use(r) && (r == _f4 || r == _f6 || r == _f8 || r == _f10))
-								which_to_store.push_back(r);
-							else if (mc->current_frame()->is_register_in_use(r))
-								which_to_store.push_back(r);
-							pre_offset += 8;
-						}
-					vector<int> middle_offsets;
-					for (int i = 0, curr = 0; i < which_to_store.size(); i++) {
-						int r = which_to_store[i];
-						middle_offsets.push_back(-(mc->current_frame()->middle_section_size() + 8));
-						mc->current_frame()->update_middle_section_size(8);
-						if (r == _f4 || r == _f6 || r == _f8 || r == _f10 || r == _f12 || r == _f14) {
-							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_SDC1, register_file2::int_2_register_object.at(which_to_store[i]),
-								make_shared<operand>(operand::offset_kind::KIND_MIDDLE, middle_offsets[i], fp->register_number(), fp->register_name())));
-						}
-						else
-							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_SW, register_file2::int_2_register_object.at(which_to_store[i]),
-								make_shared<operand>(operand::offset_kind::KIND_MIDDLE, middle_offsets[i], fp->register_number(), fp->register_name())));
-						curr += 8;
-					}
-					shared_ptr<symbol> sym = pt->function();
-					if (sym->symbol_kind() != symbol::kind::KIND_FUNCTION) {
-						mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
-						return nullptr;
-					}
-					shared_ptr<function_symbol> fsym = static_pointer_cast<function_symbol>(sym);
-					shared_ptr<function_type> ftype = fsym->function_symbol_type();
+					shared_ptr<operand> fp = register_file2::_fp_register, a0 = register_file2::_a0_register;
+#if SYSTEM == 0 || SYSTEM == 1
+					shared_ptr<operand> f12 = register_file2::_f12_register;
+#elif SYSTEM == 2
+					shared_ptr<operand> f10 = register_file2::_f10_register;
+#endif
+					shared_ptr<function_type> ftype = static_pointer_cast<function_type>(pt->function_type());
 					shared_ptr<type> ret_type = ftype->return_type();
 					vector<shared_ptr<variable_declaration>> vdecl_list = ftype->parameter_list();
 					vector<shared_ptr<assignment_expression>> ae_list = pt->argument_list();
@@ -2396,16 +2696,29 @@ namespace spectre {
 						return nullptr;
 					}
 					int sz_to_offset = 0;
+					tuple<vector<int>, vector<int>, int> res_s_tup = save_to_middle(mc);
+					vector<int> which_to_store = get<0>(res_s_tup), middle_offsets = get<1>(res_s_tup);
+					int pre_offset = get<2>(res_s_tup);
 					vector<int> register_args, fp_register_args;
 					for (int i = 0; i < vdecl_list.size(); i++) {
 						shared_ptr<variable_declaration> vdecl = vdecl_list[i];
 						shared_ptr<type> vtype = vdecl->variable_declaration_type();
 						bool is_prim = vtype->type_kind() == type::kind::KIND_PRIMITIVE && vtype->type_array_kind() == type::array_kind::KIND_NON_ARRAY;
-						bool is_struct = !(vtype->type_kind() == type::kind::KIND_STRUCT && vtype->type_array_kind() == type::array_kind::KIND_NON_ARRAY);
-						if (fp_register_args.size() < 2 && is_prim && (static_pointer_cast<primitive_type>(vtype)->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE ||
-							static_pointer_cast<primitive_type>(vtype)->primitive_type_kind() == primitive_type::kind::KIND_FLOAT))
+						bool is_not_struct = !(vtype->type_kind() == type::kind::KIND_STRUCT && vtype->type_array_kind() == type::array_kind::KIND_NON_ARRAY);
+						bool is_fp = static_pointer_cast<primitive_type>(vtype)->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE ||
+							static_pointer_cast<primitive_type>(vtype)->primitive_type_kind() == primitive_type::kind::KIND_FLOAT;
+#if SYSTEM == 0 || SYSTEM == 1
+						if (fp_register_args.size() < 2 && is_prim && is_fp)
 							fp_register_args.push_back(i);
-						else if (register_args.size() < 4 && is_struct)
+#elif SYSTEM == 2
+						if (fp_register_args.size() < 8 && is_prim && is_fp)
+							fp_register_args.push_back(i);
+#endif
+#if SYSTEM == 0 || SYSTEM == 1
+						else if (register_args.size() < 4 && is_not_struct && !is_fp)
+#elif SYSTEM == 2
+						else if (register_args.size() < 8 && is_not_struct && !is_fp)
+#endif
 							register_args.push_back(i);
 						else
 							sz_to_offset += (int)calculate_type_size(mc, vtype);
@@ -2423,8 +2736,13 @@ namespace spectre {
 						evaluated_arg = load_value_into_register(mc, evaluated_arg, arg_type);
 						evaluated_arg = cast_between_types(mc, evaluated_arg, arg_type, parm_type);
 						if (fp_index < fp_register_args.size()) {
+#if SYSTEM == 0 || SYSTEM == 1
 							shared_ptr<operand> correct_reg = register_file2::int_2_register_object.at(f12->register_number() + fp_index * 2);
 							mc->current_frame()->mark_register(f12->register_number() + fp_index * 2);
+#elif SYSTEM == 2
+							shared_ptr<operand> correct_reg = register_file2::int_2_register_object.at(f10->register_number() + fp_index);
+							mc->current_frame()->mark_register(f10->register_number() + fp_index);
+#endif
 							if (parm_type->type_kind() != type::kind::KIND_PRIMITIVE && parm_type->type_array_kind() != type::array_kind::KIND_NON_ARRAY) {
 								mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 								return nullptr;
@@ -2469,51 +2787,88 @@ namespace spectre {
 						else
 							free_general_purpose_register(mc, evaluated_arg);
 					}
-					if (op->operand_kind() != operand::kind::KIND_LABEL) {
+					if (op->is_immediate()) {
 						mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 						return nullptr;
 					}
-					if (pt->function()->symbol_kind() != symbol::kind::KIND_FUNCTION) {
+					if (op->operand_kind() == operand::kind::KIND_LABEL) {
+						if(already_loaded)
+							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_JAL, op));
+						else {
+							shared_ptr<operand> reg = allocate_general_purpose_register(mc);
+							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LW, reg, op));
+							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_JALR, reg));
+							free_general_purpose_register(mc, reg);
+						}
+					}
+					else if (op->operand_kind() == operand::kind::KIND_REGISTER) {
+						if (already_loaded)
+							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_JALR, op));
+						else {
+							shared_ptr<operand> reg = allocate_general_purpose_register(mc);
+							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LW, reg, make_shared<operand>(operand::offset_kind::KIND_TRUE, 0,
+								op->register_number(), op->register_name())));
+							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_JALR, reg));
+							free_general_purpose_register(mc, reg);
+						}
+					}
+					else if (op->operand_kind() == operand::kind::KIND_MEMORY) {
+						if (already_loaded) {
+							shared_ptr<operand> reg = allocate_general_purpose_register(mc);
+							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDIU, reg,
+								register_file2::int_2_register_object.at(op->register_number()), make_shared<operand>(op->offset())));
+							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_JALR, reg));
+							free_general_purpose_register(mc, reg);
+						}
+						else {
+							shared_ptr<operand> reg = allocate_general_purpose_register(mc);
+							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LW, reg, op));
+							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_JALR, reg));
+							free_general_purpose_register(mc, reg);
+						}
+					}
+					else {
 						mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 						return nullptr;
 					}
-					shared_ptr<function_symbol> function_sym = static_pointer_cast<function_symbol>(pt->function());
-					if(is_function_main(mc, function_sym))
-#ifdef REAL_MIPS_SYSTEM
-						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_JAL, make_shared<operand>(false, "__start")));
-#else
-						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_JAL, make_shared<operand>(false, "main")));
+					int old_op_reg_num = op->register_number();
+#if SYSTEM == 0 || SYSTEM == 1
+					shared_ptr<operand> v0 = register_file2::_v0_register, f0 = register_file2::_f0_register;
 #endif
-					else
-						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_JAL, op));
 					if (ret_type->type_kind() == type::kind::KIND_PRIMITIVE && ret_type->type_array_kind() == type::array_kind::KIND_NON_ARRAY) {
 						shared_ptr<primitive_type> ret_ptype = static_pointer_cast<primitive_type>(ret_type);
 						if (ret_ptype->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE || ret_ptype->primitive_type_kind() == primitive_type::kind::KIND_FLOAT) {
 							shared_ptr<operand> freg = allocate_general_purpose_fp_register(mc);
+#if SYSTEM == 0 || SYSTEM == 1
 							mc->current_frame()->add_insn_to_body(make_shared<insn>(ret_ptype->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE ? insn::kind::KIND_MOV_D :
 								insn::kind::KIND_MOV_S, freg, f0));
+#elif SYSTEM == 2
+							mc->current_frame()->add_insn_to_body(make_shared<insn>(ret_ptype->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE ? insn::kind::KIND_MOV_D :
+								insn::kind::KIND_MOV_S, freg, f10));
+#endif
 							op = freg;
 						}
 						else {
 							shared_ptr<operand> reg = allocate_general_purpose_register(mc);
+#if SYSTEM == 0 || SYSTEM == 1
 							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDU, reg, v0, register_file2::_zero_register));
+#elif SYSTEM == 2
+							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDU, reg, a0, register_file2::_zero_register));
+#endif
 							op = reg;
 						}
 					}
 					else {
 						shared_ptr<operand> reg = allocate_general_purpose_register(mc);
+#if SYSTEM == 0 || SYSTEM == 1
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDU, reg, v0, register_file2::_zero_register));
+#elif SYSTEM == 2
+						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDU, reg, a0, register_file2::_zero_register));
+#endif
 						op = reg;
 					}
-					for (int i = 0, curr = 0; i < which_to_store.size(); i++) {
-						if (which_to_store[i] > 31)
-							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LDC1, register_file2::int_2_register_object.at(which_to_store[i]),
-								make_shared<operand>(operand::offset_kind::KIND_MIDDLE, middle_offsets[i], fp->register_number(), fp->register_name())));
-						else
-							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LW, register_file2::int_2_register_object.at(which_to_store[i]),
-								make_shared<operand>(operand::offset_kind::KIND_MIDDLE, middle_offsets[i], fp->register_number(), fp->register_name())));
-						curr += 8;
-					}
+					free_general_purpose_register(mc, register_file2::int_2_register_object.at(old_op_reg_num));
+					restore_from_middle(mc, which_to_store, middle_offsets);
 					already_loaded = true;
 				}
 					break;
@@ -2646,8 +3001,13 @@ namespace spectre {
 				}
 				else {
 					shared_ptr<operand> reg = allocate_general_purpose_register(mc);
-					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LUI, reg, make_shared<operand>((unsigned) val >> 16)));
+#if SYSTEM == 0 || SYSTEM == 1
+					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LUI, reg, make_shared<operand>((unsigned) ((val >> 16) & 0xffff))));
 					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ORI, reg, reg, make_shared<operand>(val & 0xffff)));
+#elif SYSTEM == 2
+					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LUI, reg, make_shared<operand>((unsigned) ((val >> 12) & 0xfffff))));
+					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ORI, reg, reg, make_shared<operand>(val & 0xfff)));
+#endif
 					return cast_between_types(mc, reg, ipt, pe->primary_expression_type());
 				}
 			}
@@ -2752,8 +3112,18 @@ namespace spectre {
 			case primary_expression::kind::KIND_IDENTIFIER: {
 				string sym_string = symbol_2_string(mc, pe->identifier_symbol());
 				shared_ptr<symbol> sym = pe->identifier_symbol();
-				if (sym->symbol_kind() == symbol::kind::KIND_FUNCTION)
-					return make_shared<operand>(false, sym_string);
+				if (sym->symbol_kind() == symbol::kind::KIND_FUNCTION) {
+					if (is_function_main(mc, static_pointer_cast<function_symbol>(sym)))
+#if SYSTEM == 0
+						return make_shared<operand>(false, "__start");
+#elif SYSTEM == 1
+						return make_shared<operand>(false, "main");
+#elif SYSTEM == 2
+						return make_shared<operand>(false, "main");
+#endif
+					else
+						return make_shared<operand>(false, sym_string);
+				}
 				else
 					return mc->current_frame()->get_variable_offset(sym_string);
 			}
@@ -2865,7 +3235,6 @@ namespace spectre {
 				shared_ptr<operand> e = generate_expression_mips(mc, pe->parenthesized_expression(), false);
 				if(e->operand_kind() != operand::kind::KIND_INT_IMMEDIATE)
 					e = load_value_into_register(mc, e, pe->parenthesized_expression()->expression_type());
-				shared_ptr<operand> _4 = register_file2::_a0_register, _2 = register_file2::_v0_register, _30 = register_file2::_fp_register;
 				bool is_pow_of_2 = (sz & (sz - 1)) == 0 && sz != 0;
 				if (e->operand_kind() == operand::kind::KIND_INT_IMMEDIATE) {
 					e = make_shared<operand>(e->int_immediate() * sz);
@@ -2876,11 +3245,17 @@ namespace spectre {
 					else {
 						shared_ptr<operand> temp = allocate_general_purpose_register(mc);
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDIU, temp, register_file2::_zero_register, make_shared<operand>(sz)));
+#if SYSTEM == 0 || SYSTEM == 1
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_MULTU, e, temp));
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_MFLO, e));
+#elif SYSTEM == 2
+						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_MULTU, e, e, temp));
+#endif
 						free_general_purpose_register(mc, temp);
 					}
 				}
+#if SYSTEM == 0 || SYSTEM == 1
+				shared_ptr<operand> _4 = register_file2::_a0_register, _2 = register_file2::_v0_register, _30 = register_file2::_fp_register;
 				vector<int> _4_2_store;
 				bool _4_in_use = mc->current_frame()->is_register_in_use(4), _2_in_use = mc->current_frame()->is_register_in_use(2);
 				if (_4_in_use) {
@@ -2900,84 +3275,57 @@ namespace spectre {
 				}
 				else
 					_4_2_store.push_back(-1);
-#ifdef REAL_MIPS_SYSTEM
-				vector<int> which_to_store;
-				int _t0 = register_file2::_t0_register->register_number(), _t1 = register_file2::_t1_register->register_number(),
-					_t2 = register_file2::_t2_register->register_number(), _t3 = register_file2::_t3_register->register_number(),
-					_t4 = register_file2::_t4_register->register_number(), _t5 = register_file2::_t5_register->register_number(),
-					_t6 = register_file2::_t6_register->register_number(), _t7 = register_file2::_t7_register->register_number(),
-					_f4 = register_file2::_f4_register->register_number(), _f6 = register_file2::_f6_register->register_number(),
-					_f8 = register_file2::_f8_register->register_number(), _f10 = register_file2::_f10_register->register_number(),
-					_f12 = register_file2::_f12_register->register_number(), _f14 = register_file2::_f14_register->register_number(),
-					_v0 = register_file2::_v0_register->register_number(), _a0 = register_file2::_a0_register->register_number(),
-					_a1 = register_file2::_a1_register->register_number(), _a2 = register_file2::_a2_register->register_number(),
-					_a3 = register_file2::_a3_register->register_number();
-				shared_ptr<operand> fp = register_file2::_fp_register, f12 = register_file2::_f12_register, a0 = register_file2::_a0_register, v0 = register_file2::_v0_register,
-					f0 = register_file2::_f0_register;
-				int pre_offset = 0;
-				for (int r : { _t0, _t1, _t2, _t3, _t4, _t5, _t6, _t7, _v0, _a0, _a1, _a2, _a3, _f4, _f6, _f8, _f10, _f12, _f14 })
-					if (mc->current_frame()->is_register_in_use(r)) {
-						if (mc->current_frame()->is_register_in_use(r) && (r == _f4 || r == _f6 || r == _f8 || r == _f10))
-							which_to_store.push_back(r);
-						else if (mc->current_frame()->is_register_in_use(r))
-							which_to_store.push_back(r);
-						pre_offset += 8;
-					}
-				vector<int> middle_offsets;
-				for (int i = 0, curr = 0; i < which_to_store.size(); i++) {
-					int r = which_to_store[i];
-					middle_offsets.push_back(-(mc->current_frame()->middle_section_size() + 8));
-					mc->current_frame()->update_middle_section_size(8);
-					if (r == _f4 || r == _f6 || r == _f8 || r == _f10 || r == _f12 || r == _f14) {
-						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_SDC1, register_file2::int_2_register_object.at(which_to_store[i]),
-							make_shared<operand>(operand::offset_kind::KIND_MIDDLE, middle_offsets[i], fp->register_number(), fp->register_name())));
-					}
-					else
-						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_SW, register_file2::int_2_register_object.at(which_to_store[i]),
-							make_shared<operand>(operand::offset_kind::KIND_MIDDLE, middle_offsets[i], fp->register_number(), fp->register_name())));
-					curr += 8;
-				}
+#endif
+#if SYSTEM == 0
+				tuple<vector<int>, vector<int>, int> res_s_tup = save_to_middle(mc);
+				vector<int> which_to_store = get<0>(res_s_tup), middle_offsets = get<1>(res_s_tup);
+				int pre_offset = get<2>(res_s_tup);
 				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDIU, _2, register_file2::_zero_register, make_shared<operand>(4045)));
 				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDU, _4, register_file2::_zero_register, register_file2::_zero_register));
 				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_SYSCALL));
-				for (int i = 0, curr = 0; i < which_to_store.size(); i++) {
-					if (which_to_store[i] > 31)
-						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LDC1, register_file2::int_2_register_object.at(which_to_store[i]),
-							make_shared<operand>(operand::offset_kind::KIND_MIDDLE, middle_offsets[i], fp->register_number(), fp->register_name())));
-					else
-						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LW, register_file2::int_2_register_object.at(which_to_store[i]),
-							make_shared<operand>(operand::offset_kind::KIND_MIDDLE, middle_offsets[i], fp->register_number(), fp->register_name())));
-					curr += 8;
-				}
+				restore_from_middle(mc, which_to_store, middle_offsets);
 				if(e->operand_kind() == operand::kind::KIND_INT_IMMEDIATE)
 					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDIU, _4, _2, e));
 				else
 					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDU, _4, _2, e));
 				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDIU, _2, register_file2::_zero_register, make_shared<operand>(4045)));
 				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_SYSCALL));
-				for (int i = 0, curr = 0; i < which_to_store.size(); i++) {
-					if (which_to_store[i] > 31)
-						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LDC1, register_file2::int_2_register_object.at(which_to_store[i]),
-							make_shared<operand>(operand::offset_kind::KIND_MIDDLE, middle_offsets[i], fp->register_number(), fp->register_name())));
-					else
-						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LW, register_file2::int_2_register_object.at(which_to_store[i]),
-							make_shared<operand>(operand::offset_kind::KIND_MIDDLE, middle_offsets[i], fp->register_number(), fp->register_name())));
-					curr += 8;
-				}
-				if(e->operand_kind() == operand::kind::KIND_INT_IMMEDIATE)
+				restore_from_middle(mc, which_to_store, middle_offsets);
 				if (e->operand_kind() == operand::kind::KIND_INT_IMMEDIATE)
 					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDIU, _2, _2, make_shared<operand>(-e->int_immediate())));
 				else
 					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_SUBU, _2, _2, e));
-#else
+#elif SYSTEM == 1
 				if(e->operand_kind() == operand::kind::KIND_INT_IMMEDIATE)
 					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDIU, _4, register_file2::_zero_register, e));
 				else
 					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDU, _4, register_file2::_zero_register, e));
 				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDIU, _2, register_file2::_zero_register, make_shared<operand>(9)));
 				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_SYSCALL));
+#elif SYSTEM == 2
+				int a0_pos = -1, a1_pos = -1;
+				shared_ptr<operand> a0 = register_file2::_a0_register, fp = register_file2::_fp_register, a1 = register_file2::_a1_register;
+				bool _a0_in_use = mc->current_frame()->is_register_in_use(10), _a1_in_use = mc->current_frame()->is_register_in_use(11);
+				if (_a0_in_use) {
+					int o = -(mc->current_frame()->middle_section_size() + 8);
+					a0_pos = o;
+					mc->current_frame()->update_middle_section_size(8);
+					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_SW, a0, make_shared<operand>(operand::offset_kind::KIND_MIDDLE,
+						o, fp->register_number(), fp->register_name())));
+				}
+				if (_a1_in_use) {
+					int o = -(mc->current_frame()->middle_section_size() + 8);
+					a1_pos = o;
+					mc->current_frame()->update_middle_section_size(8);
+					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_SW, a1, make_shared<operand>(operand::offset_kind::KIND_MIDDLE,
+						o, fp->register_number(), fp->register_name())));
+				}
+				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDIU, a0, register_file2::_zero_register, make_shared<operand>(9)));
+				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDU, a1, register_file2::_zero_register, e));
+				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_SYSCALL));
 #endif
 				shared_ptr<operand> reg = allocate_general_purpose_register(mc);
+#if SYSTEM == 0 || SYSTEM == 1
 				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDU, reg, register_file2::_zero_register, _2));
 				if (_4_in_use)
 					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LW, _4, make_shared<operand>(operand::offset_kind::KIND_MIDDLE,
@@ -2985,6 +3333,15 @@ namespace spectre {
 				if (_2_in_use)
 					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LW, _2, make_shared<operand>(operand::offset_kind::KIND_MIDDLE,
 						_4_2_store[1], _2->register_number(), _2->register_name())));
+#elif SYSTEM == 2
+				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDU, reg, register_file2::_zero_register, a0));
+				if (_a0_in_use)
+					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LW, a0, make_shared<operand>(operand::offset_kind::KIND_MIDDLE,
+						a0_pos, fp->register_number(), fp->register_name())));
+				if (_a1_in_use)
+					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LW, a1, make_shared<operand>(operand::offset_kind::KIND_MIDDLE,
+						a1_pos, a0->register_number(), a1->register_name())));
+#endif
 				if (e->register_number() > 31)
 					free_general_purpose_fp_register(mc, e);
 				else
@@ -3130,6 +3487,9 @@ namespace spectre {
 					flhs = p.first, frhs = p.second;
 				}
 				insn::kind fpb = insn::kind::KIND_NONE;
+#if SYSTEM == 2
+				shared_ptr<operand> res_reg = allocate_general_purpose_register(mc);
+#endif
 				switch (ok) {
 				case binary_expression::operator_kind::KIND_ADD: {
 					if (dp)
@@ -3160,50 +3520,92 @@ namespace spectre {
 				}
 					break;
 				case binary_expression::operator_kind::KIND_LESS_THAN: {
+#if SYSTEM == 0 || SYSTEM == 1
 					if (dp)
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_C_LT_D, flhs, frhs));
 					else
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_C_LT_S, flhs, frhs));
+#elif SYSTEM == 2
+					if (dp)
+						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_C_LT_D, res_reg, flhs, frhs));
+					else
+						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_C_LT_S, res_reg, flhs, frhs));
+#endif
 					fpb = insn::kind::KIND_BC1F;
 				}
 					break;
 				case binary_expression::operator_kind::KIND_LESS_THAN_OR_EQUAL_TO: {
+#if SYSTEM == 0 || SYSTEM == 1
 					if (dp)
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_C_LE_D, flhs, frhs));
 					else
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_C_LE_S, flhs, frhs));
+#elif SYSTEM == 2
+					if (dp)
+						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_C_LE_D, res_reg, flhs, frhs));
+					else
+						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_C_LE_S, res_reg, flhs, frhs));
+#endif
 					fpb = insn::kind::KIND_BC1F;
 				}
 					break;
 				case binary_expression::operator_kind::KIND_GREATER_THAN: {
+#if SYSTEM == 0 || SYSTEM == 1
 					if (dp)
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_C_LE_D, flhs, frhs));
 					else
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_C_LE_S, flhs, frhs));
+#elif SYSTEM == 2
+					if (dp)
+						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_C_LE_D, res_reg, flhs, frhs));
+					else
+						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_C_LE_S, res_reg, flhs, frhs));
+#endif
 					fpb = insn::kind::KIND_BC1T;
 				}
 					break;
 				case binary_expression::operator_kind::KIND_GREATER_THAN_OR_EQUAL_TO: {
+#if SYSTEM == 0 || SYSTEM == 1
 					if (dp)
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_C_LT_D, flhs, frhs));
 					else
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_C_LT_S, flhs, frhs));
+#elif SYSTEM == 2
+					if (dp)
+						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_C_LT_D, res_reg, flhs, frhs));
+					else
+						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_C_LT_S, res_reg, flhs, frhs));
+#endif
 					fpb = insn::kind::KIND_BC1T;
 				}
 					break;
 				case binary_expression::operator_kind::KIND_EQUALS_EQUALS: {
+#if SYSTEM == 0 || SYSTEM == 1
 					if (dp)
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_C_EQ_D, flhs, frhs));
 					else
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_C_EQ_S, flhs, frhs));
+#elif SYSTEM == 2
+					if (dp)
+						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_C_EQ_D, res_reg, flhs, frhs));
+					else
+						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_C_EQ_S, res_reg, flhs, frhs));
+#endif
 					fpb = insn::kind::KIND_BC1F;
 				}
 					break;
 				case binary_expression::operator_kind::KIND_NOT_EQUALS: {
+#if SYSTEM == 0 || SYSTEM == 1
 					if (dp)
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_C_EQ_D, flhs, frhs));
 					else
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_C_EQ_S, flhs, frhs));
+#elif SYSTEM == 2
+					if (dp)
+						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_C_EQ_D, res_reg, flhs, frhs));
+					else
+						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_C_EQ_S, res_reg, flhs, frhs));
+#endif
 					fpb = insn::kind::KIND_BC1T;
 				}
 					break;
@@ -3215,6 +3617,7 @@ namespace spectre {
 				if (fpb != insn::kind::KIND_NONE) {
 					free_general_purpose_fp_register(mc, flhs);
 					free_general_purpose_fp_register(mc, frhs);
+#if SYSTEM == 0 || SYSTEM == 1
 					shared_ptr<operand> reg = allocate_general_purpose_register(mc);
 					pair<int, shared_ptr<operand>> lab = mc->next_label();
 					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDU, reg, register_file2::_zero_register, register_file2::_zero_register));
@@ -3222,6 +3625,9 @@ namespace spectre {
 					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDIU, reg, register_file2::_zero_register, make_shared<operand>(1)));
 					mc->current_frame()->add_insn_to_body(make_shared<insn>(lab.second));
 					return reg;
+#elif SYSTEM == 2
+					return res_reg;
+#endif
 				}
 				else {
 					free_general_purpose_fp_register(mc, frhs);
@@ -3329,8 +3735,12 @@ namespace spectre {
 					rhs = o2;
 				pair<shared_ptr<operand>, shared_ptr<operand>> p = deconflict_registers(mc, lhs, rhs);
 				lhs = p.first, rhs = p.second;
-				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_MULTU, lhs, rhs));
+#if SYSTEM == 0 || SYSTEM == 1
+				mc->current_frame()->add_insn_to_body(make_shared<insn>(u ? insn::kind::KIND_MULTU : insn::kind::KIND_MULT, lhs, rhs));
 				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_MFLO, lhs));
+#elif SYSTEM == 2
+				mc->current_frame()->add_insn_to_body(make_shared<insn>(u ? insn::kind::KIND_MULTU : insn::kind::KIND_MULT, lhs, lhs, rhs));
+#endif
 				free_general_purpose_register(mc, rhs);
 				return lhs;
 			}
@@ -3345,8 +3755,15 @@ namespace spectre {
 					rhs = load_value_into_register(mc, o2, t);
 				else
 					rhs = o2;
-				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_DIVU, lhs, rhs));
+#if SYSTEM == 0 || SYSTEM == 1
+				mc->current_frame()->add_insn_to_body(make_shared<insn>(u ? insn::kind::KIND_DIVU : insn::kind::KIND_DIV, lhs, rhs));
 				mc->current_frame()->add_insn_to_body(make_shared<insn>(lo ? insn::kind::KIND_MFLO : insn::kind::KIND_MFHI, lhs));
+#elif SYSTEM == 2
+				if (lo)
+					mc->current_frame()->add_insn_to_body(make_shared<insn>(u ? insn::kind::KIND_DIVU : insn::kind::KIND_DIV, lhs, lhs, rhs));
+				else
+					mc->current_frame()->add_insn_to_body(make_shared<insn>(u ? insn::kind::KIND_REMU : insn::kind::KIND_REM, lhs, lhs, rhs));
+#endif
 				free_general_purpose_register(mc, rhs);
 				return lhs;
 			}
@@ -3391,8 +3808,16 @@ namespace spectre {
 				ok == binary_expression::operator_kind::KIND_EQUALS_EQUALS || ok == binary_expression::operator_kind::KIND_NOT_EQUALS) {
 				shared_ptr<operand> lhs = load_value_into_register(mc, o1, t);
 				if (ok == binary_expression::operator_kind::KIND_LESS_THAN) {
-					if (o2->is_immediate())
-						mc->current_frame()->add_insn_to_body(make_shared<insn>(u ? insn::kind::KIND_SLTIU : insn::kind::KIND_SLTI, lhs, lhs, o2));
+					if (o2->is_immediate()) {
+						if (o2->int_immediate() >= (1 << 15)) {
+							shared_ptr<operand> temp = allocate_general_purpose_register(mc);
+							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ORI, temp, register_file2::_zero_register, o2));
+							mc->current_frame()->add_insn_to_body(make_shared<insn>(u ? insn::kind::KIND_SLTU : insn::kind::KIND_SLT, lhs, lhs, temp));
+							free_general_purpose_register(mc, temp);
+						}
+						else
+							mc->current_frame()->add_insn_to_body(make_shared<insn>(u ? insn::kind::KIND_SLTIU : insn::kind::KIND_SLTI, lhs, lhs, o2));
+					}
 					else {
 						pair<shared_ptr<operand>, shared_ptr<operand>> p = deconflict_registers(mc, o1, o2);
 						o1 = p.first, o2 = p.second;
@@ -3501,6 +3926,8 @@ namespace spectre {
 				if (sz == 0) sz = 4;
 				return sz;
 			}
+			else if (t->type_kind() == type::kind::KIND_FUNCTION)
+				return 4;
 			mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 			return 0;
 		}
@@ -3547,6 +3974,13 @@ namespace spectre {
 			else if (t->type_kind() == type::kind::KIND_STRUCT) {
 				shared_ptr<struct_type> s = static_pointer_cast<struct_type>(t);
 				return "struct" + sep + s->struct_name().raw_text() + "_" + arr;
+			}
+			else if (t->type_kind() == type::kind::KIND_FUNCTION) {
+				shared_ptr<function_type> ft = static_pointer_cast<function_type>(t);
+				string ret = "fn" + sep + type_2_string(mc, ft->return_type(), spaces) + sep;
+				for (shared_ptr<variable_declaration> vd : ft->parameter_list())
+					ret += type_2_string(mc, vd->variable_declaration_type(), spaces) + sep;
+				return ret + arr;
 			}
 			mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 			return "";
@@ -3627,10 +4061,6 @@ namespace spectre {
 					vd->variable_declaration_symbol()->parent_scope()->scope_kind() == scope::kind::KIND_NAMESPACE,
 				static_variable = vd_type->type_static_kind() == type::static_kind::KIND_STATIC;
 			shared_ptr<operand> fp = register_file2::_fp_register;
-			if (vd_type->type_kind() == type::kind::KIND_FUNCTION) {
-				mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
-				return;
-			}
 			int sz = (int)calculate_type_size(mc, vd_type);
 			int space = sz % 8 == 0 ? sz : (sz / 8 + 1) * 8;
 			shared_ptr<operand> o = nullptr;
@@ -3851,10 +4281,8 @@ namespace spectre {
 
 		insn::kind load_store_insn_from_type(shared_ptr<mips_code> mc, shared_ptr<type> t, bool l) {
 			if (t == nullptr) return insn::kind::KIND_NONE;
-			if (t->type_kind() == type::kind::KIND_FUNCTION) {
-				mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
-				return insn::kind::KIND_NONE;
-			}
+			if (t->type_kind() == type::kind::KIND_FUNCTION && t->type_array_kind() == type::array_kind::KIND_NON_ARRAY)
+				return l ? insn::kind::KIND_LW : insn::kind::KIND_SW;
 			else if (t->type_kind() == type::kind::KIND_STRUCT && t->type_array_kind() == type::array_kind::KIND_NON_ARRAY)
 				return l ? insn::kind::KIND_LW : insn::kind::KIND_SW;
 			else if (t->type_kind() == type::kind::KIND_PRIMITIVE && t->type_array_kind() == type::array_kind::KIND_NON_ARRAY) {
@@ -3900,9 +4328,11 @@ namespace spectre {
 			string fsym = "";
 			bool main_function = is_function_main(mc, fs->function_stmt_symbol());
 			if (main_function)
-#ifdef REAL_MIPS_SYSTEM
+#if SYSTEM == 0
 				fsym = "__start";
-#else
+#elif SYSTEM == 1
+				fsym = "main";
+#elif SYSTEM == 2
 				fsym = "main";
 #endif
 			else
@@ -3916,7 +4346,11 @@ namespace spectre {
 			int old_frame_size = mc->current_frame()->top_section_size() + mc->current_frame()->middle_section_size() + mc->current_frame()->frame_size();
 			mc->push_frame(make_shared<mips_frame>(main_function, false, ret_is_prim && static_pointer_cast<primitive_type>(ret_type)->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE,
 				ret_is_prim && static_pointer_cast<primitive_type>(ret_type)->primitive_type_kind() == primitive_type::kind::KIND_FLOAT));
+#if SYSTEM == 0 || SYSTEM == 1
 			mc->current_frame()->mark_register(31);
+#elif SYSTEM == 2
+			mc->current_frame()->mark_register(1);
+#endif
 			mc->current_frame()->set_return_label(ret_lab.second);
 			mc->current_frame()->set_return_label_set(true);
 			mc->current_frame()->set_return_type(ret_type);
@@ -3924,7 +4358,12 @@ namespace spectre {
 			for (pair<string, shared_ptr<operand>> p : old_map)
 				mc->current_frame()->add_variable(p.first, p.second);
 			vector<int> register_args, fp_register_args;
-			shared_ptr<operand> _4 = register_file2::_a0_register, _f12 = register_file2::_f12_register;
+			shared_ptr<operand> _a0 = register_file2::_a0_register;
+#if SYSTEM == 0 || SYSTEM == 1
+			shared_ptr<operand> _f12 = register_file2::_f12_register;
+#elif SYSTEM == 2
+			shared_ptr<operand> _f10 = register_file2::_f10_register;
+#endif
 			vector<shared_ptr<variable_declaration>> parm_list = fs->function_stmt_type()->parameter_list();
 			mc->current_frame()->update_top_section_size(16);
 			for (int i = 0; i < parm_list.size(); i++) {
@@ -3932,15 +4371,21 @@ namespace spectre {
 				shared_ptr<type> curr_type = vdecl->variable_declaration_type();
 				bool is_prim = curr_type->type_kind() == type::kind::KIND_PRIMITIVE && curr_type->type_array_kind() == type::array_kind::KIND_NON_ARRAY;
 				bool is_not_struct = !(curr_type->type_kind() == type::kind::KIND_STRUCT && curr_type->type_array_kind() == type::array_kind::KIND_NON_ARRAY);
-				if (fp_register_args.size() < 2 && (is_prim && (static_pointer_cast<primitive_type>(curr_type)->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE ||
-					static_pointer_cast<primitive_type>(curr_type)->primitive_type_kind() == primitive_type::kind::KIND_FLOAT)))
+				bool is_fp = static_pointer_cast<primitive_type>(curr_type)->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE ||
+					static_pointer_cast<primitive_type>(curr_type)->primitive_type_kind() == primitive_type::kind::KIND_FLOAT;
+#if SYSTEM == 0 || SYSTEM == 1
+				if (fp_register_args.size() < 2 && (is_prim && is_fp))
 					fp_register_args.push_back(i);
-				else if (register_args.size() < 4 && is_not_struct) {
-					if (is_prim && (static_pointer_cast<primitive_type>(curr_type)->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE ||
-						static_pointer_cast<primitive_type>(curr_type)->primitive_type_kind() == primitive_type::kind::KIND_FLOAT));
-					else
+#elif SYSTEM == 2
+				if (fp_register_args.size() < 8 && (is_prim && is_fp))
+					fp_register_args.push_back(i);
+#endif
+#if SYSTEM == 0 || SYSTEM == 1
+				else if (register_args.size() < 4 && is_not_struct && !is_fp)
+#elif SYSTEM == 2
+				else if (register_args.size() < 8 && is_not_struct && !is_fp)
+#endif
 						register_args.push_back(i);
-				}
 			}
 			int curr_off = 0;
 			for (int i = 0; i < parm_list.size(); i++) {
@@ -3949,13 +4394,17 @@ namespace spectre {
 				string sym_name = symbol_2_string(mc, vdecl->variable_declaration_symbol());
 				int fp_index = find(fp_register_args.begin(), fp_register_args.end(), i) - fp_register_args.begin(),
 					reg_index = find(register_args.begin(), register_args.end(), i) - register_args.begin();
-				if(fp_index < fp_register_args.size()) {
+				if (fp_index < fp_register_args.size()) {
 					if (curr_type->type_kind() != type::kind::KIND_PRIMITIVE && curr_type->type_array_kind() != type::array_kind::KIND_NON_ARRAY) {
 						mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 						return;
 					}
 					shared_ptr<primitive_type> pt = static_pointer_cast<primitive_type>(curr_type);
+#if SYSTEM == 0 || SYSTEM == 1
 					shared_ptr<operand> correct_reg = register_file2::int_2_register_object.at(_f12->register_number() + fp_index * 2);
+#elif SYSTEM == 2
+					shared_ptr<operand> correct_reg = register_file2::int_2_register_object.at(_f10->register_number() + fp_index);
+#endif
 					if (pt->primitive_type_kind() != primitive_type::kind::KIND_DOUBLE && pt->primitive_type_kind() != primitive_type::kind::KIND_FLOAT) {
 						mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 						return;
@@ -3981,14 +4430,14 @@ namespace spectre {
 						return;
 					}
 				}
-				else if(reg_index < register_args.size()) {
+				else if (reg_index < register_args.size()) {
 					int sz = (int)calculate_type_size(mc, curr_type);
 					sz = sz % 8 == 0 ? sz : (sz / 8 + 1) * 8;
 					mc->current_frame()->update_top_section_size(sz);
 					shared_ptr<operand> mem = make_shared<operand>(operand::offset_kind::KIND_TOP, -mc->current_frame()->top_section_size(), fp->register_number(), fp->register_name());
 					mc->current_frame()->add_variable(sym_name, mem);
 					insn::kind s = load_store_insn_from_type(mc, curr_type, false);
-					shared_ptr<operand> correct_reg = register_file2::int_2_register_object.at(_4->register_number() + reg_index);
+					shared_ptr<operand> correct_reg = register_file2::int_2_register_object.at(_a0->register_number() + reg_index);
 					mc->current_frame()->add_insn_to_prologue(make_shared<insn>(s, correct_reg, mem));
 				}
 				else {
@@ -3997,9 +4446,9 @@ namespace spectre {
 					mc->current_frame()->update_top_section_size(sz);
 					shared_ptr<operand> mem = make_shared<operand>(operand::offset_kind::KIND_TOP, -mc->current_frame()->top_section_size(), fp->register_number(), fp->register_name());
 					bool is_sp = curr_type->type_kind() == type::kind::KIND_PRIMITIVE && curr_type->type_array_kind() == type::array_kind::KIND_NON_ARRAY &&
-							static_pointer_cast<primitive_type>(curr_type)->primitive_type_kind() == primitive_type::kind::KIND_FLOAT,
+						static_pointer_cast<primitive_type>(curr_type)->primitive_type_kind() == primitive_type::kind::KIND_FLOAT,
 						is_dp = curr_type->type_kind() == type::kind::KIND_PRIMITIVE && curr_type->type_array_kind() == type::array_kind::KIND_NON_ARRAY &&
-							static_pointer_cast<primitive_type>(curr_type)->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE;
+						static_pointer_cast<primitive_type>(curr_type)->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE;
 					mem->set_double_precision(is_dp);
 					mem->set_single_precision(is_sp);
 					mc->current_frame()->add_variable(sym_name, mem);
@@ -4059,12 +4508,14 @@ namespace spectre {
 				sp->register_name())), true);
 			mc->current_frame()->add_insn_to_prologue(make_shared<insn>(insn::kind::KIND_ADDIU, sp, sp, make_shared<operand>(-mc->current_frame()->frame_size())), true);
 			if (main_function)
-#ifdef REAL_MIPS_SYSTEM
+#if SYSTEM == 0
 				;
-#else
+#elif SYSTEM == 1
 				mc->current_frame()->add_insn_to_prologue(make_shared<insn>(insn::kind::KIND_ADDIU, sp, sp, make_shared<operand>(-4)), true);
+#elif SYSTEM == 2
+				;
 #endif
-			mc->current_frame()->add_insn_to_prologue(make_shared<insn>(make_shared<operand>(false, fsym)), true);
+				mc->current_frame()->add_insn_to_prologue(make_shared<insn>(make_shared<operand>(false, fsym)), true);
 			mc->current_frame()->add_insn_to_prologue(make_shared<insn>(""), true);
 			mc->current_frame()->add_insn_to_epilogue(make_shared<insn>(ret_lab.second));
 			mc->current_frame()->add_insn_to_epilogue(make_shared<insn>(insn::kind::KIND_LW, ra, make_shared<operand>(operand::offset_kind::KIND_TOP, -16, fp->register_number(),
@@ -4073,23 +4524,39 @@ namespace spectre {
 				fp->register_name())));
 			mc->current_frame()->add_insn_to_epilogue(make_shared<insn>(insn::kind::KIND_ADDIU, sp, sp, make_shared<operand>(mc->current_frame()->frame_size())));
 			if (main_function) {
+#if SYSTEM == 0 || SYSTEM == 1
 				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDU, register_file2::_v0_register, register_file2::_zero_register, register_file2::_zero_register));
-#ifndef REAL_MIPS_SYSTEM
+#elif SYSTEM == 2
+				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDU, register_file2::_a0_register, register_file2::_zero_register, register_file2::_zero_register));
+#endif
+#if SYSTEM == 0
 				mc->current_frame()->add_insn_to_epilogue(make_shared<insn>(insn::kind::KIND_ADDIU, sp, sp, make_shared<operand>(4)));
 #endif
+#if SYSTEM == 0 || SYSTEM == 1
 				mc->current_frame()->add_insn_to_epilogue(make_shared<insn>(insn::kind::KIND_ADDU, register_file2::_a0_register, register_file2::_v0_register, register_file2::_zero_register));
-#ifdef REAL_MIPS_SYSTEM
+#endif
+#if SYSTEM == 0
 				mc->current_frame()->add_insn_to_epilogue(make_shared<insn>(insn::kind::KIND_ADDIU, register_file2::_v0_register, register_file2::_zero_register, make_shared<operand>(4001)));
-#else
+#elif SYSTEM == 1
 				mc->current_frame()->add_insn_to_epilogue(make_shared<insn>(insn::kind::KIND_ADDIU, register_file2::_v0_register, register_file2::_zero_register, make_shared<operand>(17)));
 #endif
+#if SYSTEM == 0 || SYSTEM == 1
 				mc->current_frame()->add_insn_to_epilogue(make_shared<insn>(insn::kind::KIND_SYSCALL));
+#elif SYSTEM == 2
+				mc->current_frame()->add_insn_to_epilogue(make_shared<insn>(insn::kind::KIND_ADDU, register_file2::_a1_register, register_file2::_zero_register, register_file2::_a0_register));
+				mc->current_frame()->add_insn_to_epilogue(make_shared<insn>(insn::kind::KIND_ADDIU, register_file2::_a0_register, register_file2::_zero_register, make_shared<operand>(10)));
+				mc->current_frame()->add_insn_to_epilogue(make_shared<insn>(insn::kind::KIND_SYSCALL));
+#endif
 				mc->current_frame()->add_insn_to_epilogue(make_shared<insn>(""));
 			}
 			else
 				mc->current_frame()->add_insn_to_epilogue(make_shared<insn>(insn::kind::KIND_JR, ra));
 			mc->current_frame()->calculate_true_insn_offsets();
+#if SYSTEM == 0 || SYSTEM == 1
 			mc->current_frame()->unmark_register(31);
+#elif SYSTEM == 2
+			mc->current_frame()->unmark_register(1);
+#endif
 			vector<shared_ptr<insn>> fnal, pre = mc->current_frame()->prologue_insn_list(), bod = mc->current_frame()->body_insn_list(), post = mc->current_frame()->epilogue_insn_list();
 			mc->pop_frame();
 			fnal.insert(fnal.end(), pre.begin(), pre.end());
@@ -4126,21 +4593,36 @@ namespace spectre {
 				shared_ptr<operand> op = generate_expression_mips(mc, e, false);
 				op = load_value_into_register(mc, op, e->expression_type());
 				op = cast_between_types(mc, op, e->expression_type(), mc->current_frame()->return_type());
+#if SYSTEM == 0 || SYSTEM == 1
 				shared_ptr<operand> f0 = register_file2::_f0_register, v0 = register_file2::_v0_register;
+#elif SYSTEM == 2
+				shared_ptr<operand> f10 = register_file2::_f0_register, v0 = register_file2::_a0_register;
+#endif
 				shared_ptr<type> ret_type = mc->current_frame()->return_type();
 				if (ret_type->type_kind() == type::kind::KIND_PRIMITIVE && ret_type->type_array_kind() == type::array_kind::KIND_NON_ARRAY) {
 					shared_ptr<primitive_type> ret_ptype = static_pointer_cast<primitive_type>(ret_type);
 					if (ret_ptype->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE || ret_ptype->primitive_type_kind() == primitive_type::kind::KIND_FLOAT) {
+#if SYSTEM == 0 || SYSTEM == 1
 						if (ret_ptype->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE)
 							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_MOV_D, f0, op));
 						else
 							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_MOV_S, f0, op));
+#elif SYSTEM == 2
+						if (ret_ptype->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE)
+							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_MOV_D, f10, op));
+						else
+							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_MOV_S, f10, op));
+#endif
 					}
 					else
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDU, v0, op, register_file2::_zero_register));
 				}
 				else
 					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDU, v0, op, register_file2::_zero_register));
+				if (op->register_number() > 31)
+					free_general_purpose_fp_register(mc, op);
+				else
+					free_general_purpose_register(mc, op);
 			}
 			mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_J, mc->current_frame()->return_label()));
 		}
@@ -4226,8 +4708,15 @@ namespace spectre {
 					case_cond = load_value_into_register(mc, case_cond, child_type);
 					case_cond = cast_between_types(mc, case_cond, child_type, base_type);
 					if (dp_eq || sp_eq) {
+#if SYSTEM == 0 || SYSTEM == 1
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(dp_eq ? insn::kind::KIND_C_EQ_D : insn::kind::KIND_C_EQ_S, op, case_cond));
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_BC1T, case_label));
+#elif SYSTEM == 2
+						shared_ptr<operand> temp = allocate_general_purpose_register(mc);
+						mc->current_frame()->add_insn_to_body(make_shared<insn>(dp_eq ? insn::kind::KIND_C_EQ_D : insn::kind::KIND_C_EQ_S, temp, op, case_cond));
+						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_BNE, temp, register_file2::_zero_register, case_label));
+						free_general_purpose_register(mc, temp);
+#endif
 					}
 					else
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_BEQ, op, case_cond, case_label));
@@ -4365,9 +4854,11 @@ namespace spectre {
 					string sym_string = symbol_2_string(mc, at->identifier_symbol());
 					if (at->identifier_symbol()->symbol_kind() == symbol::kind::KIND_FUNCTION) {
 						if (is_function_main(mc, static_pointer_cast<function_symbol>(at->identifier_symbol())))
-#ifdef REAL_MIPS_SYSTEM
+#if SYSTEM == 0
 							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LA, reg_label, make_shared<operand>(false, "__start")));
-#else
+#elif SYSTEM == 1
+							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LA, reg_label, make_shared<operand>(false, "main")));
+#elif SYSTEM == 2
 							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LA, reg_label, make_shared<operand>(false, "main")));
 #endif
 						else
@@ -4983,6 +5474,81 @@ namespace spectre {
 				return result;
 			};
 			return evaluate_assignment_expression(ae);
+		}
+
+		tuple<vector<int>, vector<int>, int> save_to_middle(shared_ptr<mips_code> mc) {
+			shared_ptr<operand> fp = register_file2::_fp_register;
+			vector<int> which_to_store;
+			vector<int> middle_offsets;
+			int pre_offset = 0;
+#if SYSTEM == 0 || SYSTEM == 1
+			int _t0 = register_file2::_t0_register->register_number(), _t1 = register_file2::_t1_register->register_number(),
+				_t2 = register_file2::_t2_register->register_number(), _t3 = register_file2::_t3_register->register_number(),
+				_t4 = register_file2::_t4_register->register_number(), _t5 = register_file2::_t5_register->register_number(),
+				_t6 = register_file2::_t6_register->register_number(), _t7 = register_file2::_t7_register->register_number(),
+				_f4 = register_file2::_f4_register->register_number(), _f6 = register_file2::_f6_register->register_number(),
+				_f8 = register_file2::_f8_register->register_number(), _f10 = register_file2::_f10_register->register_number(),
+				_f12 = register_file2::_f12_register->register_number(), _f14 = register_file2::_f14_register->register_number(),
+				_v0 = register_file2::_v0_register->register_number(), _a0 = register_file2::_a0_register->register_number(),
+				_a1 = register_file2::_a1_register->register_number(), _a2 = register_file2::_a2_register->register_number(),
+				_a3 = register_file2::_a3_register->register_number();
+			for (int r : { _t0, _t1, _t2, _t3, _t4, _t5, _t6, _t7, _v0, _a0, _a1, _a2, _a3, _f4, _f6, _f8, _f10, _f12, _f14 })
+#elif SYSTEM == 2
+			int _t0 = register_file2::_t0_register->register_number(), _t1 = register_file2::_t1_register->register_number(),
+				_t2 = register_file2::_t2_register->register_number(), _t3 = register_file2::_t3_register->register_number(),
+				_t5 = register_file2::_t5_register->register_number(), _t6 = register_file2::_t6_register->register_number(),
+				_t4 = register_file2::_t4_register->register_number(), _a5 = register_file2::_a5_register->register_number(),
+				_a6 = register_file2::_a6_register->register_number(), _a7 = register_file2::_a7_register->register_number(),
+				_a0 = register_file2::_a0_register->register_number();
+			int _a1 = register_file2::_a1_register->register_number(), _a2 = register_file2::_a2_register->register_number(),
+				_a3 = register_file2::_a3_register->register_number(), _a4 = register_file2::_a4_register->register_number();
+			int f0 = register_file1::register_2_int.at(register_file1::_f0), f1 = register_file1::register_2_int.at(register_file1::_f1),
+				f2 = register_file1::register_2_int.at(register_file1::_f2), f3 = register_file1::register_2_int.at(register_file1::_f3),
+				f4 = register_file1::register_2_int.at(register_file1::_f4), f5 = register_file1::register_2_int.at(register_file1::_f5),
+				f6 = register_file1::register_2_int.at(register_file1::_f6), f7 = register_file1::register_2_int.at(register_file1::_f7),
+				f10 = register_file1::register_2_int.at(register_file1::_f10), f11 = register_file1::register_2_int.at(register_file1::_f11),
+				f12 = register_file1::register_2_int.at(register_file1::_f12), f13 = register_file1::register_2_int.at(register_file1::_f13),
+				f14 = register_file1::register_2_int.at(register_file1::_f14), f15 = register_file1::register_2_int.at(register_file1::_f15),
+				f16 = register_file1::register_2_int.at(register_file1::_f16), f17 = register_file1::register_2_int.at(register_file1::_f17),
+				f28 = register_file1::register_2_int.at(register_file1::_f28), f29 = register_file1::register_2_int.at(register_file1::_f29),
+				f30 = register_file1::register_2_int.at(register_file1::_f30), f31 = register_file1::register_2_int.at(register_file1::_f31);
+			for (int r : { _t0, _t1, _t2, _t3, _t4, _a5, _a6, _a7, _t5, _a0, _a1, _a2, _a3, _a4, _t5, _t6,
+							f0, f1, f2, f3, f4, f5, f6, f7, f10, f11, f12, f13, f14, f15, f16, f17, f28, f29, f30, f31 })
+#endif
+				if (mc->current_frame()->is_register_in_use(r)) {
+					if (mc->current_frame()->is_register_in_use(r) && (r > 31))
+						which_to_store.push_back(r);
+					else if (mc->current_frame()->is_register_in_use(r))
+						which_to_store.push_back(r);
+					pre_offset += 8;
+				}
+			for (int i = 0, curr = 0; i < which_to_store.size(); i++) {
+				int r = which_to_store[i];
+				middle_offsets.push_back(-(mc->current_frame()->middle_section_size() + 8));
+				mc->current_frame()->update_middle_section_size(8);
+				if (r > 31) {
+					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_SDC1, register_file2::int_2_register_object.at(which_to_store[i]),
+						make_shared<operand>(operand::offset_kind::KIND_MIDDLE, middle_offsets[i], fp->register_number(), fp->register_name())));
+				}
+				else
+					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_SW, register_file2::int_2_register_object.at(which_to_store[i]),
+						make_shared<operand>(operand::offset_kind::KIND_MIDDLE, middle_offsets[i], fp->register_number(), fp->register_name())));
+				curr += 8;
+			}
+			return make_tuple(which_to_store, middle_offsets, pre_offset);
+		}
+
+		void restore_from_middle(shared_ptr<mips_code> mc, vector<int> which_to_store, vector<int> middle_offsets) {
+			shared_ptr<operand> fp = register_file2::_fp_register;
+			for (int i = 0, curr = 0; i < which_to_store.size(); i++) {
+				if (which_to_store[i] > 31)
+					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LDC1, register_file2::int_2_register_object.at(which_to_store[i]),
+						make_shared<operand>(operand::offset_kind::KIND_MIDDLE, middle_offsets[i], fp->register_number(), fp->register_name())));
+				else
+					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LW, register_file2::int_2_register_object.at(which_to_store[i]),
+						make_shared<operand>(operand::offset_kind::KIND_MIDDLE, middle_offsets[i], fp->register_number(), fp->register_name())));
+				curr += 8;
+			}
 		}
 	}
 }

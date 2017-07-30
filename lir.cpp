@@ -1,6 +1,8 @@
 #include "lir.hpp"
 #include <iostream>
 
+#if 0
+
 using std::make_shared;
 using std::static_pointer_cast;
 using std::to_string;
@@ -1531,3 +1533,5 @@ namespace spectre {
 		}
 	}
 }
+
+#endif

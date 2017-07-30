@@ -32,7 +32,7 @@ outputs/spectre: intermediates/ast_printer.o intermediates/buffer.o intermediate
 
 intermediates/main.o: main.cpp buffer.hpp token.hpp error.hpp diagnostics.hpp token_keywords.hpp parser.hpp stmt.hpp \
 		expr.hpp ast_printer.hpp lir.hpp lir_instruction_set.hpp lir.hpp mips.hpp mips_instruction_set.hpp \
-		file_io.hpp mips2.hpp
+		file_io.hpp mips2.hpp config.hpp mips_instruction_set.hpp
 	$(CC) $(CXX_FLAGS) -c main.cpp -o intermediates/main.o $(CXX_LINKER_FLAGS)
 
 intermediates/ast_printer.o: ast_printer.cpp ast_printer.hpp
@@ -71,5 +71,5 @@ intermediates/type.o: type.cpp type.hpp
 intermediates/file_io.o: file_io.cpp file_io.hpp
 	$(CC) $(CXX_FLAGS) -c file_io.cpp -o intermediates/file_io.o $(CXX_LINKER_FLAGS)
 
-intermediates/mips2.o: mips2.cpp mips2.hpp
+intermediates/mips2.o: mips2.cpp mips2.hpp config.hpp mips_instruction_set.hpp
 	$(CC) $(CXX_FLAGS) -c mips2.cpp -o intermediates/mips2.o $(CXX_LINKER_FLAGS)
