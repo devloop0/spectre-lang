@@ -2296,15 +2296,15 @@ namespace spectre {
 							if (!op->single_precision())
 								mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_NEG_S, op, op));
-							op->set_double_precision(true);
-							op->set_single_precision(false);
+							op->set_single_precision(true);
+							op->set_double_precision(false);
 						}
 						else if (pt->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE) {
 							if (!op->double_precision())
 								mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_NEG_D, op, op));
-							op->set_single_precision(true);
-							op->set_double_precision(false);
+							op->set_double_precision(true);
+							op->set_single_precision(false);
 						}
 						else
 							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_SUBU, op, register_file2::_zero_register, op));
