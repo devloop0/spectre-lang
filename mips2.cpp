@@ -2256,6 +2256,8 @@ namespace spectre {
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADD_D, n, n, d1));
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(st, n, op));
 						free_general_purpose_fp_register(mc, d1);
+						n->set_double_precision(true);
+						n->set_single_precision(false);
 					}
 					else if (prim->primitive_type_kind() == primitive_type::kind::KIND_FLOAT) {
 						shared_ptr<operand> f1 = allocate_general_purpose_fp_register(mc);
@@ -2263,6 +2265,8 @@ namespace spectre {
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADD_S, n, n, f1));
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(st, n, op));
 						free_general_purpose_fp_register(mc, f1);
+						n->set_single_precision(true);
+						n->set_double_precision(false);
 					}
 					else {
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDIU, n, n, make_shared<operand>(inc ? 1 : -1)));
@@ -2292,11 +2296,15 @@ namespace spectre {
 							if (!op->single_precision())
 								mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_NEG_S, op, op));
+							op->set_double_precision(true);
+							op->set_single_precision(false);
 						}
 						else if (pt->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE) {
 							if (!op->double_precision())
 								mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_NEG_D, op, op));
+							op->set_single_precision(true);
+							op->set_double_precision(false);
 						}
 						else
 							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_SUBU, op, register_file2::_zero_register, op));
@@ -2376,6 +2384,8 @@ namespace spectre {
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_NEG_D, d1, d1));
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADD_D, n, n, d1));
 						free_general_purpose_fp_register(mc, d1);
+						n->set_double_precision(true);
+						n->set_single_precision(false);
 					}
 					else if (prim->primitive_type_kind() == primitive_type::kind::KIND_FLOAT) {
 						shared_ptr<operand> f1 = allocate_general_purpose_fp_register(mc);
@@ -2385,6 +2395,8 @@ namespace spectre {
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_NEG_S, f1, f1));
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADD_S, n, n, f1));
 						free_general_purpose_fp_register(mc, f1);
+						n->set_double_precision(false);
+						n->set_single_precision(true);
 					}
 					else {
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDIU, n, n, make_shared<operand>(inc ? 1 : -1)));
@@ -2715,9 +2727,9 @@ namespace spectre {
 							fp_register_args.push_back(i);
 #endif
 #if SYSTEM == 0 || SYSTEM == 1
-						else if (register_args.size() < 4 && is_not_struct && !is_fp)
+						else if (register_args.size() < 4 && is_not_struct && !(is_fp && is_prim))
 #elif SYSTEM == 2
-						else if (register_args.size() < 8 && is_not_struct && !is_fp)
+						else if (register_args.size() < 8 && is_not_struct && !(is_fp && is_prim))
 #endif
 							register_args.push_back(i);
 						else
@@ -2847,6 +2859,8 @@ namespace spectre {
 								insn::kind::KIND_MOV_S, freg, f10));
 #endif
 							op = freg;
+							op->set_double_precision(ret_ptype->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE);
+							op->set_single_precision(ret_ptype->primitive_type_kind() == primitive_type::kind::KIND_FLOAT);
 						}
 						else {
 							shared_ptr<operand> reg = allocate_general_purpose_register(mc);
@@ -2890,8 +2904,11 @@ namespace spectre {
 						insn::kind ik = load_store_insn_from_type(mc, pt, true);
 						auto which_free = pt->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE || pt->primitive_type_kind() == primitive_type::kind::KIND_FLOAT ?
 							free_general_purpose_fp_register : free_general_purpose_register;
-						if (pt->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE || pt->primitive_type_kind() == primitive_type::kind::KIND_FLOAT)
+						if (pt->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE || pt->primitive_type_kind() == primitive_type::kind::KIND_FLOAT) {
 							temp = allocate_general_purpose_fp_register(mc);
+							temp->set_single_precision(pt->primitive_type_kind() == primitive_type::kind::KIND_FLOAT);
+							temp->set_double_precision(pt->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE);
+						}
 						else
 							temp = allocate_general_purpose_register(mc);
 						if (op->operand_kind() == operand::kind::KIND_LABEL)
@@ -2908,11 +2925,8 @@ namespace spectre {
 							mc->current_frame()->add_insn_to_body(make_shared<insn>(ik, temp, make_shared<operand>(operand::offset_kind::KIND_TRUE, 0, op->register_number(), op->register_name())));
 							free_general_purpose_register(mc, register_file2::int_2_register_object.at(op->register_number()));
 						}
-						bool dp = op->double_precision(), sp = op->single_precision();
 						which_free(mc, op);
 						op = temp;
-						op->set_double_precision(dp);
-						op->set_single_precision(sp);
 					}
 					else if (t->type_kind() == type::kind::KIND_STRUCT && t->type_array_kind() != type::array_kind::KIND_ARRAY) {
 						shared_ptr<operand> temp = allocate_general_purpose_register(mc);
@@ -4381,9 +4395,9 @@ namespace spectre {
 					fp_register_args.push_back(i);
 #endif
 #if SYSTEM == 0 || SYSTEM == 1
-				else if (register_args.size() < 4 && is_not_struct && !is_fp)
+				else if (register_args.size() < 4 && is_not_struct && !(is_fp && is_prim))
 #elif SYSTEM == 2
-				else if (register_args.size() < 8 && is_not_struct && !is_fp)
+				else if (register_args.size() < 8 && is_not_struct && !(is_fp && is_prim))
 #endif
 						register_args.push_back(i);
 			}
