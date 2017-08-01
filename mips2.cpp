@@ -2346,7 +2346,14 @@ namespace spectre {
 		shared_ptr<operand> generate_postfix_expression_mips(shared_ptr<mips_code> mc, shared_ptr<postfix_expression> pe, bool lvalue) {
 			if (pe == nullptr) return nullptr;
 			shared_ptr<operand> op = generate_primary_expression_mips(mc, pe->contained_primary_expression(), lvalue || pe->postfix_type_list().size() > 0);
-			bool already_loaded = pe->contained_primary_expression()->primary_expression_value_kind() == value_kind::VALUE_RVALUE;
+			bool already_loaded;
+			if (pe->contained_primary_expression()->primary_expression_kind() == primary_expression::kind::KIND_PARENTHESIZED_EXPRESSION) {
+				if (!lvalue)
+					op = load_value_into_register(mc, op, pe->contained_primary_expression()->primary_expression_type());
+				already_loaded = !lvalue;
+			}
+			else
+				already_loaded = pe->contained_primary_expression()->primary_expression_value_kind() == value_kind::VALUE_RVALUE;
 			shared_ptr<type> prev_type = pe->contained_primary_expression()->primary_expression_type();
 			for (shared_ptr<postfix_expression::postfix_type> pt : pe->postfix_type_list()) {
 				switch (pt->postfix_type_kind()) {

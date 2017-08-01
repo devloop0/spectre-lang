@@ -2047,7 +2047,7 @@ namespace spectre {
 				p->report(error(error::kind::KIND_ERROR, "Cannot have array types of an unequal number of dimensions.", stream, 0));
 				return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
 			}
-			type::const_kind ck = t1->type_const_kind() == type::const_kind::KIND_CONST && t2->type_const_kind() == type::const_kind::KIND_CONST ?
+			type::const_kind ck = t1->type_const_kind() == type::const_kind::KIND_CONST || t2->type_const_kind() == type::const_kind::KIND_CONST ?
 				type::const_kind::KIND_CONST : type::const_kind::KIND_NON_CONST;
 			type::static_kind sk = t1->type_static_kind() == type::static_kind::KIND_STATIC && t2->type_static_kind() == type::static_kind::KIND_STATIC ?
 				type::static_kind::KIND_STATIC : type::static_kind::KIND_NON_STATIC;
