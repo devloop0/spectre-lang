@@ -2345,12 +2345,16 @@ namespace spectre {
 
 		shared_ptr<operand> generate_postfix_expression_mips(shared_ptr<mips_code> mc, shared_ptr<postfix_expression> pe, bool lvalue) {
 			if (pe == nullptr) return nullptr;
-			shared_ptr<operand> op = generate_primary_expression_mips(mc, pe->contained_primary_expression(), lvalue || pe->postfix_type_list().size() > 0);
+			bool pe_requires_lvalue = lvalue || (pe->postfix_type_list().size() > 0 &&
+				(pe->postfix_type_list()[0]->postfix_type_kind() == postfix_expression::kind::KIND_INCREMENT ||
+					pe->postfix_type_list()[0]->postfix_type_kind() == postfix_expression::kind::KIND_DECREMENT ||
+					pe->postfix_type_list()[0]->postfix_type_kind() == postfix_expression::kind::KIND_ADDRESS));
+			shared_ptr<operand> op = generate_primary_expression_mips(mc, pe->contained_primary_expression(), pe_requires_lvalue);
 			bool already_loaded;
 			if (pe->contained_primary_expression()->primary_expression_kind() == primary_expression::kind::KIND_PARENTHESIZED_EXPRESSION) {
-				if (!lvalue)
+				if (!pe_requires_lvalue)
 					op = load_value_into_register(mc, op, pe->contained_primary_expression()->primary_expression_type());
-				already_loaded = !lvalue;
+				already_loaded = !pe_requires_lvalue;
 			}
 			else
 				already_loaded = pe->contained_primary_expression()->primary_expression_value_kind() == value_kind::VALUE_RVALUE;
