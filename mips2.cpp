@@ -2986,6 +2986,22 @@ namespace spectre {
 						op = load_value_into_register(mc, op, pe->postfix_expression_type());
 				}
 			}
+			else if (!lvalue && already_loaded) {
+				if (op->operand_kind() == operand::kind::KIND_MEMORY) {
+					shared_ptr<operand> temp = allocate_general_purpose_register(mc);
+					shared_ptr<operand> imm = make_shared<operand>(op->offset());
+					imm->set_operand_offset_kind(op->operand_offset_kind());
+					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDIU, temp, register_file2::int_2_register_object.at(op->register_number()), imm));
+					free_general_purpose_register(mc, register_file2::int_2_register_object.at(op->register_number()));
+					op = temp;
+					if (pe->postfix_expression_type()->type_kind() == type::kind::KIND_PRIMITIVE && pe->postfix_expression_type()->type_array_kind() != type::array_kind::KIND_ARRAY) {
+						shared_ptr<primitive_type> pt = static_pointer_cast<primitive_type>(pe->postfix_expression_type());
+						op->set_double_precision(pt->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE);
+						op->set_single_precision(pt->primitive_type_kind() == primitive_type::kind::KIND_FLOAT);
+					}
+				}
+				op = load_value_into_register(mc, op, pe->postfix_expression_type());
+			}
 			return op;
 		}
 
