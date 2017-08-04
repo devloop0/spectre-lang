@@ -3406,6 +3406,12 @@ namespace spectre {
 					_valid = false;
 					return;
 				}
+				if (prt->primitive_type_kind() == primitive_type::kind::KIND_BOOL && pfrt->primitive_type_kind() != primitive_type::kind::KIND_BOOL) {
+					p->report(error(error::kind::KIND_ERROR, "Cannot return bool from a non-bool function.", stream, 0));
+					_contained_return_stmt = make_shared<return_stmt>(rv, false, stream);
+					_valid = false;
+					return;
+				}
 				if (rt->type_array_kind() == type::array_kind::KIND_ARRAY && prt->primitive_type_kind() != pfrt->primitive_type_kind()) {
 					p->report(error(error::kind::KIND_ERROR, "Cannot return incompatible array types from a function.", stream, 0));
 					_contained_return_stmt = make_shared<return_stmt>(rv, false, stream);
