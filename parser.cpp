@@ -2996,7 +2996,12 @@ namespace spectre {
 				bool bad = false;
 				if (res->symbol_kind() != symbol::kind::KIND_FUNCTION) {
 					p->report(error(error::kind::KIND_ERROR, "Function name conflicts with symbol already declared.", stream, 0));
-					p->report(error(error::kind::KIND_NOTE, "Originally declared here.", static_pointer_cast<variable_symbol>(res)->stream(), 0));
+					if(res->symbol_kind() == symbol::kind::KIND_NAMESPACE)
+						p->report(error(error::kind::KIND_NOTE, "Originally declared here.", static_pointer_cast<namespace_symbol>(res)->stream(), 0));
+					else if(res->symbol_kind() == symbol::kind::KIND_VARIABLE)
+						p->report(error(error::kind::KIND_NOTE, "Originally declared here.", static_pointer_cast<variable_symbol>(res)->stream(), 0));
+					else if(res->symbol_kind() == symbol::kind::KIND_STRUCT)
+						p->report(error(error::kind::KIND_NOTE, "Originally declared here.", static_pointer_cast<struct_symbol>(res)->stream(), 0));
 					bad = true;
 				}
 				else { 

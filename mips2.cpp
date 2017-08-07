@@ -3085,7 +3085,9 @@ namespace spectre {
 				}
 				int counter = mc->next_misc_counter();
 				string s_lit = "__sp_lit_" + to_string(counter);
-				raw_lit = raw_lit.substr(1, raw_lit.length() - 2);
+				raw_lit = "";
+				for (token t : pe->stream())
+					raw_lit += t.raw_text().substr(1, t.raw_text().length() - 2);
 				shared_ptr<operand> fp = register_file2::_fp_register;
 				vector<string> chars;
 				for (int i = 0; i < raw_lit.length(); i++)
