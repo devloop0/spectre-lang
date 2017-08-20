@@ -396,8 +396,8 @@ namespace spectre {
 			const static string _mfc1 = "mfc1";
 			const static string _mtc1 = "mtc1";
 #elif SYSTEM == 2
-			const static string _mfc1 = "fmv.w.x";
-			const static string _mtc1 = "fmv.x.w";
+			const static string _mfc1 = "fmv.x.w";
+			const static string _mtc1 = "fmv.w.x";
 #endif
 
 #if SYSTEM == 0 || SYSTEM == 1

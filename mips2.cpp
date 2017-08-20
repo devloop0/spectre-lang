@@ -1578,12 +1578,15 @@ namespace spectre {
 			tuple<vector<shared_ptr<stmt>>, vector<shared_ptr<stmt>>, vector<shared_ptr<stmt>>, vector<shared_ptr<stmt>>> reordered = reorder_stmt_list(mc, p->stmt_list());
 			vector<shared_ptr<stmt>> _vdecls = get<0>(reordered), _functions = get<1>(reordered), _main = get<2>(reordered), _rest = get<3>(reordered);
 			for (shared_ptr<stmt> s : _vdecls) {
-				if (s->stmt_kind() != stmt::kind::KIND_VARIABLE_DECLARATION) {
+				if (s->stmt_kind() != stmt::kind::KIND_VARIABLE_DECLARATION && s->stmt_kind() != stmt::kind::KIND_ACCESS) {
 					mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 					return;
 				}
-				for (shared_ptr<variable_declaration> vd : s->stmt_variable_declaration_list())
-					generate_variable_declaration_mips(mc, vd);
+				if (s->stmt_kind() == stmt::kind::KIND_VARIABLE_DECLARATION)
+					for (shared_ptr<variable_declaration> vd : s->stmt_variable_declaration_list())
+						generate_variable_declaration_mips(mc, vd);
+				else if (s->stmt_kind() == stmt::kind::KIND_ACCESS)
+					generate_access_stmt_mips(mc, s->stmt_access());
 			}
 			for (shared_ptr<stmt> s : _functions)
 				generate_stmt_mips(mc, s);
@@ -1653,6 +1656,7 @@ namespace spectre {
 				case stmt::kind::KIND_ASM:
 					return generate_asm_stmt_mips(mc, s->stmt_asm());
 					break;
+				case stmt::kind::KIND_ACCESS:
 				case stmt::kind::KIND_NAMESPACE:
 				default:
 					mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
@@ -1773,7 +1777,11 @@ namespace spectre {
 					return nullptr;
 				}
 				shared_ptr<operand> reg = allocate_general_purpose_fp_register(mc);
+#if SYSTEM == 0 || SYSTEM == 1
 				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_MTC1, src, reg));
+#elif SYSTEM == 2
+				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_MTC1, reg, src));
+#endif
 				if (pt2->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE) {
 					reg->set_double_precision(true);
 					reg->set_single_precision(false);
@@ -3153,7 +3161,7 @@ namespace spectre {
 			}
 				break;
 			case primary_expression::kind::KIND_IDENTIFIER: {
-				string sym_string = symbol_2_string(mc, pe->identifier_symbol());
+				string sym_string = c_symbol_2_string(mc, pe->identifier_symbol());
 				shared_ptr<symbol> sym = pe->identifier_symbol();
 				if (sym->symbol_kind() == symbol::kind::KIND_FUNCTION) {
 					if (is_function_main(mc, static_pointer_cast<function_symbol>(sym)))
@@ -3466,7 +3474,11 @@ namespace spectre {
 					dp = flhs->double_precision();
 					if(frhs->register_number() <= 31) {
 						shared_ptr<operand> temp = allocate_general_purpose_fp_register(mc);
+#if SYSTEM == 0 || SYSTEM == 1
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_MTC1, frhs, temp));
+#elif SYSTEM == 2
+						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_MTC1, temp, frhs));
+#endif
 						if (dp)
 							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_CVT_D_W, temp, temp));
 						else
@@ -3485,7 +3497,11 @@ namespace spectre {
 					dp = frhs->double_precision();
 					if(flhs->register_number() <= 31) {
 						shared_ptr<operand> temp = allocate_general_purpose_fp_register(mc);
+#if SYSTEM == 0 || SYSTEM == 1
 						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_MTC1, flhs, temp));
+#elif SYSTEM == 2
+						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_MTC1, temp, flhs));
+#endif
 						if (dp)
 							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_CVT_D_W, temp, temp));
 						else
@@ -4094,9 +4110,65 @@ namespace spectre {
 			return symbol_2_string_helper(mc, s, "");
 		}
 
+		string c_scope_2_string_helper(shared_ptr<mips_code> mc, shared_ptr<scope> s, string r) {
+			if (s == nullptr)
+				return r;
+			else if (s->parent_scope() == nullptr || s->scope_kind() == scope::kind::KIND_GLOBAL)
+				return r;
+			switch (s->scope_kind()) {
+			case scope::kind::KIND_BLOCK:
+				return c_scope_2_string_helper(mc, s->parent_scope(), "b" + to_string(static_pointer_cast<block_scope>(s)->block_number()) + "$_" + r);
+				break;
+			case scope::kind::KIND_LOOP:
+				return c_scope_2_string_helper(mc, s->parent_scope(), "l$_" + r);
+				break;
+			case scope::kind::KIND_SWITCH:
+				return c_scope_2_string_helper(mc, s->parent_scope(), "s$_" + r);
+				break;
+			case scope::kind::KIND_NAMESPACE:
+				return c_scope_2_string_helper(mc, s->parent_scope(), static_pointer_cast<namespace_scope>(s)->namespace_name().raw_text() + "_" + r);
+			case scope::kind::KIND_FUNCTION: {
+				shared_ptr<function_scope> fs = static_pointer_cast<function_scope>(s);
+				return c_scope_2_string_helper(mc, s->parent_scope(), fs->function_name().raw_text() + "_" + r);
+			}
+				break;
+			};
+			mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+			return "";
+		}
+
+		string c_scope_2_string(shared_ptr<mips_code> mc, shared_ptr<scope> s) {
+			if (s == nullptr)
+				return "";
+			return "_" + c_scope_2_string_helper(mc, s, "");
+		}
+		string c_symbol_2_string_helper(shared_ptr<mips_code> mc, shared_ptr<symbol> s, string r) {
+			string scope_string = c_scope_2_string(mc, s->parent_scope());
+			if (s->symbol_kind() == symbol::kind::KIND_VARIABLE) {
+				shared_ptr<type> t = static_pointer_cast<variable_symbol>(s)->variable_type();
+				return scope_string + static_pointer_cast<variable_symbol>(s)->variable_name().raw_text();
+			}
+			if (s->symbol_kind() == symbol::kind::KIND_FUNCTION) {
+				shared_ptr<function_symbol> fsym = static_pointer_cast<function_symbol>(s);
+				return scope_string + fsym->function_name().raw_text();
+			}
+			if (s->symbol_kind() == symbol::kind::KIND_STRUCT) {
+				shared_ptr<struct_symbol> ss = static_pointer_cast<struct_symbol>(s);
+				return scope_string + ss->struct_name().raw_text();
+			}
+			mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+			return "";
+		}
+
+		string c_symbol_2_string(shared_ptr<mips_code> mc, shared_ptr<symbol> s) {
+			if (s == nullptr)
+				return "";
+			return c_symbol_2_string_helper(mc, s, "");
+		}
+
 		void generate_variable_declaration_mips(shared_ptr<mips_code> mc, shared_ptr<variable_declaration> vd) {
 			if (vd == nullptr) return;
-			string sym_string = symbol_2_string(mc, vd->variable_declaration_symbol());
+			string sym_string = c_symbol_2_string(mc, vd->variable_declaration_symbol());
 			shared_ptr<type> vd_type = vd->variable_declaration_type();
 			bool on_stack = !(vd->variable_declaration_symbol()->parent_scope()->scope_kind() == scope::kind::KIND_GLOBAL || vd->variable_declaration_symbol()->parent_scope()->scope_kind() == scope::kind::KIND_NAMESPACE ||
 					vd_type->type_static_kind() == type::static_kind::KIND_STATIC),
@@ -4379,7 +4451,7 @@ namespace spectre {
 				fsym = "main";
 #endif
 			else
-				fsym = symbol_2_string(mc, fs->function_stmt_symbol());
+				fsym = c_symbol_2_string(mc, fs->function_stmt_symbol());
 			bool is_static = fs->function_stmt_type()->type_static_kind() == type::static_kind::KIND_STATIC;
 			if (!is_static)
 				mc->add_globl_directive(make_shared<directive>(fsym));
@@ -4434,7 +4506,7 @@ namespace spectre {
 			for (int i = 0; i < parm_list.size(); i++) {
 				shared_ptr<variable_declaration> vdecl = parm_list[i];
 				shared_ptr<type> curr_type = vdecl->variable_declaration_type();
-				string sym_name = symbol_2_string(mc, vdecl->variable_declaration_symbol());
+				string sym_name = c_symbol_2_string(mc, vdecl->variable_declaration_symbol());
 				int fp_index = find(fp_register_args.begin(), fp_register_args.end(), i) - fp_register_args.begin(),
 					reg_index = find(register_args.begin(), register_args.end(), i) - register_args.begin();
 				if (fp_index < fp_register_args.size()) {
@@ -4572,12 +4644,13 @@ namespace spectre {
 #elif SYSTEM == 2
 				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDU, register_file2::_a0_register, register_file2::_zero_register, register_file2::_zero_register));
 #endif
-#if SYSTEM == 0
+#if SYSTEM == 1
 				mc->current_frame()->add_insn_to_epilogue(make_shared<insn>(insn::kind::KIND_ADDIU, sp, sp, make_shared<operand>(4)));
 #endif
 #if SYSTEM == 0 || SYSTEM == 1
 				mc->current_frame()->add_insn_to_epilogue(make_shared<insn>(insn::kind::KIND_ADDU, register_file2::_a0_register, register_file2::_v0_register, register_file2::_zero_register));
 #endif
+#if PROG_TERM == 0
 #if SYSTEM == 0
 				mc->current_frame()->add_insn_to_epilogue(make_shared<insn>(insn::kind::KIND_ADDIU, register_file2::_v0_register, register_file2::_zero_register, make_shared<operand>(4001)));
 #elif SYSTEM == 1
@@ -4589,6 +4662,9 @@ namespace spectre {
 				mc->current_frame()->add_insn_to_epilogue(make_shared<insn>(insn::kind::KIND_ADDU, register_file2::_a1_register, register_file2::_zero_register, register_file2::_a0_register));
 				mc->current_frame()->add_insn_to_epilogue(make_shared<insn>(insn::kind::KIND_ADDIU, register_file2::_a0_register, register_file2::_zero_register, make_shared<operand>(10)));
 				mc->current_frame()->add_insn_to_epilogue(make_shared<insn>(insn::kind::KIND_SYSCALL));
+#endif
+#elif PROG_TERM == 1
+				mc->current_frame()->add_insn_to_epilogue(make_shared<insn>(insn::kind::KIND_JAL, make_shared<operand>(false, program_termination_hook)));
 #endif
 				mc->current_frame()->add_insn_to_epilogue(make_shared<insn>(""));
 			}
@@ -4814,7 +4890,7 @@ namespace spectre {
 			vector<shared_ptr<stmt>> reordered;
 			vector<shared_ptr<stmt>> _vdecls, _functions, _main, _rest;
 			for (shared_ptr<stmt> s : sl) {
-				if (s->stmt_kind() == stmt::kind::KIND_VARIABLE_DECLARATION)
+				if (s->stmt_kind() == stmt::kind::KIND_VARIABLE_DECLARATION || s->stmt_kind() == stmt::kind::KIND_ACCESS)
 					_vdecls.push_back(s);
 				else if (s->stmt_kind() == stmt::kind::KIND_FUNCTION) {
 					if (is_function_main(mc, s->stmt_function()->function_stmt_symbol()))
@@ -4894,7 +4970,7 @@ namespace spectre {
 					for (token t : at->raw_register())
 						raw_reg += t.raw_text().substr(1, t.raw_text().length() - 2);
 					shared_ptr<operand> reg_label = make_shared<operand>(false, raw_reg);
-					string sym_string = symbol_2_string(mc, at->identifier_symbol());
+					string sym_string = c_symbol_2_string(mc, at->identifier_symbol());
 					if (at->identifier_symbol()->symbol_kind() == symbol::kind::KIND_FUNCTION) {
 						if (is_function_main(mc, static_pointer_cast<function_symbol>(at->identifier_symbol())))
 #if SYSTEM == 0
@@ -5591,6 +5667,14 @@ namespace spectre {
 					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LW, register_file2::int_2_register_object.at(which_to_store[i]),
 						make_shared<operand>(operand::offset_kind::KIND_MIDDLE, middle_offsets[i], fp->register_number(), fp->register_name())));
 				curr += 8;
+			}
+		}
+
+		void generate_access_stmt_mips(shared_ptr<mips_code> mc, shared_ptr<access_stmt> as) {
+			if (as == nullptr || !as->valid()) return;
+			for (shared_ptr<symbol> s : as->declared_symbol_list()) {
+				string sym_name = c_symbol_2_string(mc, s);
+				mc->current_frame()->add_variable(sym_name, make_shared<operand>(false, sym_name));
 			}
 		}
 	}

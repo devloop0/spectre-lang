@@ -334,6 +334,10 @@ namespace spectre {
 
 		}
 
+		stmt::stmt(stmt::kind sk, shared_ptr<access_stmt> as, bool v, vector<token> s) : _valid(v), _stream(s), _stmt_access(as), _stmt_kind(sk) {
+
+		}
+
 		stmt::stmt() : _stmt_kind(stmt::kind::KIND_NONE), _stmt_expression(nullptr), _valid(false), _stream(vector<token>()) {
 
 		}
@@ -420,6 +424,10 @@ namespace spectre {
 
 		shared_ptr<include_stmt> stmt::stmt_include() {
 			return _stmt_include;
+		}
+
+		shared_ptr<access_stmt> stmt::stmt_access() {
+			return _stmt_access;
 		}
 
 		break_continue_stmt::break_continue_stmt(break_continue_stmt::kind k, vector<token> s, bool v) :
@@ -757,6 +765,30 @@ namespace spectre {
 
 		include_stmt::type include_stmt::include_stmt_type() {
 			return _include_stmt_type;
+		}
+
+		access_stmt::access_stmt(shared_ptr<type> dt, vector<shared_ptr<symbol>> dsl, vector<token> s, bool v) : _declared_type(dt), _declared_symbol_list(dsl), _stream(s), _valid(v) {
+
+		}
+
+		access_stmt::~access_stmt() {
+
+		}
+
+		shared_ptr<type> access_stmt::declared_type() {
+			return _declared_type;
+		}
+
+		vector<shared_ptr<symbol>> access_stmt::declared_symbol_list() {
+			return _declared_symbol_list;
+		}
+
+		vector<token> access_stmt::stream() {
+			return _stream;
+		}
+
+		bool access_stmt::valid() {
+			return _valid;
 		}
 	}
 }

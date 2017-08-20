@@ -42,6 +42,7 @@ using spectre::ast::namespace_stmt;
 using spectre::ast::using_stmt;
 using spectre::ast::asm_stmt;
 using spectre::ast::include_stmt;
+using spectre::ast::access_stmt;
 using spectre::lexer::diagnostics;
 using spectre::lexer::error;
 using std::shared_ptr;
@@ -566,6 +567,18 @@ namespace spectre {
 			include_stmt_parser(shared_ptr<parser> p);
 			~include_stmt_parser();
 			shared_ptr<include_stmt> contained_include_stmt();
+			bool valid();
+		};
+
+		class access_stmt_parser {
+		private:
+			shared_ptr<access_stmt> _contained_access_stmt;
+			bool _valid;
+	
+		public:
+			access_stmt_parser(shared_ptr<parser> p);
+			~access_stmt_parser();
+			shared_ptr<access_stmt> contained_access_stmt();
 			bool valid();
 		};
 

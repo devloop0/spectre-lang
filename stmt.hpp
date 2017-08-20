@@ -423,12 +423,27 @@ namespace spectre {
 			type include_stmt_type();
 		};
 
+		class access_stmt {
+		private:
+			vector<token> _stream;
+			shared_ptr<type> _declared_type;
+			vector<shared_ptr<symbol>> _declared_symbol_list;
+			bool _valid;
+		public:
+			access_stmt(shared_ptr<type> dt, vector<shared_ptr<symbol>> dsl, vector<token> s, bool v);
+			~access_stmt();
+			vector<token> stream();
+			shared_ptr<type> declared_type();
+			vector<shared_ptr<symbol>> declared_symbol_list();
+			bool valid();
+		};
+
 		class stmt {
 		public:
 			enum class kind {
 				KIND_EXPRESSION, KIND_VARIABLE_DECLARATION, KIND_IF, KIND_EMPTY, KIND_FUNCTION, KIND_RETURN, KIND_WHILE,
 				KIND_BLOCK, KIND_BREAK_CONTINUE, KIND_FOR, KIND_DO_WHILE, KIND_CASE_DEFAULT, KIND_SWITCH, KIND_STRUCT,
-				KIND_NAMESPACE, KIND_USING, KIND_ASM, KIND_INCLUDE, KIND_NONE
+				KIND_NAMESPACE, KIND_USING, KIND_ASM, KIND_INCLUDE, KIND_ACCESS, KIND_NONE
 			};
 		private:
 			shared_ptr<expression> _stmt_expression;
@@ -448,6 +463,7 @@ namespace spectre {
 			shared_ptr<using_stmt> _stmt_using;
 			shared_ptr<asm_stmt> _stmt_asm;
 			shared_ptr<include_stmt> _stmt_include;
+			shared_ptr<access_stmt> _stmt_access;
 			kind _stmt_kind;
 			bool _valid;
 			vector<token> _stream;
@@ -469,6 +485,7 @@ namespace spectre {
 			stmt(kind sk, shared_ptr<using_stmt> us, bool v, vector<token> s);
 			stmt(kind sk, shared_ptr<asm_stmt> as, bool v, vector<token> s);
 			stmt(kind sk, shared_ptr<include_stmt> is, bool v, vector<token> s);
+			stmt(kind sk, shared_ptr<access_stmt> as, bool v, vector<token> s);
 			stmt();
 			~stmt();
 			shared_ptr<expression> stmt_expression();
@@ -491,6 +508,7 @@ namespace spectre {
 			shared_ptr<using_stmt> stmt_using();
 			shared_ptr<asm_stmt> stmt_asm();
 			shared_ptr<include_stmt> stmt_include();
+			shared_ptr<access_stmt> stmt_access();
 		};
 	}
 }

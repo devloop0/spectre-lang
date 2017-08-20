@@ -380,8 +380,9 @@ namespace spectre {
 			if (sp.valid() && sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_FUNCTION && sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_STRUCT &&
 				sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_VARIABLE_DECLARATION && sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_NAMESPACE &&
 				sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_EMPTY && sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_USING &&
-				sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_INCLUDE) {
-				report(error(error::kind::KIND_ERROR, "Only includes/imports, namespaces, using statements, functions, struct's, and variable declarations are allowed at the global scope.",
+				sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_INCLUDE && sp.contained_stmt()->stmt_kind() != stmt::kind::KIND_ACCESS) {
+				report(error(error::kind::KIND_ERROR,
+					"Only includes/imports, namespaces, using statements, functions, struct's, accesses, and variable declarations are allowed at the global scope.",
 					sp.contained_stmt()->stream(), 0));
 			}
 			_stmt_list.push_back(sp.contained_stmt());
@@ -1326,6 +1327,18 @@ namespace spectre {
 					_contained_stmt = make_shared<stmt>(stmt::kind::KIND_IF, i, i->valid(), i->stream());
 					stream = i->stream();
 					_valid = i->valid();
+				}
+				else {
+					_contained_stmt = make_shared<stmt>();
+					_valid = false;
+				}
+			}
+			else if (p->peek().token_kind() == token::kind::TOKEN_ACCESS) {
+				shared_ptr<access_stmt> a = access_stmt_parser(p).contained_access_stmt();
+				if (a != nullptr) {
+					_contained_stmt = make_shared<stmt>(stmt::kind::KIND_ACCESS, a, a->valid(), a->stream());
+					stream = a->stream();
+					_valid = a->valid();
 				}
 				else {
 					_contained_stmt = make_shared<stmt>();
@@ -4344,8 +4357,8 @@ namespace spectre {
 				}
 				if (s->stmt_kind() != stmt::kind::KIND_FUNCTION && s->stmt_kind() != stmt::kind::KIND_VARIABLE_DECLARATION &&
 					s->stmt_kind() != stmt::kind::KIND_NAMESPACE && s->stmt_kind() != stmt::kind::KIND_EMPTY && s->stmt_kind() != stmt::kind::KIND_STRUCT &&
-					s->stmt_kind() != stmt::kind::KIND_USING && s->stmt_kind() != stmt::kind::KIND_INCLUDE) {
-					p->report(error(error::kind::KIND_ERROR, "Only namespaces, using statements, functions, struct's, import/include statements and variable declarations are"
+					s->stmt_kind() != stmt::kind::KIND_USING && s->stmt_kind() != stmt::kind::KIND_INCLUDE && s->stmt_kind() != stmt::kind::KIND_ACCESS) {
+					p->report(error(error::kind::KIND_ERROR, "Only namespaces, using statements, functions, struct's, import/include statements, accesses, and variable declarations are"
 						"allowed at the namespace scope.", stream, 0));
 					_contained_namespace_stmt = make_shared<namespace_stmt>(k, dk, nn, n_scope, n_symbol, nsl, false, stream);
 					_valid = false;
@@ -4783,6 +4796,131 @@ namespace spectre {
 
 		bool include_stmt_parser::valid() {
 			return _valid;
+		}
+
+		access_stmt_parser::access_stmt_parser(shared_ptr<parser> p) : _valid(false), _contained_access_stmt(nullptr) {
+			vector<token> stream;
+			if (p->peek().token_kind() != token::kind::TOKEN_ACCESS ||
+				(p->current_scope()->scope_kind() != scope::kind::KIND_GLOBAL && p->current_scope()->scope_kind() != scope::kind::KIND_NAMESPACE)) {
+				_contained_access_stmt = make_shared<access_stmt>(nullptr, vector<shared_ptr<symbol>>{}, vector<token>{}, false);
+				_valid = false;
+				return;
+			}
+			stream.push_back(p->pop());
+			type_parser tp(p);
+			if (!tp.valid() || !check_declaration_type_is_correct(p, make_shared<type_parser>(tp))) {
+				p->report(error(error::kind::KIND_ERROR, "Expected a valid type for an access statement.", stream, 0));
+				_contained_access_stmt = make_shared<access_stmt>(nullptr, vector<shared_ptr<symbol>>{}, stream, false);
+				_valid = false;
+				return;
+			}
+			if (p->peek().token_kind() != token::kind::TOKEN_BAR) {
+				p->report(error(error::kind::KIND_ERROR, "Expected a '|' to divide an access type from identifiers.", stream, 0));
+				_contained_access_stmt = make_shared<access_stmt>(nullptr, vector<shared_ptr<symbol>>{}, stream, false);
+				_valid = false;
+				return;
+			}
+			stream.push_back(p->pop());
+			shared_ptr<type> dt = tp.contained_type();
+			auto consume_qualified_name = [&dt](shared_ptr<parser> p) -> tuple<vector<token>, shared_ptr<symbol>, bool> {
+				if (p->peek().token_kind() != token::kind::TOKEN_COLON_COLON && p->peek().token_kind() != token::kind::TOKEN_IDENTIFIER)
+					return make_tuple(vector<token>{}, nullptr, false);
+				vector<token> stream;
+				bool global = false;
+				if (p->peek().token_kind() == token::kind::TOKEN_COLON_COLON)
+					stream.push_back(p->pop()), global = true;
+				if (p->peek().token_kind() != token::kind::TOKEN_IDENTIFIER) {
+					p->report(error(error::kind::KIND_ERROR, "Expected an identifier after '::'.", stream, 0));
+					return make_tuple(stream, nullptr, false);
+				}
+				vector<token> istream;
+				while (p->peek().token_kind() == token::kind::TOKEN_IDENTIFIER) {
+					token ident = p->pop();
+					stream.push_back(ident);
+					istream.push_back(ident);
+					if (p->peek().token_kind() == token::kind::TOKEN_COLON_COLON)
+						stream.push_back(p->pop());
+					else
+						break;
+				}
+				shared_ptr<scope> iter_scope;
+				if (global) iter_scope = p->global_scope();
+				else iter_scope = p->current_scope();
+				shared_ptr<symbol> last_symbol;
+				bool first_iter = true;
+				for (int i = 0; i < istream.size() - 1; i++) {
+					last_symbol = iter_scope->find_symbol(istream[i], !first_iter);
+					if (last_symbol == nullptr) {
+						p->report(error(error::kind::KIND_ERROR, "This symbol was not found.", stream, 0));
+						return make_tuple(stream, nullptr, false);
+					}
+					if (last_symbol->symbol_kind() != symbol::kind::KIND_NAMESPACE) {
+						p->report(error(error::kind::KIND_ERROR, "Cannot use the '::' operator on a non-namespace symbol.", stream, 0));
+						return make_tuple(stream, nullptr, false);
+					}
+					shared_ptr<namespace_symbol> nsym = static_pointer_cast<namespace_symbol>(last_symbol);
+					iter_scope = nsym->namespace_symbol_scope();
+					first_iter = false;
+				}
+				shared_ptr<symbol> res = iter_scope->find_symbol(istream[istream.size() - 1], !first_iter);
+				if (res != nullptr) {
+					if (res->symbol_kind() != symbol::kind::KIND_VARIABLE) {
+						p->report(error(error::kind::KIND_ERROR, "Expected to 'access' a variable.", stream, 0));
+						return make_tuple(stream, nullptr, false);
+					}
+					shared_ptr<type> to_comp = static_pointer_cast<variable_symbol>(res)->variable_type();
+					if (!exact_type_match(p, to_comp, dt)) {
+						p->report(error(error::kind::KIND_ERROR, "Conflicting types for an 'access' statement with an already defined symbol.", stream, 0));
+						return make_tuple(stream, nullptr, false);
+					}
+					return make_tuple(stream, res, true);
+				}
+				else {
+					shared_ptr<variable_symbol> constructed = make_shared<variable_symbol>(iter_scope, istream[istream.size() - 1], dt, stream);
+					iter_scope->add_symbol(constructed);
+					return make_tuple(stream, constructed, true);
+				}
+				return make_tuple(stream, nullptr, false);
+			};
+			vector<shared_ptr<symbol>> dsl;
+			while (true) {
+				tuple<vector<token>, shared_ptr<symbol>, bool> tup = consume_qualified_name(p);
+				if (!get<2>(tup)) {
+					p->report(error(error::kind::KIND_ERROR, "Invalid identifier name.", stream, 0));
+					_contained_access_stmt = make_shared<access_stmt>(dt, dsl, stream, false);
+					_valid = false;
+					return;
+				}
+				vector<token> istream = get<0>(tup);
+				shared_ptr<symbol> curr = get<1>(tup);
+				stream.insert(stream.end(), istream.begin(), istream.end());
+				dsl.push_back(curr);
+				if (p->peek().token_kind() == token::kind::TOKEN_COMMA)
+					stream.push_back(p->pop());
+				else
+					break;
+			}
+			if (p->peek().token_kind() != token::kind::TOKEN_SEMICOLON) {
+					p->report(error(error::kind::KIND_ERROR, "Expected a ';' to terminate an 'access' statement.", stream, 0));
+					_contained_access_stmt = make_shared<access_stmt>(dt, dsl, stream, false);
+					_valid = false;
+					return;
+			}
+			stream.push_back(p->pop());
+			_valid = true;
+			_contained_access_stmt = make_shared<access_stmt>(dt, dsl, stream, true);
+		}
+
+		access_stmt_parser::~access_stmt_parser() {
+
+		}
+
+		bool access_stmt_parser::valid() {
+			return _valid;
+		}
+
+		shared_ptr<access_stmt> access_stmt_parser::contained_access_stmt() {
+			return _contained_access_stmt;
 		}
 
 		bool is_constant_expression(shared_ptr<parser> p, shared_ptr<assignment_expression> aexpr) {

@@ -22,6 +22,7 @@ namespace spectre {
 	namespace mips2 {
 
 		const static string label_prefix = "$L";
+		const static string program_termination_hook = "_std_hooks_sp_exit";
 
 		class operand {
 		public:
@@ -315,6 +316,11 @@ namespace spectre {
 		string symbol_2_string_helper(shared_ptr<mips_code> mc, shared_ptr<symbol> s, string r);
 		string symbol_2_string(shared_ptr<mips_code> mc, shared_ptr<symbol> s);
 
+		string c_scope_2_string_helper(shared_ptr<mips_code> mc, shared_ptr<scope> s, string r);
+		string c_scope_2_string(shared_ptr<mips_code> mc, shared_ptr<scope> s);
+		string c_symbol_2_string_helper(shared_ptr<mips_code> mc, shared_ptr<symbol> s, string r);
+		string c_symbol_2_string(shared_ptr<mips_code> mc, shared_ptr<symbol> s);
+
 		shared_ptr<operand> literal_token_2_operand(shared_ptr<mips_code> mc, shared_ptr<primary_expression> pe);
 
 		void generate_mips(shared_ptr<mips_code> mc, shared_ptr<spectre::parser::parser> p);
@@ -338,6 +344,7 @@ namespace spectre {
 		void generate_do_while_stmt_mips(shared_ptr<mips_code> mc, shared_ptr<while_stmt> dws);
 		void generate_for_stmt_mips(shared_ptr<mips_code> mc, shared_ptr<for_stmt> fs);
 		void generate_asm_stmt_mips(shared_ptr<mips_code> mc, shared_ptr<asm_stmt> as);
+		void generate_access_stmt_mips(shared_ptr<mips_code> mc, shared_ptr<access_stmt> as);
 
 		variant<bool, int, unsigned int, float, double, string> evaluate_constant_expression(shared_ptr<mips_code> mc, shared_ptr<assignment_expression> ae);
 		template<typename C, typename TL, typename TR> auto raw_arithmetic_binary_expression_evaluator(shared_ptr<mips_code> mc, TL lhs, TR rhs, binary_expression::operator_kind ok);
