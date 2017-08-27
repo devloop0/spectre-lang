@@ -22,7 +22,7 @@ namespace spectre {
 	namespace mips2 {
 
 		const static string label_prefix = "$L";
-		const static string program_termination_hook = "_std_hooks_sp_exit";
+		const static string program_termination_hook = "_std_lib_exit";
 
 		class operand {
 		public:
