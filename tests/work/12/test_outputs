@@ -1,0 +1,36 @@
+------------Building ./gcc_torture_34.sp-------------
+------------Running ./gcc_torture_34.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./arr_test.sp-------------
+------------Running ./arr_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./gcc_torture_26_2.sp-------------
+------------Running ./gcc_torture_26_2.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./memchr_test.sp-------------
+------------Running ./memchr_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./memmove_test.sp-------------
+------------Running ./memmove_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./memcmp_test.sp-------------
+------------Running ./memcmp_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./_l_abs_test.sp-------------
+------------Running ./_l_abs_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./gcc_torture_33.sp-------------
+------------Running ./gcc_torture_33.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./_l_div_test.sp-------------
+------------Running ./_l_div_test.sp-------------
+Y
+------------Return code: 0-------------

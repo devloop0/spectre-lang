@@ -1,0 +1,19 @@
+namespace std {
+	namespace hooks {
+
+		const static int ATEXIT_MAX = 32;
+
+		struct exit_data {
+			fn void()* exit_fn_list;
+			unsigned int sz;
+		}
+
+		func int sp_atexit(fn void() f);
+
+		func void sp_exit(int status);
+
+		func int sp_at_quick_exit(fn void() f);
+	
+		func void sp_quick_exit(int status);
+	}
+}

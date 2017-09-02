@@ -1,0 +1,15 @@
+namespace std {
+	namespace syscall {
+
+		const static unsigned int LINUX_MIPS = 4000;
+		const static unsigned int LINUX_MIPS_EXIT = 4001;
+		const static unsigned int LINUX_MIPS_READ = 4003;
+		const static unsigned int LINUX_MIPS_WRITE = 4004;
+
+		func void direct_write(int fd, const char* buf, const unsigned int count);
+		
+		func void direct_read(int fd, char* buf, const unsigned int count);
+		
+		func void exit(const int status_code);
+	}
+}

@@ -1,0 +1,25 @@
+------------Building ./strcpy_test.sp-------------
+------------Running ./strcpy_test.sp-------------
+Nikhil Athreya
+Nidhi Athreya 
+Nikhil Athreya
+Nidhil Athreya
+------------Return code: 0-------------
+------------Building ./function_ptrs_3.sp-------------
+------------Running ./function_ptrs_3.sp-------------
+------------Return code: 18-------------
+------------Building ./function_ptrs_4.sp-------------
+------------Running ./function_ptrs_4.sp-------------
+5
+8
+------------Return code: 0-------------
+------------Building ./function_ptrs_2.sp-------------
+------------Running ./function_ptrs_2.sp-------------
+------------Return code: 9-------------
+------------Building ./function_ptrs.sp-------------
+------------Running ./function_ptrs.sp-------------
+Nikhil
+Athreya
+is
+great
+------------Return code: 0-------------

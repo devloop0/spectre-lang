@@ -1,0 +1,28 @@
+namespace std {
+	namespace string {
+
+		static char* NULL = 0 as char*;
+
+		func unsigned int strlen(const char* str);
+
+		func int strcmp(const char* str1, const char* str2);
+
+		func char* strcpy(char* str1, const char* str2);
+	
+		func char* strcat(char* str1, const char* str2);
+
+		func byte* memcpy(byte* dst, const byte* src, unsigned int bytes);
+
+		func byte* memset(byte* dst, const byte val, unsigned int bytes);
+
+		func char* strchr(const char* str, const char c);
+
+		func unsigned int strcspn(const char* str1, const char* str2);
+
+		func int memcmp(const byte* ptr1, const byte* ptr2, unsigned int count);
+
+		func byte* memmove(byte* dst, const byte* src, unsigned int bytes);
+
+		func byte* memchr(const byte* src, const byte val, unsigned int bytes);
+	}
+}

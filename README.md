@@ -1,27 +1,110 @@
-Spectre: A C-like compiled language.
+# Spectre: A C-like compiled language.
 
-Sample:
+## Why?
+I like C and did it for fun. I also like namespaces.
 
+## Dependencies
+* make
+* g++\-7 (C++17)
+* realpath
+* GNU binutils
+
+## Compiler Setup
+To compile spectre for your machine:
 ```
-namespace std {
-	namespace io {
-		func void print_string(const char* str) {
-			__asm__ ( "li $2, 4" : str "$4" : "lw $4, 0($4)" : "syscall" );
-		}
-	}
-}
+$ make install
+```
+This will setup and compile spectre for you.
 
-namespace std {
-	namespace machine {
-		func const bool little_endian() {
-			int x = 1;
-			return x$ as char* @ as bool;
-		}
-	}
-}
+## Library Setup
+The standard library only works on an actual 32-bit MIPS Linux system. If you don't have access to one, you'll need to emulate one.
+First, you'll need to copy the `libspectre` directory into your `/usr/include` directory. The spectre compiler searches for system includes from the
+`/usr/include/libspectre` path. I'd recommend giving your current user full permissions over the folder during setup (you can change this later if you want).
+Additionally, you'll need to add the spectre compiler to your `$PATH` for this build script to work.
+From here on out, I'll assume that you have full permissions to the `/usr/include/libspectre` folder and `spectre` is in your `$PATH`.
+Now, do the following:
+```
+$ mkdir build
+$ cd build
+$ /usr/include/libspectre/build.sh
+$ cp libspectre.a /usr/include/libspectre/
+```
+This creates a temporary build directory and builds the standard library and statically links it to a `libspectre.a` archive.
+Then you'll need to place this in the `/usr/include/libspectre` folder since this is spectre's system folder.
+You can remove the `build/` folder now if you want.
+
+## Running
+Running assumes you've compiled the standard library from source in the last step (see the `Config` section for more clarifications on this) and you're on a 32-bit Linux MIPS system.
+Here's a sample Spectre program to print `Hello World!` using syscalls.
+```
+import <"std/syscall">
+import <"std/string">
+
+using std::syscall::direct_write;
+using std::string::strlen;
 
 func int main() {
-	std::io::print_string("Hello World!\n");
-	std::io::print_string(std::machine::little_endian() ? "This is a little endian machine.\n" : "This is a big endian machine.\n");
+	char* hello = "Hello World!\n";
+	direct_write(1, hello, strlen(hello));
+	return 0;
 }
 ```
+Save this in a file called `hello.sp` (or really whatever you want, I'll just assume `hello.sp` from here on out).
+Now, run the following:
+```
+$ spectre hello.sp
+$ as -mips32 hello.s -o hello.o
+$ ld hello.o -o hello -L/usr/include/libspectre -l:libspectre.a
+$ ./hello
+```
+This should print `Hello World!` if everything went correct. Since these sets of command are so common, there's a shortcut for doing this:
+```
+$ sp hello.sp
+$ ./hello
+```
+Where the `sp` command is just a bash script wrapper around the `spectre` compiler.
+
+## Tips
+If you don't have access to a physical MIPS machine, I would recommend using QEMU to emulate MIPS. I've tested this on a QEMU 32-bit MIPS Malta emulated CPU that has floating point support.
+
+## Config
+If you absolutely don't have access to a physical MIPS system, you'll access to the standard library, but there are still ways to use spectre.
+Inside the `config.hpp` file, you'll see some preprocessor macros that you can change to change the behavior of spectre itself.
+Please only touch the `SYSTEM` and `PROG_TERM` macros.
+Here are the options for the `SYSTEM` macro:
+* `REAL_MIPS`: the default, spectre compiles the program as if it were going to be run on a real Linux machine.
+* `MARS`: spectre compiles the program as if it were going to be run on the MARS MIPS emulator.
+* `RISCV`: spectre compiles the program as if it were going to be run on a RISCV machine.
+
+Here are the options for the `PROG_TERM` macro:
+* `PROG_TERM_ABORT`: at the end of the main function, the program terminates by essentially calling the `abort()` function in C (something similar to this). More importantly, no exit handlers are run.
+* `PROG_TERM_EXIT`: the default, runs exit handlers on program termination, require integration into the standard library by the compiler.
+
+These options fall into the following sets:
+* `REAL_MIPS` - { `PROG_TERM_ABORT`, `PROG_TERM_EXIT` }
+* `MARS` - { `PROG_TERM_ABORT` }
+* `RISCV` - { `PROG_TERM_ABORT` }
+
+In other words, if you're compiling for MARS, you can only use `PROG_TERM_ABORT` option.
+
+## Testing
+Inside the `tests/` folder, there are two folders, `work/` and `work_heavy/`. Both contain tests. You'll need to compile `work_heavy` manually (these take a long time to compile) but you can automatically run everything in the `work/` folder.
+Once again, this assumes the standard library from before.
+NOTE: the following output clears the reference outputs in each folder called `test_outputs` if you want to compare to make sure things work, you'll need to save these somewhere else.
+```
+$ ./clear_outputs.sh
+$ ./run.sh
+```
+This will run all the tests in each directory and pipe outputs and return values to files. These folders contain examples of practical spectre programs such as linked lists, ternary search trees, etc. So if you're confused about how to use spectre, this is a good place to start.
+
+# Future Work
+* Should make the `sp` script more robust by just doing the entire thing in C++ so it'll handle more options as well. Currently, it takes all files as inputs and assumes your first file is the file with your main function.
+* Should make testing more robust and intuitive.
+* Write a tutorial?
+
+## Contributions
+* If something went horribly wrong, let me know and I'll try to fix it. Of course, if you want to fix it yourself, contributions are always welcome :^)
+
+## License
+* If you modify the compiler or standard library, make it open source if you plan on re-distributing it.
+* If you write something in the spectre programming language, link against or just use the spectre standard library, or build an executable using spectre, do whatever you want.

@@ -1,0 +1,14 @@
+namespace std {
+	namespace ctype {
+
+		func bool isalpha(char c);
+
+		func bool isdigit(char c);
+
+		func bool isalnum(char c);
+
+		func bool isblank(char c);
+
+		func bool isspace(char c);
+	}
+}

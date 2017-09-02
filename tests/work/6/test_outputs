@@ -1,0 +1,44 @@
+------------Building ./gcc_torture_4.sp-------------
+------------Running ./gcc_torture_4.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./2d_dmat_trans.sp-------------
+------------Running ./2d_dmat_trans.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./dmat_trans.sp-------------
+------------Running ./dmat_trans.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./pt_gt_4_args.sp-------------
+------------Running ./pt_gt_4_args.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./gcc_torture_2.sp-------------
+------------Running ./gcc_torture_2.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./tern_expr.sp-------------
+------------Running ./tern_expr.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./2d_mat_trans.sp-------------
+------------Running ./2d_mat_trans.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./mat_trans.sp-------------
+------------Running ./mat_trans.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./gcc_torture_1.sp-------------
+------------Running ./gcc_torture_1.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./gcc_torture_3.sp-------------
+------------Running ./gcc_torture_3.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./fl_cmps.sp-------------
+------------Running ./fl_cmps.sp-------------
+Y
+------------Return code: 0-------------

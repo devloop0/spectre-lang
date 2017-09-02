@@ -1,0 +1,12 @@
+namespace std {
+	namespace machine {
+
+		func const bool little_endian();
+		
+		func const bool big_endian();
+		
+		func const bool middle_endian();
+	
+		func const unsigned int bits();
+	}
+}

@@ -1,0 +1,42 @@
+namespace std {
+	namespace lib {
+
+		struct div_t {
+			int quot;
+			int rem;
+		}
+
+		struct ldiv_t {
+			long quot;
+			long rem;
+		}
+
+		const static int EXIT_SUCCESS = 0;
+		const static int EXIT_FAILURE = 1;
+		static byte* NULL = 0 as byte*;
+
+		func void qsort(byte* arr, unsigned int len, unsigned int sz, fn int(const byte*,const byte*) cmp);
+
+		func type div_t div(int num, int denom);
+		
+		func type ldiv_t ldiv(long num, long denom);
+
+		func int abs(int n);
+
+		func long labs(long n);
+
+		func int atexit(fn void() f);
+
+		func void exit(int status);
+
+		func void abort();
+
+		func void _Exit(int status);
+
+		func int at_quick_exit(fn void() f);
+		
+		func void quick_exit(int status);
+
+		func void _Exit(int status);
+	}
+}
