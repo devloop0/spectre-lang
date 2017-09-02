@@ -68,7 +68,7 @@ Where the `sp` command is just a bash script wrapper around the `spectre` compil
 If you don't have access to a physical MIPS machine, I would recommend using QEMU to emulate MIPS. I've tested this on a QEMU 32-bit MIPS Malta emulated CPU that has floating point support.
 
 ## Config
-If you absolutely don't have access to a physical MIPS system, you'll access to the standard library, but there are still ways to use spectre.
+If you absolutely don't have access to a physical MIPS system, you'll lose access to the standard library, but there are still ways to use spectre.
 Inside the `config.hpp` file, you'll see some preprocessor macros that you can change to change the behavior of spectre itself.
 Please only touch the `SYSTEM` and `PROG_TERM` macros.
 Here are the options for the `SYSTEM` macro:
@@ -97,7 +97,7 @@ $ ./run.sh
 ```
 This will run all the tests in each directory and pipe outputs and return values to files. These folders contain examples of practical spectre programs such as linked lists, ternary search trees, etc. So if you're confused about how to use spectre, this is a good place to start.
 
-# Future Work
+## Future Work
 * Should make the `sp` script more robust by just doing the entire thing in C++ so it'll handle more options as well. Currently, it takes all files as inputs and assumes your first file is the file with your main function.
 * Should make testing more robust and intuitive.
 * Write a tutorial?
