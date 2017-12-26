@@ -5,11 +5,16 @@
 #include <algorithm>
 #include <iostream>
 #include <cmath>
+#include <limits>
+#include <sstream>
+#include <iomanip>
 
 using std::make_shared;
 using std::make_pair;
 using std::to_string;
 using std::find;
+using std::stringstream;
+using std::setprecision;
 using std::static_pointer_cast;
 using std::remove;
 using std::atoi;
@@ -737,11 +742,20 @@ namespace spectre {
 				}
 					break;
 				case directive::kind::KIND_FLOAT: {
-					if(_float_list.size() == 0)
-						return "\t" + _label_name + ": .float " + to_string(_immediate_float);
+					if (_float_list.size() == 0) {
+						stringstream ss;
+						ss << setprecision(std::numeric_limits<float>::max_digits10) << _immediate_float;
+						string s;
+						ss >> s;
+						return "\t" + _label_name + ": .float " + s;
+					}
 					string ret = "\t" + _label_name + ": .float ";
 					for (int i = 0; i < _float_list.size(); i++) {
-						ret += to_string(_float_list[i]);
+						stringstream ss;
+						ss << setprecision(std::numeric_limits<float>::max_digits10) << _float_list[i];
+						string s;
+						ss >> s;
+						ret += s;
 						if (i != _float_list.size() - 1)
 							ret += ", ";
 					}
@@ -749,11 +763,20 @@ namespace spectre {
 				}
 					break;
 				case directive::kind::KIND_DOUBLE: {
-					if(_double_list.size() == 0)
-						return "\t" + _label_name + ": .double " + to_string(_immediate_double);
+					if (_double_list.size() == 0) {
+						stringstream ss;
+						ss << setprecision(std::numeric_limits<double>::max_digits10) << _immediate_double;
+						string s;
+						ss >> s;
+						return "\t" + _label_name + ": .double " + s;
+					}
 					string ret = "\t" + _label_name + ": .double ";
 					for (int i = 0; i < _double_list.size(); i++) {
-						ret += to_string(_double_list[i]);
+						stringstream ss;
+						ss << setprecision(std::numeric_limits<double>::max_digits10) << _double_list[i];
+						string s;
+						ss >> s;
+						ret += s;
 						if (i != _double_list.size() - 1) ret += ", ";
 					}
 					return ret;
