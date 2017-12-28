@@ -4639,6 +4639,12 @@ namespace spectre {
 			mc->current_frame()->set_frame_size_set(true);
 			mc->current_frame()->set_frame_size(mc->current_frame()->top_section_size() + mc->current_frame()->middle_section_size() + mc->current_frame()->frame_size());
 			mc->current_frame()->restore_saved_registers(mc);
+			if (main_function && parm_list.size() == 2) {
+				shared_ptr<operand> argv_location = make_shared<operand>(4);
+				argv_location->set_operand_offset_kind(operand::offset_kind::KIND_TOP);
+				mc->current_frame()->add_insn_to_prologue(make_shared<insn>(insn::kind::KIND_ADDIU, register_file2::_a1_register, fp, argv_location), true);
+				mc->current_frame()->add_insn_to_prologue(make_shared<insn>(insn::kind::KIND_LW, register_file2::_a0_register, make_shared<operand>(operand::offset_kind::KIND_TOP, 0, fp->register_number(), fp->register_name())), true);
+			}
 			mc->current_frame()->add_insn_to_prologue(make_shared<insn>(insn::kind::KIND_ADDU, fp, sp, register_file2::_zero_register), true);
 			mc->current_frame()->add_insn_to_prologue(make_shared<insn>(insn::kind::KIND_SW, ra, make_shared<operand>(operand::offset_kind::KIND_TOP, -16, sp->register_number(),
 				sp->register_name())), true);
@@ -4719,6 +4725,23 @@ namespace spectre {
 					ft->parameter_list().size() == 0 && ft->type_const_kind() == type::const_kind::KIND_NON_CONST && ft->type_static_kind() == type::static_kind::KIND_NON_STATIC) {
 					shared_ptr<primitive_type> prt = static_pointer_cast<primitive_type>(rt);
 					if (prt->primitive_type_kind() == primitive_type::kind::KIND_INT && prt->primitive_type_sign_kind() == primitive_type::sign_kind::KIND_SIGNED) return true;
+				}
+				else if (rt->type_kind() == type::kind::KIND_PRIMITIVE && rt->type_array_kind() == type::array_kind::KIND_NON_ARRAY &&
+					rt->type_const_kind() == type::const_kind::KIND_NON_CONST && rt->type_static_kind() == type::static_kind::KIND_NON_STATIC &&
+					ft->parameter_list().size() == 2 && ft->type_const_kind() == type::const_kind::KIND_NON_CONST && ft->type_static_kind() == type::static_kind::KIND_NON_STATIC) {
+					shared_ptr<primitive_type> prt = static_pointer_cast<primitive_type>(rt);
+					if (prt->primitive_type_kind() != primitive_type::kind::KIND_INT && prt->primitive_type_sign_kind() != primitive_type::sign_kind::KIND_SIGNED) return false;
+					shared_ptr<variable_declaration> potential_argc = ft->parameter_list()[0];
+					shared_ptr<variable_declaration> potential_argv = ft->parameter_list()[1];
+					shared_ptr<type> potential_argc_type = potential_argc->variable_declaration_type(),
+						potential_argv_type = potential_argv->variable_declaration_type();
+					if (potential_argc_type->type_kind() != type::kind::KIND_PRIMITIVE || potential_argc_type->array_dimensions() != 0 || potential_argc_type->type_array_kind() != type::array_kind::KIND_NON_ARRAY ||
+						potential_argc_type->type_static_kind() != type::static_kind::KIND_NON_STATIC) return false;
+					if (potential_argv_type->type_kind() != type::kind::KIND_PRIMITIVE || potential_argv_type->array_dimensions() != 2 || potential_argv_type->type_array_kind() != type::array_kind::KIND_ARRAY ||
+						potential_argv_type->type_static_kind() != type::static_kind::KIND_NON_STATIC) return false;
+					shared_ptr<primitive_type> potential_argc_prim_type = static_pointer_cast<primitive_type>(potential_argc_type),
+						potential_argv_prim_type = static_pointer_cast<primitive_type>(potential_argv_type);
+					if (potential_argc_prim_type->primitive_type_kind() == primitive_type::kind::KIND_INT && potential_argv_prim_type->primitive_type_kind() == primitive_type::kind::KIND_CHAR) return true;
 				}
 			}
 			return false;
