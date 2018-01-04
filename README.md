@@ -104,6 +104,8 @@ Inside the `samples/` folder, you will see some simple spectre programs that dis
 * Should make the `sp` script more robust by just doing the entire thing in C++ so it'll handle more options as well. Currently, it takes all files as inputs and assumes your first file is the file with your main function.
 * Should make testing more robust and intuitive.
 * Write a tutorial?
+* Update all tests use the `test.sp` include.
+* Add a checker for the tests to automate matching.
 
 ## Contributions
 * If something went horribly wrong, let me know and I'll try to fix it. Of course, if you want to fix it yourself, contributions are always welcome :^)
