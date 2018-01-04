@@ -11,9 +11,17 @@ namespace std {
 			long rem;
 		}
 
+		struct mem_block_t {
+			type mem_block_t* prev, next;
+			bool free;
+			unsigned int size;
+			byte* block;
+		}
+
 		const static int EXIT_SUCCESS = 0;
 		const static int EXIT_FAILURE = 1;
 		static byte* NULL = 0 as byte*;
+		const static unsigned int MALLOC_ALIGNMENT = sizeof{double};
 
 		func void qsort(byte* arr, unsigned int len, unsigned int sz, fn int(const byte*,const byte*) cmp);
 
@@ -38,5 +46,19 @@ namespace std {
 		func void quick_exit(int status);
 
 		func void _Exit(int status);
+
+		func byte* malloc(const unsigned int sz);
+		
+		func void free(const byte* data);
+
+		func byte* realloc(byte* data, const unsigned int size);
+
+		func byte* calloc(const unsigned int n, const unsigned int sz);
+
+		func int atoi(const char* str);
+
+		func long atol(const char* str);
+
+		func double atof(const char* str);
 	}
 }

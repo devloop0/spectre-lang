@@ -1,6 +1,9 @@
 namespace std {
 	namespace machine {
 
+		static const unsigned int WORD_SIZE = sizeof{int};
+		static const unsigned int BYTE_BIT = 8;
+
 		func const bool little_endian();
 		
 		func const bool big_endian();

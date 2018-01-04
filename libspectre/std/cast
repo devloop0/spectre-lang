@@ -1,0 +1,28 @@
+namespace std {
+	namespace cast {
+
+		func unsigned byte ub(unsigned byte c);
+
+		func byte b(byte c);
+
+		func unsigned char uc(unsigned char d);
+
+		func char c(char d);
+
+		func unsigned short us(unsigned short t);
+
+		func short s(short t);
+
+		func unsigned int ui(unsigned int j);
+		
+		func int i(int j);
+	
+		func unsigned long ul(unsigned long m);
+
+		func long l(long m);
+
+		func float f(float g);
+
+		func double d(double e);
+	}
+}

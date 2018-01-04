@@ -1,0 +1,32 @@
+------------Building ./strncpy_test.sp-------------
+------------Running ./strncpy_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./strpbrk_test.sp-------------
+------------Running ./strpbrk_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./strstr_test.sp-------------
+------------Running ./strstr_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./strncmp_test.sp-------------
+------------Running ./strncmp_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./strrchr_test.sp-------------
+------------Running ./strrchr_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./strtok_test.sp-------------
+------------Running ./strtok_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./strspn_test.sp-------------
+------------Running ./strspn_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./strncat_test.sp-------------
+------------Running ./strncat_test.sp-------------
+Y
+------------Return code: 0-------------

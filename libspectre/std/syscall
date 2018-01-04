@@ -5,11 +5,20 @@ namespace std {
 		const static unsigned int LINUX_MIPS_EXIT = 4001;
 		const static unsigned int LINUX_MIPS_READ = 4003;
 		const static unsigned int LINUX_MIPS_WRITE = 4004;
+		const static unsigned int LINUX_MIPS_BRK = 4045;
 
 		func void direct_write(int fd, const char* buf, const unsigned int count);
 		
 		func void direct_read(int fd, char* buf, const unsigned int count);
 		
 		func void exit(const int status_code);
+
+		func byte* raw_brk(const byte* data);
+
+		func int direct_brk(const byte* data);
+
+		func byte* curr_brk();
+
+		func byte* direct_sbrk(const int inc);
 	}
 }

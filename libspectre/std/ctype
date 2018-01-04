@@ -10,5 +10,23 @@ namespace std {
 		func bool isblank(char c);
 
 		func bool isspace(char c);
+
+		func bool iscntrl(char c);
+
+		func bool islower(char c);
+
+		func bool ispunct(char c);
+
+		func bool isprint(char c);
+
+		func bool isgraph(char c);
+
+		func bool isupper(char c);
+
+		func char tolower(char c);
+
+		func char toupper(char c);
+
+		func bool isxdigit(char c);
 	}
 }

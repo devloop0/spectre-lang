@@ -1,0 +1,20 @@
+namespace std {
+	namespace math {
+		
+		func float infinity();
+		
+		func float nan();
+
+		func bool isnan(double d);
+
+		func double fabs(double arg);
+
+		func float fabsf(float arg);
+
+		func bool isinf(double arg);
+
+		func bool isfinite(double arg);
+
+		func bool isnormal(double arg);
+	}
+}
