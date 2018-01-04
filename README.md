@@ -97,6 +97,9 @@ $ ./run.sh
 ```
 This will run all the tests in each directory and pipe outputs and return values to files. These folders contain examples of practical spectre programs such as linked lists, ternary search trees, etc. So if you're confused about how to use spectre, this is a good place to start.
 
+## Samples
+Inside the `samples/` folder, you will see some simple spectre programs that display the power of the spectre programming language and standard library. In addition to the tests, these samples are a great place to start seeing spectre in action in a practical setting. These currently include things like a decimal to hexadecimal converter (and vice versa), a simple echo program, and more. 
+
 ## Future Work
 * Should make the `sp` script more robust by just doing the entire thing in C++ so it'll handle more options as well. Currently, it takes all files as inputs and assumes your first file is the file with your main function.
 * Should make testing more robust and intuitive.
