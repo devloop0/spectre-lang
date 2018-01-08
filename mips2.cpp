@@ -2752,7 +2752,6 @@ namespace spectre {
 					int sz_to_offset = 0;
 					tuple<vector<int>, vector<int>, int> res_s_tup = save_to_middle(mc);
 					vector<int> which_to_store = get<0>(res_s_tup), middle_offsets = get<1>(res_s_tup);
-					int pre_offset = get<2>(res_s_tup);
 					vector<int> register_args, fp_register_args;
 					for (int i = 0; i < vdecl_list.size(); i++) {
 						shared_ptr<variable_declaration> vdecl = vdecl_list[i];
@@ -2779,7 +2778,7 @@ namespace spectre {
 					}
 					if (sz_to_offset > mc->current_frame()->frame_size())
 						mc->current_frame()->set_frame_size(sz_to_offset);
-					int curr_off = pre_offset;
+					int curr_off = 0;
 					for (int i = 0; i < vdecl_list.size(); i++) {
 						int fp_index = find(fp_register_args.begin(), fp_register_args.end(), i) - fp_register_args.begin(),
 							reg_index = find(register_args.begin(), register_args.end(), i) - register_args.begin();
@@ -3353,7 +3352,6 @@ namespace spectre {
 #if SYSTEM == 0
 				tuple<vector<int>, vector<int>, int> res_s_tup = save_to_middle(mc);
 				vector<int> which_to_store = get<0>(res_s_tup), middle_offsets = get<1>(res_s_tup);
-				int pre_offset = get<2>(res_s_tup);
 				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDIU, _2, register_file2::_zero_register, make_shared<operand>(4045)));
 				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDU, _4, register_file2::_zero_register, register_file2::_zero_register));
 				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_SYSCALL));
