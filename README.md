@@ -104,7 +104,7 @@ Inside the `samples/` folder, you will see some simple spectre programs that dis
 * Should make the `sp` script more robust by just doing the entire thing in C++ so it'll handle more options as well. Currently, it takes all files as inputs and assumes your first file is the file with your main function.
 * Should make testing more robust and intuitive (this includes updating all tests to include the `test.sp` include and automate checking for tests).
 * Write a tutorial? -- new simply increases the program break; while this doesn't assume a malloc implementation for the user, it may catch some people off guard.
-* Consider memcpy integration into the compiler: would force the compiler to no longer non MIPS system targets, but would clean up code for copying strings and structs.
+* Consider memcpy integration into the compiler: would force the compiler to no longer support non-MIPS system targets, but would clean up code for copying strings and structs.
 
 ## Contributions
 * If something went horribly wrong, let me know and I'll try to fix it. Of course, if you want to fix it yourself, contributions are always welcome :^)
