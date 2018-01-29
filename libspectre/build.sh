@@ -5,17 +5,34 @@ mkdir asm
 mkdir o
 
 STD_DIR="${LIB_DIR}/std"
+STDX_DIR="${LIB_DIR}/stdx"
 
 cd $STD_DIR
 
 for f in $(find . -name '*.sp'); do
 	fdir=$(dirname $f)
 	fbase=$(basename $f)
-	echo "Building $fbase..."
+	echo "Building std/$fbase..."
 	fname="${fbase%.*}"
 	fdirbase=$(basename $fdir)
 	fasm="$fdir/$fname.s"
-	fdestasm="$CURRENT_DIR/asm/$fname-$fdirbase.s"
+	fdestasm="$CURRENT_DIR/asm/std-$fname-$fdirbase.s"
+	spectre $f
+	mv $fasm $fdestasm
+done
+
+cd $CURRENT_DIR
+
+cd $STDX_DIR
+
+for f in $(find . -name '*.sp'); do
+	fdir=$(dirname $f)
+	fbase=$(basename $f)
+	echo "Building stdx/$fbase..."
+	fname="${fbase%.*}"
+	fdirbase=$(basename $fdir)
+	fasm="$fdir/$fname.s"
+	fdestasm="$CURRENT_DIR/asm/stdx-$fname-$fdirbase.s"
 	spectre $f
 	mv $fasm $fdestasm
 done

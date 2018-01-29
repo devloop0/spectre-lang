@@ -969,5 +969,5 @@ Q . . . . . . .
 ------------Return code: 0-------------
 ------------Building ./main.sp-------------
 ------------Running ./main.sp-------------
-Please enter your name: (^:| says "Hello World!"
+Please enter your name: :^) nikhil says "Hello World!"
 ------------Return code: 0-------------

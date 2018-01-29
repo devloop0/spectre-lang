@@ -5,11 +5,135 @@ namespace std {
 		const static unsigned int LINUX_MIPS_EXIT = 4001;
 		const static unsigned int LINUX_MIPS_READ = 4003;
 		const static unsigned int LINUX_MIPS_WRITE = 4004;
+		const static unsigned int LINUX_MIPS_OPEN = 4005;
+		const static unsigned int LINUX_MIPS_CLOSE = 4006;
+		const static unsigned int LINUX_MIPS_LSEEK = 4019;
+		const static unsigned int LINUX_MIPS_SYNC = 4036;
 		const static unsigned int LINUX_MIPS_BRK = 4045;
+		const static unsigned int LINUX_MIPS_STAT = 4106;
+		const static unsigned int LINUX_MIPS_FSTAT = 4108;
+		const static unsigned int LINUX_MIPS_GETDENTS = 4141;
+		const static unsigned int LINUX_MIPS_OPENAT = 4288;
+		const static unsigned int LINUX_MIPS_SYNCFS = 4342;
 
-		func void direct_write(int fd, const char* buf, const unsigned int count);
+		const static unsigned int O_RDONLY = 0x0;
+		const static unsigned int O_WRONLY = 0x1;
+		const static unsigned int O_RDWR = 0x2;
+
+		const static unsigned int O_APPEND = 0x8;
+		const static unsigned int O_ASYNC = 0x1000;
+		const static unsigned int O_CLOEXEC = 0x80000;
+		const static unsigned int O_CREAT = 0x100;
+		const static unsigned int O_DIRECTORY = 0x10000;
+		const static unsigned int O_DSYNC = 0x10;
+		const static unsigned int O_EXCL = 0x400;
+		const static unsigned int O_NOCTTY = 0x800;
+		const static unsigned int O_NOFOLLOW = 0x20000;
+		const static unsigned int O_NONBLOCK = 0x80;
+		const static unsigned int O_NDELAY = 0x80;
+		const static unsigned int O_SYNC = 0x4010;
+		const static unsigned int O_TRUNC = 0x200;
+
+		const static unsigned int S_IRWXU = 0x1c0;
+		const static unsigned int S_IRUSR = 0x100;
+		const static unsigned int S_IWUSR = 0x80;
+		const static unsigned int S_IXUSR = 0x40;
+		const static unsigned int S_IRWXG = 0x38;
+		const static unsigned int S_IRGRP = 0x20;
+		const static unsigned int S_IWGRP = 0x10;
+		const static unsigned int S_IXGRP = 0x8;
+		const static unsigned int S_IRWXO = 0x7;
+		const static unsigned int S_IROTH = 0x4;
+		const static unsigned int S_IWOTH = 0x2;
+		const static unsigned int S_IXOTH = 0x1;
+
+		const static unsigned int S_ISUID = 0x800;
+		const static unsigned int S_ISGID = 0x400;
+		const static unsigned int S_ISVTX = 0x200;
+
+		const static unsigned int STAT_sizeof = 144;
+		const static unsigned int STAT_st_dev_OFFSET = 0;
+		const static unsigned int STAT_st_pad1_OFFSET = 4;
+		const static unsigned int STAT_st_ino_OFFSET = 16;
+		const static unsigned int STAT_st_mode_OFFSET = 20;
+		const static unsigned int STAT_st_nlink_OFFSET = 24;
+		const static unsigned int STAT_st_uid_OFFSET = 28;
+		const static unsigned int STAT_st_gid_OFFSET = 32;
+		const static unsigned int STAT_st_rdev_OFFSET = 36;
+		const static unsigned int STAT_st_pad2_OFFSET = 40;
+		const static unsigned int STAT_st_size_OFFSET = 48;
+		const static unsigned int STAT_st_pad3_OFFSET = 52;
+		const static unsigned int STAT_st_atim_tv_sec_OFFSET = 56;
+		const static unsigned int STAT_st_atim_tv_nsec_OFFSET = 60;
+		const static unsigned int STAT_st_mtim_tv_sec_OFFSET = 64;
+		const static unsigned int STAT_st_mtim_tv_nsec_OFFSET = 68;
+		const static unsigned int STAT_st_ctim_tv_sec_OFFSET = 72;
+		const static unsigned int STAT_st_ctim_tv_nsec_OFFSET = 76;
+		const static unsigned int STAT_st_blksize_OFFSET = 80;
+		const static unsigned int STAT_st_blocks_OFFSET = 84;
+		const static unsigned int STAT_st_pad5_OFFSET = 88;
+
+		const static unsigned int PATH_MAX = 4096;
+		const static unsigned int NAME_MAX = 255;
+
+		struct stat {
+			unsigned long st_dev;
+			long st_pad1_0, st_pad1_1, st_pad1_2;
+			unsigned long st_ino;
+			unsigned int st_mode;
+			unsigned long st_nlink;
+			unsigned int st_uid;
+			unsigned int st_gid;
+			unsigned long st_rdev;
+			long st_pad2_0, st_pad2_1;
+			unsigned long st_size;
+			long st_pad3_0;
+			unsigned long st_atime_tv_sec;
+			unsigned long st_atime_tv_nsec;
+			unsigned long st_mtime_tv_sec;
+			unsigned long st_mtime_tv_nsec;
+			unsigned long st_ctime_tv_sec;
+			unsigned long st_ctime_tv_nsec;
+			unsigned long st_blksize;
+			unsigned long st_blocks;
+			long st_pad5_0, st_pad5_1, st_pad5_2, st_pad5_3, st_pad5_4, st_pad5_5,
+				st_pad5_6, st_pad5_7, st_pad5_8, st_pad5_9, st_pad5_10, st_pad5_11,
+				st_pad5_12, st_pad5_13;
+		}
+
+		const static unsigned int LINUX_DIRENT_d_ino_OFFSET = 0;
+		const static unsigned int LINUX_DIRENT_d_off_OFFSET = 4;
+		const static unsigned int LINUX_DIRENT_d_reclen_OFFSET = 8;
+		const static unsigned int LINUX_DIRENT_d_name_OFFSET = 10;
+
+		const static unsigned int DT_UNKNOWN = 0;
+		const static unsigned int DT_FIFO = 1;
+		const static unsigned int DT_CHR = 2;
+		const static unsigned int DT_DIR = 4;
+		const static unsigned int DT_BLK = 6;
+		const static unsigned int DT_REG = 8;
+		const static unsigned int DT_LNK = 10;
+		const static unsigned int DT_SOCK = 12;
+		const static unsigned int DT_WHT = 14;
 		
-		func void direct_read(int fd, char* buf, const unsigned int count);
+		const static unsigned int S_IFMT = 0o170000;
+		const static unsigned int S_IFDIR = 0o40000;
+		const static unsigned int S_IFCHR = 0o20000;
+		const static unsigned int S_IFBLK = 0o60000;
+		const static unsigned int S_IFREG = 0o100000;
+		const static unsigned int S_IFIFO = 0o10000;
+		const static unsigned int S_IFLNK = 0o120000;
+		const static unsigned int S_IFSOCK = 0o140000;
+		
+		const static unsigned int SEEK_SET = 0;
+		const static unsigned int SEEK_CUR = 1;
+		const static unsigned int SEEK_END = 2;
+
+		const static unsigned int AT_FDCWD = -100;
+
+		func int direct_write(int fd, const char* buf, const unsigned int count);
+		
+		func int direct_read(int fd, char* buf, const unsigned int count);
 		
 		func void exit(const int status_code);
 
@@ -20,5 +144,43 @@ namespace std {
 		func byte* curr_brk();
 
 		func byte* direct_sbrk(const int inc);
+
+		func int direct_open(const char* pathname, int flags);
+
+		func int direct_open2(const char* pathname, int flags, unsigned int mode);
+
+		func int direct_close(int fd);
+
+		func void direct_sync();
+
+		func int direct_syncfs(int fd);
+
+		func int direct_stat(const char* pathname, type stat* statbuf);
+
+		func int direct_fstat(int fd, type stat* statbuf);
+
+		func void bytes_to_stat(byte* stream, type stat* statbuf);
+	
+		func int direct_getdents(unsigned int fd, byte* stream, unsigned int count);
+
+		func bool S_ISREG(int m);
+
+		func bool S_ISDIR(int m);
+
+		func bool S_ISCHR(int m);
+
+		func bool S_ISBLK(int m);
+
+		func bool S_ISFIFO(int m);
+
+		func bool S_ISLNK(int m);
+
+		func bool S_ISSOCK(int m);
+
+		func int direct_lseek(int fd, int offset, int whence);
+		
+		func int direct_openat(int fd, const char* pathname, int flags);
+
+		func int direct_openat2(int fd, const char* pathname, int flags, unsigned int mode);
 	}
 }

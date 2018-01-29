@@ -3,7 +3,8 @@ import <"std/syscall">
 namespace std {
 	namespace syscall {
 	
-		func void direct_read(int fd, char* buf, const unsigned int count) {
+		func int direct_read(int fd, char* buf, const unsigned int count) {
+			int ret;
 			__asm__ ( 
 				fd "$4" :
 				"lw $4, 0($4)" :
@@ -13,8 +14,11 @@ namespace std {
 				"lw $6, 0($6)" :
 				LINUX_MIPS_READ "$2" :
 				"lw $2, 0($2)" :
-				"syscall"
+				"syscall" :
+				ret "$8" :
+				"sw $2, 0($8)"
 			);
+			return ret;
 		}
 	}
 }

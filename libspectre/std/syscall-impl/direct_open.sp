@@ -2,17 +2,15 @@ import <"std/syscall">
 
 namespace std {
 	namespace syscall {
-	
-		func int direct_write(int fd, const char* buf, const unsigned int count) {
+
+		func int direct_open(const char* pathname, int flags) {
 			int ret;
 			__asm__ (
-				fd "$4" :
+				pathname "$4" :
 				"lw $4, 0($4)" :
-				buf "$5" :
+				flags "$5" :
 				"lw $5, 0($5)" :
-				count "$6" :
-				"lw $6, 0($6)" :
-				LINUX_MIPS_WRITE "$2" :
+				LINUX_MIPS_OPEN "$2" :
 				"lw $2, 0($2)" :
 				"syscall" :
 				ret "$8" :

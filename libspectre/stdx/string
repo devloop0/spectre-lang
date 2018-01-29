@@ -1,0 +1,50 @@
+namespace stdx {
+	namespace string_impl {
+		struct string {
+			char* c_string;
+			unsigned int size;
+		}
+
+		func type string* new_string(const char* c);
+
+		func void delete_string(type string* s);
+
+		func type string* concat(type string* s1, const type string* s2);
+
+		func type string* cconcat(const char* c, type string* s1);
+
+		func type string* concatc(type string* s1, const char* c);
+
+		func type string* add(const type string* s1, const type string* s2);
+
+		func type string* addc(const type string* s1, const char* c);
+		
+		func type string* cadd(const char* c, const type string* s1);
+
+		func type string* inplace_lower(type string* s1);
+
+		func type string* lower(const type string* s1);
+
+		func type string* inplace_upper(type string* s1);
+	
+		func type string* upper(const type string* s1);
+
+		func char* data(const type string* s1);
+		
+		func unsigned int size(const type string* s1);
+
+		func unsigned int length(const type string* s1);
+
+		func int find(const type string* s1, const type string* s2);
+		
+		func int cfind(const type string* s1, const char* c);
+
+		func int find_range(const type string* s1, const type string* s2, unsigned int start, unsigned int end);
+
+		func int cfind_range(const type string* s1, const char* c, unsigned int start, unsigned int end);
+	}
+
+	namespace string {
+		namespace string = ::stdx::string_impl;
+	}
+}

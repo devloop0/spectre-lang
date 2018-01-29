@@ -48,7 +48,7 @@ namespace std {
 		func void _Exit(int status);
 
 		func byte* malloc(const unsigned int sz);
-		
+
 		func void free(const byte* data);
 
 		func byte* realloc(byte* data, const unsigned int size);

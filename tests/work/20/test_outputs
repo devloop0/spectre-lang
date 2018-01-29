@@ -1,0 +1,32 @@
+------------Building ./direct_getdents_test_one.sp-------------
+------------Running ./direct_getdents_test_one.sp-------------
+direct_getdents_test_one.sp: regular
+----------
+test_outputs: regular
+----------
+direct_getdents_test_multiple.sp: regular
+----------
+st_mode_test.sp: regular
+----------
+direct_getdents_test_one: regular
+----------
+..: directory
+----------
+.: directory
+----------
+------------Return code: 0-------------
+------------Building ./direct_getdents_test_multiple.sp-------------
+------------Running ./direct_getdents_test_multiple.sp-------------
+direct_getdents_test_one.sp: regular
+test_outputs: regular
+direct_getdents_test_multiple.sp: regular
+st_mode_test.sp: regular
+..: directory
+.: directory
+direct_getdents_test_multiple: regular
+----------
+------------Return code: 0-------------
+------------Building ./st_mode_test.sp-------------
+------------Running ./st_mode_test.sp-------------
+Y
+------------Return code: 0-------------

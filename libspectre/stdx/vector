@@ -1,0 +1,35 @@
+namespace stdx {
+	namespace vector_impl {
+		
+		static const unsigned int INIT_CAP = 16;
+			
+		struct vector {
+			byte* data;
+			unsigned int capacity, size, unit;
+		}
+
+		func type vector* new_vector(unsigned int u);
+
+		func type vector* new_vector_capacity(unsigned int u, unsigned int c);
+
+		func void delete_vector(type vector* v);
+
+		func int append(type vector* v, const byte* b);
+
+		func byte* at(const type vector* v, unsigned int idx);
+
+		func unsigned int size(const type vector* v);
+		
+		func unsigned int capacity(const type vector* v);
+		
+		func unsigned int unit(const type vector* v);
+
+		func int insert(type vector* v, unsigned int idx, const byte* data);
+
+		func void clear(type vector* v);
+	}
+
+	namespace vector {
+		namespace vector = ::stdx::vector_impl;
+	}
+}

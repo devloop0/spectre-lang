@@ -15,20 +15,16 @@ namespace std {
 						if(iter->prev->free) {
 							iter->prev->size += sizeof{type mem_block_t} + iter->size;
 							iter->prev->next = iter->next;
-							iter = iter->prev;
 						}
-						else iter = iter->next;
 					}
 					else if(iter->next as bool) {
 						if(iter->next->free) {
 							iter->size += sizeof{type mem_block_t} + iter->next->size;
 							iter->next = iter->next->next;
 						}
-						else iter = iter->next;
 					}
-					else iter = iter->next;
 				}
-				else iter = iter->next;
+				iter = iter->next;
 			}
 		}	
 	}
