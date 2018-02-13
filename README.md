@@ -109,7 +109,7 @@ Inside the `samples/` folder, you will see some simple spectre programs that dis
 * Should make testing more robust and intuitive (this includes updating all tests to include the `test.sp` include and automate checking for tests).
 * Write a tutorial? (new now defaults to a malloc call, which should be more intuitive).
 * Consider memcpy integration into the compiler: would force the compiler to no longer support non-MIPS system targets, but would clean up code for copying strings and structs.
-* There's an edge-case bug where parenthesized rvalues that get converted into lvalues (i.e. `int i = 2; byte* b = i$ as int*; (b as int*)@ *= 2`), will fail. However, `b as int* @ *= 2` and `(b as int* @) *= 2` will both work. This can probably be mitigated by re-writing the back-end by first converting to a LIR and then to machine code intelligently rather than the current model of traversing the high-level AST and converting that into machine code.
+* There's an edge-case bug where parenthesized rvalues that get converted into lvalues (i.e. `int i = 2; byte* b = i$ as int*; (b as int*)@ *= 2`), will fail. However, `b as int* @ *= 2` and `(b as int* @) *= 2` will both work. This can probably be mitigated by re-writing the back-end by first converting to a LIR and then to machine code intelligently rather than the current model of traversing the high-level AST and converting that into machine code. In the mean time, hopefully this bug isn't too critical.
 
 ## Contributions
 * If something went horribly wrong, let me know and I'll try to fix it. Of course, if you want to fix it yourself, contributions are always welcome :^)
