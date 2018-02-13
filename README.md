@@ -70,7 +70,7 @@ If you don't have access to a physical MIPS machine, I would recommend using QEM
 ## Config
 If you absolutely don't have access to a physical MIPS system, you'll lose access to the standard library, but there are still ways to use spectre.
 Inside the `config.hpp` file, you'll see some preprocessor macros that you can change to change the behavior of spectre itself.
-Please only touch the `SYSTEM` and `PROG_TERM` macros.
+Please only touch the `SYSTEM`, `PROG_TERM`, and `PROG_NEW` macros.
 Here are the options for the `SYSTEM` macro:
 * `REAL_MIPS`: the default, spectre compiles the program as if it were going to be run on a real Linux machine.
 * `MARS`: spectre compiles the program as if it were going to be run on the MARS MIPS emulator.
@@ -80,10 +80,14 @@ Here are the options for the `PROG_TERM` macro:
 * `PROG_TERM_ABORT`: at the end of the main function, the program terminates by essentially calling the `abort()` function in C (something similar to this). More importantly, no exit handlers are run.
 * `PROG_TERM_EXIT`: the default, runs exit handlers on program termination, require integration into the standard library by the compiler.
 
+Here are the options for the `PROG_NEW` macro:
+* `PROG_NEW_SBRK`: calls the sbrk syscall. Does not require a malloc implementation.
+* `PROG_NEW_MALLOC`: more intuitive, and the memory you allocate can actually be freed. However, this requires an actual mips system.
+
 These options fall into the following sets:
-* `REAL_MIPS` - { `PROG_TERM_ABORT`, `PROG_TERM_EXIT` }
-* `MARS` - { `PROG_TERM_ABORT` }
-* `RISCV` - { `PROG_TERM_ABORT` }
+* `REAL_MIPS` - { `PROG_TERM_ABORT`, `PROG_TERM_EXIT`, `PROG_NEW_MALLOC` }
+* `MARS` - { `PROG_TERM_ABORT`, `PROG_NEW_SBRK` }
+* `RISCV` - { `PROG_TERM_ABORT`, `PROG_NEW_SBRK` }
 
 In other words, if you're compiling for MARS, you can only use `PROG_TERM_ABORT` option.
 
@@ -103,8 +107,9 @@ Inside the `samples/` folder, you will see some simple spectre programs that dis
 ## Future Work
 * Should make the `sp` script more robust by just doing the entire thing in C++ so it'll handle more options as well. Currently, it takes all files as inputs and assumes your first file is the file with your main function.
 * Should make testing more robust and intuitive (this includes updating all tests to include the `test.sp` include and automate checking for tests).
-* Write a tutorial? -- new simply increases the program break; while this doesn't assume a malloc implementation for the user, it may catch some people off guard.
+* Write a tutorial? (new now defaults to a malloc call, which should be more intuitive).
 * Consider memcpy integration into the compiler: would force the compiler to no longer support non-MIPS system targets, but would clean up code for copying strings and structs.
+* There's an edge-case bug where parenthesized rvalues that get converted into lvalues (i.e. `int i = 2; byte* b = i$ as int*; (b as int*)@ *= 2`), will fail. However, `b as int* @ *= 2` and `(b as int* @) *= 2` will both work. This can probably be mitigated by re-writing the back-end by first converting to a LIR and then to machine code intelligently rather than the current model of traversing the high-level AST and converting that into machine code.
 
 ## Contributions
 * If something went horribly wrong, let me know and I'll try to fix it. Of course, if you want to fix it yourself, contributions are always welcome :^)

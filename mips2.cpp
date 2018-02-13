@@ -3350,6 +3350,7 @@ namespace spectre {
 					_4_2_store.push_back(-1);
 #endif
 #if SYSTEM == 0
+#if PROG_NEW == 0
 				tuple<vector<int>, vector<int>, int> res_s_tup = save_to_middle(mc);
 				vector<int> which_to_store = get<0>(res_s_tup), middle_offsets = get<1>(res_s_tup);
 				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDIU, _2, register_file2::_zero_register, make_shared<operand>(4045)));
@@ -3367,6 +3368,15 @@ namespace spectre {
 					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDIU, _2, _2, make_shared<operand>(-e->int_immediate())));
 				else
 					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_SUBU, _2, _2, e));
+#elif PROG_NEW == 1
+				tuple<vector<int>, vector<int>, int> res_s_tup = save_to_middle(mc);
+				vector<int> which_to_store = get<0>(res_s_tup), middle_offsets = get<1>(res_s_tup);
+				mc->current_frame()->add_insn_to_body(make_shared<insn>(
+					e->operand_kind() == operand::kind::KIND_INT_IMMEDIATE ? insn::kind::KIND_ADDIU : insn::kind::KIND_ADDU,
+					_4, register_file2::_zero_register, e));
+				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_JAL, make_shared<operand>(false, program_new_hook)));
+				restore_from_middle(mc, which_to_store, middle_offsets);
+#endif
 #elif SYSTEM == 1
 				if(e->operand_kind() == operand::kind::KIND_INT_IMMEDIATE)
 					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDIU, _4, register_file2::_zero_register, e));
@@ -4163,6 +4173,7 @@ namespace spectre {
 				return "";
 			return "_" + c_scope_2_string_helper(mc, s, "");
 		}
+
 		string c_symbol_2_string_helper(shared_ptr<mips_code> mc, shared_ptr<symbol> s, string r) {
 			string scope_string = c_scope_2_string(mc, s->parent_scope());
 			if (s->symbol_kind() == symbol::kind::KIND_VARIABLE) {

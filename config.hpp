@@ -8,7 +8,11 @@
 #define PROG_TERM_ABORT 0
 #define PROG_TERM_EXIT 1
 
+#define PROG_NEW_SBRK 0
+#define PROG_NEW_MALLOC 1
+
 #define SYSTEM REAL_MIPS
 #define PROG_TERM PROG_TERM_EXIT
+#define PROG_NEW PROG_NEW_MALLOC
 
 #endif

@@ -23,6 +23,7 @@ namespace spectre {
 
 		const static string label_prefix = "$L";
 		const static string program_termination_hook = "_std_lib_exit";
+		const static string program_new_hook = "_std_lib_malloc";
 
 		class operand {
 		public:
