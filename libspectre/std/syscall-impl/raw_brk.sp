@@ -6,7 +6,7 @@ namespace std {
 		func byte* raw_brk(const byte* data) {
 			byte* ret;
 			__asm__ (
-				"addiu $2, $0, 4045" :
+				LINUX_MIPS_BRK "$2" :
 				data "$4" :
 				"lw $4, 0($4)" :
 				"syscall" :

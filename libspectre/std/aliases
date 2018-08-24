@@ -1,0 +1,19 @@
+namespace std {
+	namespace cast {}
+	namespace ctype {}
+	namespace lib {}
+	namespace machine {}
+	namespace math {}
+	namespace string {}
+	namespace syscall {}
+
+	namespace aliases {
+		namespace cast = std::cast;
+		namespace ctype = std::ctype;
+		namespace lib = std::lib;
+		namespace machine = std::machine;
+		namespace math = std::math;
+		namespace str = std::string;
+		namespace sys = std::syscall;
+	}
+}

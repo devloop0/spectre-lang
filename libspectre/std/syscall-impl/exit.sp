@@ -8,7 +8,6 @@ namespace std {
 				status_code "$4" :
 				"lw $4, 0($4)" :
 				LINUX_MIPS_EXIT "$2" :
-				"lw $2, 0($2)" :
 				"syscall"
 			);
 		}

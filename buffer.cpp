@@ -61,13 +61,16 @@ namespace spectre {
 
 		token buffer::pop() {
 			while (_index < _source_code.length() && (_source_code[_index] == '\t' || _source_code[_index] == ' ' || _source_code[_index] == '\n' ||
-				_source_code[_index] == '#')) {
+				_source_code[_index] == '#' || (_source_code[_index] == '/' && _index + 1 < _source_code.length() && (_source_code[_index + 1] == '*' ||
+					_source_code[_index + 1] == '/')))) {
 				if (_source_code[_index] == '\n') {
 					_index++;
 					_current_column_number = 1;
 					_current_line_number++;
 				}
-				else if (_source_code[_index] == '#') {
+				else if (_source_code[_index] == '#'
+					|| (_source_code[_index] == '/' && _index + 1 < _source_code.length()
+						&& _source_code[_index + 1] == '/')) {
 					while (_index < _source_code.length() && _source_code[_index] != '\n') {
 						_index++;
 						_current_column_number++;
@@ -76,6 +79,28 @@ namespace spectre {
 						_current_column_number = 1;
 						_current_line_number++;
 						_index++;
+					}
+				}
+				else if (_source_code[_index] == '/' && _index + 1 < _source_code.length() && _source_code[_index + 1] == '*') {
+					int start_line = _current_line_number, start_col = _current_column_number;
+					_index += 2;
+					bool closed = false;
+					while (_index < _source_code.length()) {
+						if (_source_code[_index] == '*' && _index + 1 < _source_code.length() && _source_code[_index + 1] == '/') {
+							closed = true;
+							_index += 2;
+							_current_column_number += 2;
+							break;
+						}
+						else if (_source_code[_index] == '\n')
+							_current_column_number = 1, _current_line_number++;
+						_index++;
+					}
+					if (!closed) {
+						token err = token(_parent_directory, _file_name, start_line, start_col, start_col + 2, token::kind::TOKEN_ERROR, "/*");
+						_diagnostics_reporter->report(error(error::kind::KIND_ERROR, "Unclosed comment starting here.", vector<token>{ err }, 0));
+						_consumed_token_list.push_back(err);
+						return err;
 					}
 				}
 				else {
@@ -797,6 +822,12 @@ namespace spectre {
 					tok = token(_parent_directory, _file_name, _current_line_number, start, _current_column_number, token::kind::TOKEN_FN, ident);
 				else if (ident == keywords::_access)
 					tok = token(_parent_directory, _file_name, _current_line_number, start, _current_column_number, token::kind::TOKEN_ACCESS, ident);
+				else if (ident == keywords::_constexpr)
+					tok = token(_parent_directory, _file_name, _current_line_number, start, _current_column_number, token::kind::TOKEN_CONSTEXPR, ident);
+				else if (ident == keywords::_auto)
+					tok = token(_parent_directory, _file_name, _current_line_number, start, _current_column_number, token::kind::TOKEN_AUTO, ident);
+				else if (ident == keywords::_delete)
+					tok = token(_parent_directory, _file_name, _current_line_number, start, _current_column_number, token::kind::TOKEN_DELETE, ident);
 				else
 					tok = token(_parent_directory, _file_name, _current_line_number, start, _current_column_number, token::kind::TOKEN_IDENTIFIER, ident);
 				_consumed_token_list.push_back(tok);

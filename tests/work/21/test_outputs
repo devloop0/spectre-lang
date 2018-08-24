@@ -1,0 +1,40 @@
+------------Building ./for_each_test.sp-------------
+------------Running ./for_each_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./count_test.sp-------------
+------------Running ./count_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./accumulate_test.sp-------------
+------------Running ./accumulate_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./iterator_test.sp-------------
+------------Running ./iterator_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./all_of_test.sp-------------
+------------Running ./all_of_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./none_of_test.sp-------------
+------------Running ./none_of_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./any_of_test.sp-------------
+------------Running ./any_of_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./find_test.sp-------------
+------------Running ./find_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./accumulate_2_test.sp-------------
+------------Running ./accumulate_2_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./copy_test.sp-------------
+------------Running ./copy_test.sp-------------
+Y
+------------Return code: 0-------------

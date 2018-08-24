@@ -3,32 +3,14 @@ import <"stdx/vector">
 import <"std/string">
 import <"std/lib">
 
+import "ltoa.sp"
+
 const unsigned int TABS_TO_SPACES = 8;
 const char* B = "B";
 
 func unsigned int div_round_up(const unsigned int i,
 	const unsigned int j) {
 	return (i + (j - 1)) / j;
-}
-
-func char* ltoa(unsigned long l) {
-	using std::lib::calloc;
-
-	char* tmp = stk char(20), tmp_iter = tmp;
-	char* ret = calloc(sizeof{char}, 20) as char*;
-	unsigned int end = 0;
-	if(l == 0) {
-		ret@ = '0';
-		return ret;
-	}
-	while(l as bool) {
-		tmp_iter@ = (l % 10) + '0';
-		tmp_iter = tmp_iter[1]$;
-		end++, l /= 10;
-	}
-	for(int i = end - 1; i >= 0; i--, tmp = tmp[1]$)
-		ret[i] = tmp@;
-	return ret;
 }
 
 func int main(int argc, char** argv) {

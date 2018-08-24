@@ -1,0 +1,23 @@
+------------Building ./vector_int_2.sp-------------
+------------Running ./vector_int_2.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./vector_insert.sp-------------
+------------Running ./vector_insert.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./vector_test.sp-------------
+------------Running ./vector_test.sp-------------
+------------Return code: 0-------------
+------------Building ./vector_int.sp-------------
+------------Running ./vector_int.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./vector_test_2.sp-------------
+------------Running ./vector_test_2.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./vector_sanity.sp-------------
+------------Running ./vector_sanity.sp-------------
+Y
+------------Return code: 0-------------

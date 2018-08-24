@@ -16,10 +16,10 @@ func int main() {
 	
 	for(int i = 0; i < len; i++) if(vector::append(v, arr[i]$ as byte*) != 0) fail();
 
-	for(int i = 0; i < 5; i++) if(vector::insert(v, 3 + i, f[i]$ as byte*) != 0) fail();
-	for(int i = 0; i < 1; i++) if(vector::insert(v, 9 + i, s[i]$ as byte*) != 0) fail();
-	for(int i = 0; i < 6; i++) if(vector::insert(v, 11 + i, t[i]$ as byte*) != 0) fail();
-	for(int i = 0; i < 7; i++) if(vector::insert(v, 18 + i, fr[i]$ as byte*) != 0) fail();
+	for(int i = 0; i < 5; i++) if(vector::uint_insert(v, 3 + i, f[i]$ as byte*) != 0) fail();
+	for(int i = 0; i < 1; i++) if(vector::uint_insert(v, 9 + i, s[i]$ as byte*) != 0) fail();
+	for(int i = 0; i < 6; i++) if(vector::uint_insert(v, 11 + i, t[i]$ as byte*) != 0) fail();
+	for(int i = 0; i < 7; i++) if(vector::uint_insert(v, 18 + i, fr[i]$ as byte*) != 0) fail();
 
 	for(int i = 0; i < 25; i++) if(vector::at(v, i) as int* @ != i) fail();
 

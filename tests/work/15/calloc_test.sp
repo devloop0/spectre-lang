@@ -8,7 +8,7 @@ func void fail() {
 
 func void success() {
 	std::syscall::direct_write(1, "Y\n", 2);
-	std::syscall::exit(1);
+	std::syscall::exit(0);
 }
 
 func int main() {

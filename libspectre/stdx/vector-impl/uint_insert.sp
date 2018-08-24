@@ -5,12 +5,13 @@ import <"std/string">
 namespace stdx {
 	namespace vector_impl {
 	
-		func int insert(type vector* v, unsigned int idx, const byte* data) {
+		func int uint_insert(type vector* v, unsigned int idx, const byte* data) {
 			using std::lib::realloc;
 			using std::string::memmove;
 			using std::string::memcpy;
 
-			if(idx >= v->size) return -1;
+			if(idx > v->size) return -1;
+			else if(idx == v->size) return append(v, data);
 
 			if(v->capacity == 0 || !v->data as bool) {
 				v->capacity = INIT_CAP;

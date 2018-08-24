@@ -1,0 +1,29 @@
+import <"stdx/iterator">
+
+namespace stdx {
+	namespace algorithm_impl {
+
+		using namespace stdx::iterator;
+		
+		func byte* accumulate(type iterator::iterator* s1, const type iterator::iterator* e1, byte* init,
+			fn byte*(byte*,byte*) op);
+
+		func unsigned long count(type iterator::iterator* s1, const type iterator::iterator* e1, fn bool(byte*) pred);
+
+		func bool any_of(type iterator::iterator* s1, const type iterator::iterator* e1, fn bool(byte*) pred);
+
+		func void for_each(type iterator::iterator* s1, const type iterator::iterator* e1, fn void(byte*) pred);
+
+		func bool all_of(type iterator::iterator* s1, const type iterator::iterator* e1, fn bool(byte*) pred);
+
+		func bool none_of(type iterator::iterator* s1, const type iterator::iterator* e1, fn bool(byte*) pred);
+
+		func type iterator::iterator* find_if(type iterator::iterator* s1, type iterator::iterator* e1, fn bool(byte*) pred);
+
+		func type iterator::iterator* find_if_not(type iterator::iterator* s1, type iterator::iterator* e1, fn bool(byte*) pred);
+	}
+
+	namespace algorithm {
+		namespace algorithm = ::stdx::algorithm_impl;
+	}
+}

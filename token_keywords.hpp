@@ -48,6 +48,9 @@ namespace spectre {
 		const static string _resv = "resv";
 		const static string _fn = "fn";
 		const static string _access = "access";
+		const static string _constexpr = "constexpr";
+		const static string _auto = "auto";
+		const static string _delete = "delete";
 	}
 }
 

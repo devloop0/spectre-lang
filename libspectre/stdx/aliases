@@ -1,0 +1,16 @@
+namespace stdx {
+	namespace algorithm {}
+	namespace allocator {}
+	namespace iterator {}
+	namespace string {}
+	namespace vector {}
+
+	namespace aliases {
+		
+		namespace algs = stdx::algorithm;
+		namespace alloc = stdx::allocator;
+		namespace iter = stdx::iterator;
+		namespace str = stdx::string;
+		namespace vec = stdx::vector;
+	}
+}

@@ -7,6 +7,7 @@
 #include <stack>
 #include <algorithm>
 #include <variant>
+#include <unordered_map>
 #include "mips_instruction_set.hpp"
 #include "parser.hpp"
 #include "config.hpp"
@@ -17,6 +18,7 @@ using std::shared_ptr;
 using std::stack;
 using std::pair;
 using std::variant;
+using std::unordered_map;
 
 namespace spectre {
 	namespace mips2 {
@@ -24,6 +26,7 @@ namespace spectre {
 		const static string label_prefix = "$L";
 		const static string program_termination_hook = "_std_lib_exit";
 		const static string program_new_hook = "_std_lib_malloc";
+		const static string program_delete_hook = "_std_lib_free";
 
 		class operand {
 		public:
@@ -269,6 +272,9 @@ namespace spectre {
 			stack<shared_ptr<mips_frame>> _frame_stack;
 			int _label_counter, _misc_counter;
 			bool _inside_function;
+			unordered_map<
+				string,
+				variant<bool, int, unsigned int, float, double, string>> _constexpr_map;
 		public:
 			mips_code(shared_ptr<spectre::parser::parser> p);
 			~mips_code();
@@ -294,6 +300,9 @@ namespace spectre {
 			shared_ptr<struct_symbol> find_struct_symbol(token n, int r);
 			void set_inside_function(bool b);
 			bool inside_function();
+			void add_constexpr_mapping(string k, variant<bool, int, unsigned int, float, double, string> v);
+			pair<bool, variant<bool, int, unsigned int, float, double, string>> get_constexpr_mapping(string s);
+			bool constexpr_mapping_exists(string k);
 		};
 
 		unsigned int calculate_type_size(shared_ptr<mips_code> mc, shared_ptr<type> t);
@@ -346,6 +355,7 @@ namespace spectre {
 		void generate_for_stmt_mips(shared_ptr<mips_code> mc, shared_ptr<for_stmt> fs);
 		void generate_asm_stmt_mips(shared_ptr<mips_code> mc, shared_ptr<asm_stmt> as);
 		void generate_access_stmt_mips(shared_ptr<mips_code> mc, shared_ptr<access_stmt> as);
+		void generate_delete_stmt_mips(shared_ptr<mips_code> mc, shared_ptr<delete_stmt> ds);
 
 		variant<bool, int, unsigned int, float, double, string> evaluate_constant_expression(shared_ptr<mips_code> mc, shared_ptr<assignment_expression> ae);
 		template<typename C, typename TL, typename TR> auto raw_arithmetic_binary_expression_evaluator(shared_ptr<mips_code> mc, TL lhs, TR rhs, binary_expression::operator_kind ok);
@@ -353,6 +363,9 @@ namespace spectre {
 
 		tuple<vector<int>, vector<int>, int> save_to_middle(shared_ptr<mips_code> mc);
 		void restore_from_middle(shared_ptr<mips_code> mc, vector<int> which_to_store, vector<int> middle_offsets);
+
+		pair<tuple<bool, bool, bool>, shared_ptr<operand>> generate_constexpr_identifier_mips(shared_ptr<mips_code> mc, shared_ptr<symbol> sym,
+			pair<bool, variant<bool, int, unsigned int, float, double, string>> res, shared_ptr<operand> init_reg);
 	}
 }
 

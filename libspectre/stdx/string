@@ -42,6 +42,40 @@ namespace stdx {
 		func int find_range(const type string* s1, const type string* s2, unsigned int start, unsigned int end);
 
 		func int cfind_range(const type string* s1, const char* c, unsigned int start, unsigned int end);
+	
+		func char at(const type string* s1, unsigned int index);
+
+		func type string* chconcat(const char c, type string* s1);
+
+		func type string* concatch(type string* s1, const char c);
+
+		func type string* chadd(const char c, const type string* s1);
+
+		func type string* addch(const type string* s1, const char c);
+
+		func bool eq(const type string* lhs, const type string* rhs);
+		func bool ceq(const char* lhs, const type string* rhs);
+		func bool eqc(const type string* lhs, const char* rhs);
+
+		func bool neq(const type string* lhs, const type string* rhs);
+		func bool cneq(const char* lhs, const type string* rhs);
+		func bool neqc(const type string* lhs, const char* rhs);
+
+		func bool lt(const type string* lhs, const type string* rhs);
+		func bool clt(const char* lhs, const type string* rhs);
+		func bool ltc(const type string* lhs, const char* rhs);
+
+		func bool lte(const type string* lhs, const type string* rhs);
+		func bool clte(const char* lhs, const type string* rhs);
+		func bool ltec(const type string* lhs, const char* rhs);
+
+		func bool gt(const type string* lhs, const type string* rhs);
+		func bool cgt(const char* lhs, const type string* rhs);
+		func bool gtc(const type string* lhs, const char* rhs);
+
+		func bool gte(const type string* lhs, const type string* rhs);
+		func bool cgte(const char* lhs, const type string* rhs);
+		func bool gtec(const type string* lhs, const char* rhs);
 	}
 
 	namespace string {

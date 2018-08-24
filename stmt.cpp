@@ -338,6 +338,10 @@ namespace spectre {
 
 		}
 
+		stmt::stmt(stmt::kind sk, shared_ptr<delete_stmt> ds, bool v, vector<token> s) : _valid(v), _stream(s), _stmt_delete(ds), _stmt_kind(sk) {
+
+		}
+
 		stmt::stmt() : _stmt_kind(stmt::kind::KIND_NONE), _stmt_expression(nullptr), _valid(false), _stream(vector<token>()) {
 
 		}
@@ -428,6 +432,10 @@ namespace spectre {
 
 		shared_ptr<access_stmt> stmt::stmt_access() {
 			return _stmt_access;
+		}
+
+		shared_ptr<delete_stmt> stmt::stmt_delete() {
+			return _stmt_delete;
 		}
 
 		break_continue_stmt::break_continue_stmt(break_continue_stmt::kind k, vector<token> s, bool v) :
@@ -789,6 +797,26 @@ namespace spectre {
 
 		bool access_stmt::valid() {
 			return _valid;
+		}
+
+		delete_stmt::delete_stmt(shared_ptr<expression> e, vector<token> s, bool v) : _expr(e), _stream(s), _valid(v) {
+
+		}
+
+		delete_stmt::~delete_stmt() {
+
+		}
+
+		vector<token> delete_stmt::stream() {
+			return _stream;
+		}
+
+		bool delete_stmt::valid() {
+			return _valid;
+		}
+
+		shared_ptr<expression> delete_stmt::expr() {
+			return _expr;
 		}
 	}
 }

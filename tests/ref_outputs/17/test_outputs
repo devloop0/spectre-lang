@@ -1,0 +1,28 @@
+------------Building ./atol_test.sp-------------
+------------Running ./atol_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./normal_finite_test.sp-------------
+------------Running ./normal_finite_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./infinity_nan_test.sp-------------
+------------Running ./infinity_nan_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./fabs_test.sp-------------
+------------Running ./fabs_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./atoi_test.sp-------------
+------------Running ./atoi_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./isinf_test.sp-------------
+------------Running ./isinf_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./atof_test.sp-------------
+------------Running ./atof_test.sp-------------
+Y
+------------Return code: 0-------------

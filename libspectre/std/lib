@@ -18,10 +18,10 @@ namespace std {
 			byte* block;
 		}
 
-		const static int EXIT_SUCCESS = 0;
-		const static int EXIT_FAILURE = 1;
-		static byte* NULL = 0 as byte*;
-		const static unsigned int MALLOC_ALIGNMENT = sizeof{double};
+		static constexpr int EXIT_SUCCESS = 0;
+		static constexpr int EXIT_FAILURE = 1;
+		static constexpr byte* NULL = 0 as byte*;
+		static constexpr unsigned int MALLOC_ALIGNMENT = sizeof{double};
 
 		func void qsort(byte* arr, unsigned int len, unsigned int sz, fn int(const byte*,const byte*) cmp);
 
@@ -60,5 +60,7 @@ namespace std {
 		func long atol(const char* str);
 
 		func double atof(const char* str);
+
+		func byte* bsearch(const byte* key, const byte* arr, unsigned int len, unsigned int sz, fn int(const byte*,const byte*) cmp);
 	}
 }

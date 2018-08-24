@@ -1,3 +1,4 @@
+#include "config.hpp"
 #include "parser.hpp"
 #include "file_io.hpp"
 #include <memory>
@@ -452,24 +453,33 @@ namespace spectre {
 			if (tok.token_kind() == token::kind::TOKEN_INTEGER) {
 				shared_ptr<type> t = nullptr;
 				if (tok.suffix_kind() == token::suffix::SUFFIX_DOUBLE)
-					t = make_shared<primitive_type>(primitive_type::kind::KIND_DOUBLE, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, primitive_type::sign_kind::KIND_NONE);
+					t = make_shared<primitive_type>(primitive_type::kind::KIND_DOUBLE, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC,
+						type::constexpr_kind::KIND_CONSTEXPR, primitive_type::sign_kind::KIND_NONE);
 				else if (tok.suffix_kind() == token::suffix::SUFFIX_FLOAT)
-					t = make_shared<primitive_type>(primitive_type::kind::KIND_FLOAT, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, primitive_type::sign_kind::KIND_NONE);
+					t = make_shared<primitive_type>(primitive_type::kind::KIND_FLOAT, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC,
+						type::constexpr_kind::KIND_CONSTEXPR, primitive_type::sign_kind::KIND_NONE);
 				else if (tok.suffix_kind() == token::suffix::SUFFIX_SIGNED_LONG)
-					t = make_shared<primitive_type>(primitive_type::kind::KIND_LONG, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, primitive_type::sign_kind::KIND_SIGNED);
+					t = make_shared<primitive_type>(primitive_type::kind::KIND_LONG, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC,
+						type::constexpr_kind::KIND_CONSTEXPR, primitive_type::sign_kind::KIND_SIGNED);
 				else if (tok.suffix_kind() == token::suffix::SUFFIX_SIGNED_SHORT)
-					t = make_shared<primitive_type>(primitive_type::kind::KIND_SHORT, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, primitive_type::sign_kind::KIND_SIGNED);
+					t = make_shared<primitive_type>(primitive_type::kind::KIND_SHORT, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC,
+						type::constexpr_kind::KIND_CONSTEXPR, primitive_type::sign_kind::KIND_SIGNED);
 				else if (tok.suffix_kind() == token::suffix::SUFFIX_UNSIGNED_LONG)
-					t = make_shared<primitive_type>(primitive_type::kind::KIND_LONG, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, primitive_type::sign_kind::KIND_UNSIGNED);
+					t = make_shared<primitive_type>(primitive_type::kind::KIND_LONG, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC,
+						type::constexpr_kind::KIND_CONSTEXPR, primitive_type::sign_kind::KIND_UNSIGNED);
 				else if (tok.suffix_kind() == token::suffix::SUFFIX_UNSIGNED_SHORT)
-					t = make_shared<primitive_type>(primitive_type::kind::KIND_SHORT, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, primitive_type::sign_kind::KIND_UNSIGNED);
+					t = make_shared<primitive_type>(primitive_type::kind::KIND_SHORT, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC,
+						type::constexpr_kind::KIND_CONSTEXPR, primitive_type::sign_kind::KIND_UNSIGNED);
 				else if (tok.suffix_kind() == token::suffix::SUFFIX_UNSIGNED_INT)
-					t = make_shared<primitive_type>(primitive_type::kind::KIND_INT, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, primitive_type::sign_kind::KIND_UNSIGNED);
+					t = make_shared<primitive_type>(primitive_type::kind::KIND_INT, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC,
+						type::constexpr_kind::KIND_CONSTEXPR, primitive_type::sign_kind::KIND_UNSIGNED);
 				else {
 					if (tok.prefix_kind() == token::prefix::PREFIX_BINARY)
-						t = make_shared<primitive_type>(primitive_type::kind::KIND_BYTE, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, primitive_type::sign_kind::KIND_UNSIGNED);
+						t = make_shared<primitive_type>(primitive_type::kind::KIND_BYTE, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC,
+							type::constexpr_kind::KIND_CONSTEXPR, primitive_type::sign_kind::KIND_UNSIGNED);
 					else
-						t = make_shared<primitive_type>(primitive_type::kind::KIND_INT, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, primitive_type::sign_kind::KIND_SIGNED);
+						t = make_shared<primitive_type>(primitive_type::kind::KIND_INT, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC,
+							type::constexpr_kind::KIND_CONSTEXPR, primitive_type::sign_kind::KIND_SIGNED);
 				}
 				_valid = true;
 				_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_LITERAL, tok, t, _valid, vector<token>{ tok }, value_kind::VALUE_RVALUE);
@@ -477,11 +487,14 @@ namespace spectre {
 			else if (tok.token_kind() == token::kind::TOKEN_DECIMAL) {
 				shared_ptr<type> t = nullptr;
 				if (tok.suffix_kind() == token::suffix::SUFFIX_DOUBLE)
-					t = make_shared<primitive_type>(primitive_type::kind::KIND_DOUBLE, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, primitive_type::sign_kind::KIND_NONE);
+					t = make_shared<primitive_type>(primitive_type::kind::KIND_DOUBLE, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC,
+						type::constexpr_kind::KIND_CONSTEXPR, primitive_type::sign_kind::KIND_NONE);
 				else if (tok.suffix_kind() == token::suffix::SUFFIX_FLOAT)
-					t = make_shared<primitive_type>(primitive_type::kind::KIND_FLOAT, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, primitive_type::sign_kind::KIND_NONE);
+					t = make_shared<primitive_type>(primitive_type::kind::KIND_FLOAT, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC,
+						type::constexpr_kind::KIND_CONSTEXPR, primitive_type::sign_kind::KIND_NONE);
 				else if(tok.suffix_kind() == token::suffix::SUFFIX_NONE)
-					t = make_shared<primitive_type>(primitive_type::kind::KIND_DOUBLE, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, primitive_type::sign_kind::KIND_NONE);
+					t = make_shared<primitive_type>(primitive_type::kind::KIND_DOUBLE, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC,
+						type::constexpr_kind::KIND_CONSTEXPR, primitive_type::sign_kind::KIND_NONE);
 				else {
 					p->report(error(error::kind::KIND_ERROR, "Cannot have a non-float or double suffix for a decimal literal.", vector<token>{ tok }, 0));
 					_valid = false;
@@ -502,12 +515,13 @@ namespace spectre {
 			}
 			else if (tok.token_kind() == token::kind::TOKEN_CHARACTER) {
 				shared_ptr<type> t = make_shared<primitive_type>(primitive_type::kind::KIND_CHAR, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC,
-					primitive_type::sign_kind::KIND_UNSIGNED);
+					type::constexpr_kind::KIND_CONSTEXPR, primitive_type::sign_kind::KIND_UNSIGNED);
 				_valid = true;
 				_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_LITERAL, tok, t, _valid, vector<token>{ tok }, value_kind::VALUE_RVALUE);
 			}
 			else if (tok.token_kind() == token::kind::TOKEN_TRUE || tok.token_kind() == token::kind::TOKEN_FALSE) {
-				shared_ptr<type> t = make_shared<primitive_type>(primitive_type::kind::KIND_BOOL, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, primitive_type::sign_kind::KIND_NONE);
+				shared_ptr<type> t = make_shared<primitive_type>(primitive_type::kind::KIND_BOOL, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC,
+					type::constexpr_kind::KIND_CONSTEXPR, primitive_type::sign_kind::KIND_NONE);
 				_valid = true;
 				_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_LITERAL, tok, t, _valid, vector<token>{ tok }, value_kind::VALUE_RVALUE);
 			}
@@ -516,12 +530,18 @@ namespace spectre {
 				stream.push_back(tok);
 				token look_ahead = p->peek();
 				shared_ptr<type> t = make_shared<primitive_type>(primitive_type::kind::KIND_INT, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC,
-					primitive_type::sign_kind::KIND_UNSIGNED);
+					type::constexpr_kind::KIND_CONSTEXPR, primitive_type::sign_kind::KIND_UNSIGNED);
 				if (look_ahead.token_kind() == token::kind::TOKEN_OPEN_BRACE) {
 					stream.push_back(p->pop());
 					type_parser tp(p);
 					if (!tp.valid()) {
 						p->report(error(error::kind::KIND_ERROR, "Cannot take the 'sizeof' an invalid type.", stream, 0));
+						_valid = false;
+						_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_SIZEOF_TYPE, tp.contained_type(), t, _valid, stream);
+						return;
+					}
+					if (tp.contained_type()->type_kind() == type::kind::KIND_AUTO) {
+						p->report(error(error::kind::KIND_ERROR, "Cannot take the 'sizeof' an auto-type.", stream, 0));
 						_valid = false;
 						_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_SIZEOF_TYPE, tp.contained_type(), t, _valid, stream);
 						return;
@@ -614,6 +634,8 @@ namespace spectre {
 					_valid = false;
 					return;
 				}
+				if (t->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR)
+					vk = value_kind::VALUE_RVALUE;
 				_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_IDENTIFIER, tok, s, t, true, stream, vk);
 				_valid = true;
 			}
@@ -656,7 +678,7 @@ namespace spectre {
 				stream.push_back(tok);
 				type_parser tp(p);
 				shared_ptr<type> nt = tp.contained_type();
-				if (!tp.valid() || !nt->valid()) {
+				if (!tp.valid() || !nt->valid() || nt->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR) {
 					p->report(error(error::kind::KIND_ERROR, "Expected a valid type to allocate.", stream, stream.size() - 1));
 					_contained_primary_expression = make_shared<primary_expression>(which, nt, nullptr, make_shared<type>(type::kind::KIND_NONE,
 						type::const_kind::KIND_NONE, type::static_kind::KIND_NONE), false, stream);
@@ -785,6 +807,12 @@ namespace spectre {
 					shared_ptr<postfix_expression::postfix_type> pt = make_shared<postfix_expression::postfix_type>(
 						op.token_kind() == token::kind::TOKEN_INCREMENT ? postfix_expression::kind::KIND_INCREMENT :
 						postfix_expression::kind::KIND_DECREMENT, prev_type);
+					if (prev_type->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR) {
+						p->report(error(error::kind::KIND_ERROR, "Cannot increment or decrement a 'constexpr' expression,", stream, 0));
+						ptl.push_back(pt);
+						_valid = false;
+						break;
+					}
 					prev_vk = deduce_postfix_expression_value_kind(p, pt);
 					_valid = _valid && prev_type->valid() && prev_vk != value_kind::VALUE_NONE;
 					ptl.push_back(pt);
@@ -793,6 +821,12 @@ namespace spectre {
 					stream.push_back(p->pop());
 					if (prev_vk != value_kind::VALUE_LVALUE) {
 						p->report(error(error::kind::KIND_ERROR, "Expected an l-value to take an address of.", stream, 0));
+						_valid = false;
+						ptl.push_back(make_shared<postfix_expression::postfix_type>(postfix_expression::kind::KIND_ADDRESS, nullptr));
+						break;
+					}
+					if (prev_type->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR) {
+						p->report(error(error::kind::KIND_ERROR, "Cannot take the address of a 'constexpr' expression.", stream, 0));
 						_valid = false;
 						ptl.push_back(make_shared<postfix_expression::postfix_type>(postfix_expression::kind::KIND_ADDRESS, nullptr));
 						break;
@@ -833,6 +867,12 @@ namespace spectre {
 						ptl.push_back(make_shared<postfix_expression::postfix_type>(postfix_expression::kind::KIND_AT, nullptr));
 						break;
 					}
+					if (prev_type->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR) {
+						p->report(error(error::kind::KIND_ERROR, "Cannot dereference a 'constexpr' expression.", stream, 0));
+						_valid = false;
+						ptl.push_back(make_shared<postfix_expression::postfix_type>(postfix_expression::kind::KIND_AT, nullptr));
+						break;
+					}
 					if (prev_type->type_kind() == type::kind::KIND_PRIMITIVE) {
 						shared_ptr<primitive_type> pt = static_pointer_cast<primitive_type>(prev_type);
 						if (pt->primitive_type_kind() == primitive_type::kind::KIND_VOID) {
@@ -865,12 +905,29 @@ namespace spectre {
 					stream.push_back(p->pop());
 					type_parser tp(p);
 					if (!tp.valid() || !tp.contained_type()->valid()) {
-						p->report(error(error::kind::KIND_ERROR, "This type is invalid.", tp.stream(), 0));
+						p->report(error(error::kind::KIND_ERROR, "Cannot cast to this type.", tp.stream(), 0));
 						_valid = false;
 						ptl.push_back(make_shared<postfix_expression::postfix_type>(postfix_expression::kind::KIND_AS, nullptr));
 						break;
 					}
 					shared_ptr<type> to_type = tp.contained_type();
+					if(to_type->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR && prev_type->type_constexpr_kind() == type::constexpr_kind::KIND_NON_CONSTEXPR) {
+						p->report(error(error::kind::KIND_ERROR, "Cannot cast from a 'non-constexpr' type to a 'non-constexpr' type.", tp.stream(), 0));
+						_valid = false;
+						ptl.push_back(make_shared<postfix_expression::postfix_type>(postfix_expression::kind::KIND_AS, nullptr));
+						break;
+					}
+					if (to_type->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR) {
+						if (to_type->type_array_kind() != type::array_kind::KIND_ARRAY) {
+							if (to_type->type_kind() != type::kind::KIND_PRIMITIVE) {
+								p->report(error(error::kind::KIND_ERROR, "Cannot cast to a non-array, constexpr function or struct type from a constexpr type.",
+									tp.stream(), 0));
+								_valid = false;
+								ptl.push_back(make_shared<postfix_expression::postfix_type>(postfix_expression::kind::KIND_AS, nullptr));
+								break;
+							}
+						}
+					}
 					vector<token> type_stream = tp.stream();
 					stream.insert(stream.end(), type_stream.begin(), type_stream.end());
 					shared_ptr<type> from_type = prev_type;
@@ -890,6 +947,12 @@ namespace spectre {
 					stream.push_back(ident);
 					if (prev_type->array_dimensions() != 1 || prev_type->type_array_kind() != type::array_kind::KIND_ARRAY) {
 						p->report(error(error::kind::KIND_ERROR, "'->' should be used to select members from array types.", stream, 0));
+						_valid = false;
+						ptl.push_back(make_shared<postfix_expression::postfix_type>(postfix_expression::kind::KIND_ARROW, ident, nullptr));
+						break;
+					}
+					if (prev_type->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR) {
+						p->report(error(error::kind::KIND_ERROR, "'->' cannot be used on a constexpr expression.", stream, 0));
 						_valid = false;
 						ptl.push_back(make_shared<postfix_expression::postfix_type>(postfix_expression::kind::KIND_ARROW, ident, nullptr));
 						break;
@@ -946,6 +1009,12 @@ namespace spectre {
 						p->report(error(error::kind::KIND_ERROR, "Can only select members from non-array types.", stream, 0));
 						_valid = false;
 						ptl.push_back(make_shared<postfix_expression::postfix_type>(postfix_expression::kind::KIND_MEMBER, ident, nullptr));
+						break;
+					}
+					if (prev_type->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR) {
+						p->report(error(error::kind::KIND_ERROR, "'.' cannot be used to select from a 'constexpr' expression.", stream, 0));
+						ptl.push_back(make_shared<postfix_expression::postfix_type>(postfix_expression::kind::KIND_MEMBER, ident, nullptr));
+						_valid = false;
 						break;
 					}
 					if (prev_type->type_kind() != type::kind::KIND_STRUCT) {
@@ -1028,6 +1097,12 @@ namespace spectre {
 					if (prev_type->type_kind() != type::kind::KIND_FUNCTION || prev_type->array_dimensions() != 0 ||
 						prev_type->type_array_kind() == type::array_kind::KIND_ARRAY) {
 						p->report(error(error::kind::KIND_ERROR, "Expected a raw function type for a function call.", stream, stream.size() - 1));
+						_valid = false;
+						ptl.push_back(make_shared<postfix_expression::postfix_type>(prev_type, al, nullptr));
+						break;
+					}
+					else if (prev_type->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR) {
+						p->report(error(error::kind::KIND_ERROR, "Cannot use a 'constexpr' expression as a function.", stream, stream.size() - 1));
 						_valid = false;
 						ptl.push_back(make_shared<postfix_expression::postfix_type>(prev_type, al, nullptr));
 						break;
@@ -1119,6 +1194,11 @@ namespace spectre {
 					}
 					if (prev_type->type_array_kind() != type::array_kind::KIND_ARRAY || prev_type->array_dimensions() == 0) {
 						p->report(error(error::kind::KIND_ERROR, "Expected to subscript an array.", stream, 0));
+						_valid = false;
+						break;
+					}
+					if (prev_type->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR) {
+						p->report(error(error::kind::KIND_ERROR, "Cannot index into a 'constexpr' expression.", stream, 0));
 						_valid = false;
 						break;
 					}
@@ -1285,6 +1365,7 @@ namespace spectre {
 			}
 			assignment_expression_list.push_back(first);
 			token op = p->peek();
+			bool all_constexpr = true;
 			while (op.token_kind() == token::kind::TOKEN_COMMA) {
 				stream.push_back(op);
 				p->pop();
@@ -1297,11 +1378,14 @@ namespace spectre {
 					_valid = false;
 					return;
 				}
+				all_constexpr = all_constexpr && ae->assignment_expression_type()->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR;
 				assignment_expression_list.push_back(ae);
 				op = p->peek();
 			}
 			_contained_expression = make_shared<expression>(assignment_expression_list[assignment_expression_list.size() - 1]->assignment_expression_type(), assignment_expression_list,
 				stream, true, assignment_expression_list[assignment_expression_list.size() - 1]->assignment_expression_value_kind());
+			if (!all_constexpr)
+				_contained_expression->expression_type()->set_constexpr_kind(type::constexpr_kind::KIND_NON_CONSTEXPR);
 			_valid = true;
 		}
 
@@ -1327,6 +1411,18 @@ namespace spectre {
 					_contained_stmt = make_shared<stmt>(stmt::kind::KIND_IF, i, i->valid(), i->stream());
 					stream = i->stream();
 					_valid = i->valid();
+				}
+				else {
+					_contained_stmt = make_shared<stmt>();
+					_valid = false;
+				}
+			}
+			else if (p->peek().token_kind() == token::kind::TOKEN_DELETE) {
+				shared_ptr<delete_stmt> d = delete_stmt_parser(p).contained_delete_stmt();
+				if (d != nullptr) {
+					_contained_stmt = make_shared<stmt>(stmt::kind::KIND_DELETE, d, d->valid(), d->stream());
+					stream = d->stream();
+					_valid = d->valid();
 				}
 				else {
 					_contained_stmt = make_shared<stmt>();
@@ -1714,6 +1810,8 @@ namespace spectre {
 					op_kind = binary_expression::operator_kind::KIND_MULTIPLY_EQUALS;
 				else if (op.token_kind() == token::kind::TOKEN_DIVIDE_EQUALS)
 					op_kind = binary_expression::operator_kind::KIND_DIVIDE_EQUALS;
+				else if (op.token_kind() == token::kind::TOKEN_MODULO_EQUALS)
+					op_kind = binary_expression::operator_kind::KIND_MODULUS_EQUALS;
 				else if (op.token_kind() == token::kind::TOKEN_SHIFT_LEFT_EQUALS)
 					op_kind = binary_expression::operator_kind::KIND_SHIFT_LEFT_EQUALS;
 				else if (op.token_kind() == token::kind::TOKEN_SHIFT_RIGHT_EQUALS)
@@ -1804,6 +1902,11 @@ namespace spectre {
 			if (t->type_kind() == type::kind::KIND_PRIMITIVE) {
 				shared_ptr<primitive_type> pt = static_pointer_cast<primitive_type>(t);
 				primitive_type::kind pt_kind = pt->primitive_type_kind();
+				if ((uek == unary_expression::kind::KIND_INCREMENT || uek == unary_expression::kind::KIND_DECREMENT)
+					&& pt->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR) {
+					p->report(error(error::kind::KIND_ERROR, "Cannot increment or decrement a 'constexpr' expression.", stream, 0));
+					return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE, type::constexpr_kind::KIND_NONE);
+				}
 				switch (uek) {
 				case unary_expression::kind::KIND_PLUS:
 				case unary_expression::kind::KIND_MINUS:
@@ -1877,6 +1980,9 @@ namespace spectre {
 			if (!lhs->valid() || !rhs->valid())
 				return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
 			shared_ptr<type> lhs_type = lhs->binary_expression_type(), rhs_type = rhs->binary_expression_type();
+			type::constexpr_kind deduced_constexpr_kind = lhs_type->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR
+				&& rhs_type->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR ?
+				type::constexpr_kind::KIND_CONSTEXPR : type::constexpr_kind::KIND_NON_CONSTEXPR;
 			if (lhs_type->type_kind() == type::kind::KIND_FUNCTION || rhs_type->type_kind() == type::kind::KIND_FUNCTION) {
 				if (lhs_type->type_kind() != type::kind::KIND_FUNCTION || rhs_type->type_kind() != type::kind::KIND_FUNCTION) {
 					p->report(error(error::kind::KIND_ERROR, "Cannot apply any binary operators on a function type and any other type.", stream, lhs->stream().size()));
@@ -1890,7 +1996,8 @@ namespace spectre {
 					p->report(error(error::kind::KIND_ERROR, "Expected matching function types to compare for equality or inequality.", stream, lhs->stream().size()));
 					return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
 				}
-				return make_shared<primitive_type>(primitive_type::kind::KIND_BOOL, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, primitive_type::sign_kind::KIND_NONE);
+				return make_shared<primitive_type>(primitive_type::kind::KIND_BOOL, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC,
+					deduced_constexpr_kind, primitive_type::sign_kind::KIND_NONE);
 			}
 			else if (lhs_type->type_kind() == type::kind::KIND_STRUCT || rhs_type->type_kind() == type::kind::KIND_STRUCT) {
 				if (lhs_type->type_kind() != type::kind::KIND_STRUCT || rhs_type->type_kind() != type::kind::KIND_STRUCT) {
@@ -1906,7 +2013,8 @@ namespace spectre {
 					p->report(error(error::kind::KIND_ERROR, "Expected matching struct types to compare for equality or inequality.", stream, lhs->stream().size()));
 					return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
 				}
-				return make_shared<primitive_type>(primitive_type::kind::KIND_BOOL, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, primitive_type::sign_kind::KIND_NONE);
+				return make_shared<primitive_type>(primitive_type::kind::KIND_BOOL, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC,
+					deduced_constexpr_kind, primitive_type::sign_kind::KIND_NONE);
 			}
 			if (lhs_type->type_kind() == type::kind::KIND_PRIMITIVE && rhs_type->type_kind() == type::kind::KIND_PRIMITIVE) {
 				shared_ptr<primitive_type> lhs_pt = static_pointer_cast<primitive_type>(lhs_type), rhs_pt = static_pointer_cast<primitive_type>(rhs_type);
@@ -1929,19 +2037,19 @@ namespace spectre {
 							return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
 						}
 						if (lhs_primitive_kind == primitive_type::kind::KIND_DOUBLE || rhs_primitive_kind == primitive_type::kind::KIND_DOUBLE)
-							return make_shared<primitive_type>(primitive_type::kind::KIND_DOUBLE, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, sk);
+							return make_shared<primitive_type>(primitive_type::kind::KIND_DOUBLE, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, deduced_constexpr_kind, sk);
 						else if (lhs_primitive_kind == primitive_type::kind::KIND_LONG || rhs_primitive_kind == primitive_type::kind::KIND_LONG)
-							return make_shared<primitive_type>(primitive_type::kind::KIND_LONG, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, sk);
+							return make_shared<primitive_type>(primitive_type::kind::KIND_LONG, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, deduced_constexpr_kind, sk);
 						else if (lhs_primitive_kind == primitive_type::kind::KIND_FLOAT || rhs_primitive_kind == primitive_type::kind::KIND_FLOAT)
-							return make_shared<primitive_type>(primitive_type::kind::KIND_FLOAT, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, sk);
+							return make_shared<primitive_type>(primitive_type::kind::KIND_FLOAT, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, deduced_constexpr_kind, sk);
 						else if(lhs_primitive_kind == primitive_type::kind::KIND_INT || rhs_primitive_kind == primitive_type::kind::KIND_INT)
-							return make_shared<primitive_type>(primitive_type::kind::KIND_INT, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, sk);
+							return make_shared<primitive_type>(primitive_type::kind::KIND_INT, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, deduced_constexpr_kind, sk);
 						else if(lhs_primitive_kind == primitive_type::kind::KIND_SHORT || rhs_primitive_kind == primitive_type::kind::KIND_SHORT)
-							return make_shared<primitive_type>(primitive_type::kind::KIND_SHORT, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, sk);
+							return make_shared<primitive_type>(primitive_type::kind::KIND_SHORT, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, deduced_constexpr_kind, sk);
 						else if(lhs_primitive_kind == primitive_type::kind::KIND_CHAR || rhs_primitive_kind == primitive_type::kind::KIND_CHAR)
-							return make_shared<primitive_type>(primitive_type::kind::KIND_CHAR, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, sk);
+							return make_shared<primitive_type>(primitive_type::kind::KIND_CHAR, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, deduced_constexpr_kind, sk);
 						else if(lhs_primitive_kind == primitive_type::kind::KIND_BYTE || rhs_primitive_kind == primitive_type::kind::KIND_BYTE)
-							return make_shared<primitive_type>(primitive_type::kind::KIND_BYTE, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, sk);
+							return make_shared<primitive_type>(primitive_type::kind::KIND_BYTE, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, deduced_constexpr_kind, sk);
 					}
 					break;
 					case token::kind::TOKEN_RIGHT_ANGLE_BRACKET:
@@ -1957,7 +2065,8 @@ namespace spectre {
 							p->report(error(error::kind::KIND_ERROR, "Expected numeric types to compare.", stream, lhs->stream().size()));
 							return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
 						}
-						return make_shared<primitive_type>(primitive_type::kind::KIND_BOOL, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, primitive_type::sign_kind::KIND_NONE);
+						return make_shared<primitive_type>(primitive_type::kind::KIND_BOOL, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC,
+							deduced_constexpr_kind, primitive_type::sign_kind::KIND_NONE);
 					}
 					break;
 					case token::kind::TOKEN_CARET:
@@ -1978,15 +2087,15 @@ namespace spectre {
 							return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
 						}
 						if (lhs_primitive_kind == primitive_type::kind::KIND_LONG || rhs_primitive_kind == primitive_type::kind::KIND_LONG)
-							return make_shared<primitive_type>(primitive_type::kind::KIND_LONG, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, sk);
+							return make_shared<primitive_type>(primitive_type::kind::KIND_LONG, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, deduced_constexpr_kind, sk);
 						else if(lhs_primitive_kind == primitive_type::kind::KIND_INT || rhs_primitive_kind == primitive_type::kind::KIND_INT)
-							return make_shared<primitive_type>(primitive_type::kind::KIND_INT, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, sk);
+							return make_shared<primitive_type>(primitive_type::kind::KIND_INT, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, deduced_constexpr_kind, sk);
 						else if(lhs_primitive_kind == primitive_type::kind::KIND_SHORT || rhs_primitive_kind == primitive_type::kind::KIND_SHORT)
-							return make_shared<primitive_type>(primitive_type::kind::KIND_SHORT, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, sk);
+							return make_shared<primitive_type>(primitive_type::kind::KIND_SHORT, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, deduced_constexpr_kind, sk);
 						else if(lhs_primitive_kind == primitive_type::kind::KIND_CHAR || rhs_primitive_kind == primitive_type::kind::KIND_CHAR)
-							return make_shared<primitive_type>(primitive_type::kind::KIND_CHAR, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, sk);
+							return make_shared<primitive_type>(primitive_type::kind::KIND_CHAR, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, deduced_constexpr_kind, sk);
 						else if(lhs_primitive_kind == primitive_type::kind::KIND_BYTE || rhs_primitive_kind == primitive_type::kind::KIND_BYTE)
-							return make_shared<primitive_type>(primitive_type::kind::KIND_BYTE, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, sk);
+							return make_shared<primitive_type>(primitive_type::kind::KIND_BYTE, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, deduced_constexpr_kind, sk);
 					}
 					break;
 					case token::kind::TOKEN_EQUALS_EQUALS:
@@ -2001,7 +2110,8 @@ namespace spectre {
 							return handle_error("Cannot compare arrays of an unequal number of dimensions.");
 						if (lhs_primitive_kind == primitive_type::kind::KIND_VOID || rhs_primitive_kind == primitive_type::kind::KIND_VOID)
 							return handle_error("Expected a non-void type for this operator.");
-						shared_ptr<type> good = make_shared<primitive_type>(primitive_type::kind::KIND_BOOL, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, primitive_type::sign_kind::KIND_NONE),
+						shared_ptr<type> good = make_shared<primitive_type>(primitive_type::kind::KIND_BOOL, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC,
+							deduced_constexpr_kind, primitive_type::sign_kind::KIND_NONE),
 							bad = make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
 						if (lhs_primitive_kind == primitive_type::kind::KIND_BOOL || rhs_primitive_kind == primitive_type::kind::KIND_BOOL) {
 							if (lhs_primitive_kind == primitive_type::kind::KIND_BOOL && rhs_primitive_kind == primitive_type::kind::KIND_BOOL)
@@ -2021,7 +2131,8 @@ namespace spectre {
 							p->report(error(error::kind::KIND_ERROR, "Expected boolean operands for this operator.", stream, lhs->stream().size()));
 							return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
 						}
-						return make_shared<primitive_type>(primitive_type::kind::KIND_BOOL, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, primitive_type::sign_kind::KIND_NONE);
+						return make_shared<primitive_type>(primitive_type::kind::KIND_BOOL, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC,
+							deduced_constexpr_kind, primitive_type::sign_kind::KIND_NONE);
 					}
 					break;
 				}
@@ -2064,6 +2175,8 @@ namespace spectre {
 				type::const_kind::KIND_CONST : type::const_kind::KIND_NON_CONST;
 			type::static_kind sk = t1->type_static_kind() == type::static_kind::KIND_STATIC && t2->type_static_kind() == type::static_kind::KIND_STATIC ?
 				type::static_kind::KIND_STATIC : type::static_kind::KIND_NON_STATIC;
+			type::constexpr_kind cek = t1->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR && t2->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR ?
+				type::constexpr_kind::KIND_CONSTEXPR : type::constexpr_kind::KIND_NON_CONSTEXPR;
 			if (t1->type_kind() == type::kind::KIND_PRIMITIVE && t2->type_kind() == type::kind::KIND_PRIMITIVE) {
 				shared_ptr<primitive_type> pt1 = static_pointer_cast<primitive_type>(t1), pt2 = static_pointer_cast<primitive_type>(t2);
 				primitive_type::sign_kind sk2 = pt1->primitive_type_sign_kind() == primitive_type::sign_kind::KIND_SIGNED && pt2->primitive_type_sign_kind() == primitive_type::sign_kind::KIND_SIGNED ?
@@ -2086,19 +2199,19 @@ namespace spectre {
 					return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
 				}
 				if (pt1->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE || pt2->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE)
-					return make_shared<primitive_type>(primitive_type::kind::KIND_DOUBLE, ck, sk, primitive_type::sign_kind::KIND_NONE, t1->array_dimensions());
+					return make_shared<primitive_type>(primitive_type::kind::KIND_DOUBLE, ck, sk, cek, primitive_type::sign_kind::KIND_NONE, t1->array_dimensions());
 				else if (pt1->primitive_type_kind() == primitive_type::kind::KIND_LONG || pt2->primitive_type_kind() == primitive_type::kind::KIND_LONG)
-					return make_shared<primitive_type>(primitive_type::kind::KIND_LONG, ck, sk, sk2, t1->array_dimensions());
+					return make_shared<primitive_type>(primitive_type::kind::KIND_LONG, ck, sk, cek, sk2, t1->array_dimensions());
 				else if (pt1->primitive_type_kind() == primitive_type::kind::KIND_FLOAT || pt2->primitive_type_kind() == primitive_type::kind::KIND_FLOAT)
-					return make_shared<primitive_type>(primitive_type::kind::KIND_FLOAT, ck, sk, primitive_type::sign_kind::KIND_NONE, t1->array_dimensions());
+					return make_shared<primitive_type>(primitive_type::kind::KIND_FLOAT, ck, sk, cek, primitive_type::sign_kind::KIND_NONE, t1->array_dimensions());
 				else if(pt1->primitive_type_kind() == primitive_type::kind::KIND_INT || pt2->primitive_type_kind() == primitive_type::kind::KIND_INT)
-					return make_shared<primitive_type>(primitive_type::kind::KIND_INT, ck, sk, sk2, t1->array_dimensions());
+					return make_shared<primitive_type>(primitive_type::kind::KIND_INT, ck, sk, cek, sk2, t1->array_dimensions());
 				else if(pt1->primitive_type_kind() == primitive_type::kind::KIND_SHORT || pt2->primitive_type_kind() == primitive_type::kind::KIND_SHORT)
-					return make_shared<primitive_type>(primitive_type::kind::KIND_SHORT, ck, sk, sk2, t1->array_dimensions());
+					return make_shared<primitive_type>(primitive_type::kind::KIND_SHORT, ck, sk, cek, sk2, t1->array_dimensions());
 				else if(pt1->primitive_type_kind() == primitive_type::kind::KIND_CHAR || pt2->primitive_type_kind() == primitive_type::kind::KIND_CHAR)
-					return make_shared<primitive_type>(primitive_type::kind::KIND_CHAR, ck, sk, sk2, t1->array_dimensions());
+					return make_shared<primitive_type>(primitive_type::kind::KIND_CHAR, ck, sk, cek, sk2, t1->array_dimensions());
 				else if(pt1->primitive_type_kind() == primitive_type::kind::KIND_BYTE || pt2->primitive_type_kind() == primitive_type::kind::KIND_BYTE)
-					return make_shared<primitive_type>(primitive_type::kind::KIND_BYTE, ck, sk, sk2, t1->array_dimensions());
+					return make_shared<primitive_type>(primitive_type::kind::KIND_BYTE, ck, sk, cek, sk2, t1->array_dimensions());
 			}
 			else if (t1->type_kind() == type::kind::KIND_STRUCT && t2->type_kind() == type::kind::KIND_STRUCT) {
 				shared_ptr<struct_type> s1 = static_pointer_cast<struct_type>(t1), s2 = static_pointer_cast<struct_type>(t2);
@@ -2135,7 +2248,8 @@ namespace spectre {
 				p->report(error(error::kind::KIND_ERROR, "Cannot assign to a rvalue expression.", stream, lhs->stream().size()));
 				return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
 			}
-			if (lhs->unary_expression_type()->type_const_kind() == type::const_kind::KIND_CONST) {
+			if (lhs->unary_expression_type()->type_const_kind() == type::const_kind::KIND_CONST
+				|| lhs->unary_expression_type()->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR) {
 				p->report(error(error::kind::KIND_ERROR, "Cannot re-assign a constant lvalue.", stream, lhs->stream().size()));
 				return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
 			}
@@ -2305,7 +2419,8 @@ namespace spectre {
 		type_parser::type_parser(shared_ptr<parser> p) : _valid(false), _contained_type(nullptr), _stream(vector<token>()) {
 			int start = p->get_buffer_position();
 			token tok = p->pop();
-			bool signed_unsigned_hit = false, const_hit = false, static_hit = false, primitive_hit = false, struct_hit = false, function_hit = false;
+			bool signed_unsigned_hit = false, const_hit = false, static_hit = false, primitive_hit = false, struct_hit = false, function_hit = false,
+				constexpr_hit = false, auto_hit = false;
 			shared_ptr<symbol> s_symbol = nullptr;
 			shared_ptr<type> r_type = nullptr;
 			vector<shared_ptr<variable_declaration>> param_list;
@@ -2321,15 +2436,23 @@ namespace spectre {
 						p->report(error(error::kind::KIND_ERROR, "Cannot have a signed or unsigned 'struct' or function types.", _stream, _stream.size() - 1));
 						return;
 					}
+					else if (auto_hit) {
+						_contained_type = make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
+						_valid = false;
+						p->report(error(error::kind::KIND_ERROR, "Cannot use 'signed' or 'unsigned' in conjunction with auto.", _stream, _stream.size() - 1));
+						return;
+					}
 				}
 				else if (tok.token_kind() == token::kind::TOKEN_CONST)
 					const_hit = true;
 				else if (tok.token_kind() == token::kind::TOKEN_STATIC)
 					static_hit = true;
+				else if (tok.token_kind() == token::kind::TOKEN_CONSTEXPR)
+					constexpr_hit = true;
 				else if (tok.token_kind() == token::kind::TOKEN_BYTE || tok.token_kind() == token::kind::TOKEN_CHAR || tok.token_kind() == token::kind::TOKEN_SHORT ||
 					tok.token_kind() == token::kind::TOKEN_INT || tok.token_kind() == token::kind::TOKEN_LONG || tok.token_kind() == token::kind::TOKEN_DOUBLE ||
 					tok.token_kind() == token::kind::TOKEN_FLOAT || tok.token_kind() == token::kind::TOKEN_BOOL || tok.token_kind() == token::kind::TOKEN_VOID) {
-					if (primitive_hit || struct_hit || function_hit) {
+					if (primitive_hit || struct_hit || function_hit || auto_hit) {
 						_contained_type = make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
 						_valid = false;
 						p->report(error(error::kind::KIND_ERROR, "Repeated type specifiers.", _stream, _stream.size() - 1));
@@ -2340,8 +2463,18 @@ namespace spectre {
 						important = tok;
 					}
 				}
+				else if (tok.token_kind() == token::kind::TOKEN_AUTO) {
+					if (primitive_hit || struct_hit || function_hit || auto_hit) {
+						_contained_type = make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
+						_valid = false;
+						p->report(error(error::kind::KIND_ERROR, "Repeated type specifiers.", _stream, _stream.size() - 1));
+						return;
+					}
+					else
+						auto_hit = true;
+				}
 				else if (tok.token_kind() == token::kind::TOKEN_TYPE) {
-					if (primitive_hit || struct_hit || function_hit) {
+					if (primitive_hit || struct_hit || function_hit || auto_hit) {
 						_contained_type = make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
 						_valid = false;
 						p->report(error(error::kind::KIND_ERROR, "Repeated type specifiers.", _stream, _stream.size() - 1));
@@ -2376,7 +2509,7 @@ namespace spectre {
 					}
 				}
 				else if (tok.token_kind() == token::kind::TOKEN_FN) {
-					if (primitive_hit || struct_hit || function_hit) {
+					if (primitive_hit || struct_hit || function_hit || auto_hit) {
 						_contained_type = make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
 						_valid = false;
 						p->report(error(error::kind::KIND_ERROR, "Repeated type specifiers.", _stream, _stream.size() - 1));
@@ -2384,7 +2517,8 @@ namespace spectre {
 					}
 					function_hit = true;
 					type_parser rt_parser(p);
-					if (!rt_parser.valid()) {
+					if (!rt_parser.valid() || rt_parser.contained_type()->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR
+						|| rt_parser.contained_type()->type_kind() == type::kind::KIND_AUTO) {
 						_valid = false;
 						p->report(error(error::kind::KIND_ERROR, "Invalid return type for a function type.", _stream, _stream.size() - 1));
 						return;
@@ -2398,7 +2532,8 @@ namespace spectre {
 					_stream.push_back(p->pop());
 					while (p->peek().token_kind() != token::kind::TOKEN_CLOSE_PARENTHESIS) {
 						type_parser param_type_parser(p);
-						if (!param_type_parser.valid()) {
+						if (!param_type_parser.valid() || param_type_parser.contained_type()->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR
+							|| param_type_parser.contained_type()->type_kind() == type::kind::KIND_AUTO) {
 							_valid = false;
 							p->report(error(error::kind::KIND_ERROR, "Expected a valid function parameter type in a function type's parameter list.", _stream, _stream.size() - 1));
 							return;
@@ -2438,6 +2573,7 @@ namespace spectre {
 			_stream.pop_back();
 			token arr_open = p->pop();
 			int ad = 0;
+			if (constexpr_hit) static_hit = true;
 			while (arr_open.token_kind() == token::kind::TOKEN_OPEN_BRACKET || arr_open.token_kind() == token::kind::TOKEN_STAR) {
 				ad++;
 				_stream.push_back(arr_open);
@@ -2455,10 +2591,16 @@ namespace spectre {
 				arr_open = p->pop();
 			}
 			p->backtrack();
-			if(!primitive_hit && !struct_hit && !function_hit) {
+			if(!primitive_hit && !struct_hit && !function_hit && !auto_hit) {
 				_contained_type = make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
 				_valid = false;
 				p->set_buffer_position(start);
+				return;
+			}
+			if (constexpr_hit && (struct_hit || function_hit) && ad == 0) {
+				p->report(error(error::kind::KIND_ERROR, "Cannot have a constexpr struct or function.", _stream, _stream.size() - 1));
+				_valid = false;
+				_contained_type = make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE, ad);
 				return;
 			}
 			if (primitive_hit) {
@@ -2514,19 +2656,31 @@ namespace spectre {
 					return;
 				}
 				_contained_type = make_shared<primitive_type>(k, const_hit ? type::const_kind::KIND_CONST : type::const_kind::KIND_NON_CONST,
-					static_hit ? type::static_kind::KIND_STATIC : type::static_kind::KIND_NON_STATIC, s, ad);
+					static_hit ? type::static_kind::KIND_STATIC : type::static_kind::KIND_NON_STATIC,
+					constexpr_hit ? type::constexpr_kind::KIND_CONSTEXPR : type::constexpr_kind::KIND_NON_CONSTEXPR, s, ad);
 				return;
 			}
 			else if (struct_hit) {
 				shared_ptr<struct_symbol> ss = static_pointer_cast<struct_symbol>(s_symbol);
 				_contained_type = make_shared<struct_type>(const_hit ? type::const_kind::KIND_CONST : type::const_kind::KIND_NON_CONST, static_hit ? type::static_kind::KIND_STATIC :
-					type::static_kind::KIND_NON_STATIC, important, ss->struct_symbol_type()->struct_reference_number(), true, ad);
+					type::static_kind::KIND_NON_STATIC, constexpr_hit ? type::constexpr_kind::KIND_CONSTEXPR : type::constexpr_kind::KIND_NON_CONSTEXPR,
+					important, ss->struct_symbol_type()->struct_reference_number(), true, ad);
 				_valid = true;
 				return;
 			}
 			else if (function_hit) {
-				_contained_type = make_shared<function_type>(const_hit ? type::const_kind::KIND_CONST : type::const_kind::KIND_NON_CONST, static_hit ? type::static_kind::KIND_STATIC :
-					type::static_kind::KIND_NON_STATIC, r_type, param_list, -1, ad);
+				_contained_type = make_shared<function_type>(const_hit ? type::const_kind::KIND_CONST : type::const_kind::KIND_NON_CONST,
+					static_hit ? type::static_kind::KIND_STATIC : type::static_kind::KIND_NON_STATIC,
+					constexpr_hit ? type::constexpr_kind::KIND_CONSTEXPR : type::constexpr_kind::KIND_NON_CONSTEXPR,
+					r_type, param_list, -1, ad);
+				_valid = true;
+				return;
+			}
+			else if (auto_hit) {
+				_contained_type = make_shared<auto_type>(const_hit ? type::const_kind::KIND_CONST : type::const_kind::KIND_NON_CONST,
+					static_hit ? type::static_kind::KIND_STATIC : type::static_kind::KIND_NON_STATIC,
+					constexpr_hit ? type::constexpr_kind::KIND_CONSTEXPR : type::constexpr_kind::KIND_NON_CONSTEXPR,
+					ad);
 				_valid = true;
 				return;
 			}
@@ -2565,7 +2719,7 @@ namespace spectre {
 				_valid = false;
 				return;
 			}
-			shared_ptr<type> decl_type = tp->contained_type();
+			shared_ptr<type> decl_type = tp->contained_type(), orig_type = decl_type;
 			vector<token> current_stream = _stream;
 			token current_name = p->pop();
 			_valid = true;
@@ -2584,6 +2738,12 @@ namespace spectre {
 						_valid = false;
 						return;
 					}
+					if (decl_type->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR && !is_constant_expression(p, ae, false)) {
+						p->report(error(error::kind::KIND_ERROR, "Cannot initialize a 'constexpr' variable with a 'non-constexpr' initializer.", current_stream, current_stream.size() - 1));
+						_contained_variable_declaration_list.push_back(make_shared<variable_declaration>(decl_type, current_name, ae, false, current_stream));
+						_valid = false;
+						return;
+					}
 					vector<token> estream = ae->stream();
 					if ((p->current_scope()->scope_kind() == scope::kind::KIND_GLOBAL || p->current_scope()->scope_kind() == scope::kind::KIND_NAMESPACE) && !is_constant_expression(p, ae)) {
 						p->report(error(error::kind::KIND_ERROR, "Expected a constant initializer for a global or namespace variable.", estream, 0));
@@ -2594,9 +2754,22 @@ namespace spectre {
 					_stream.insert(_stream.end(), estream.begin(), estream.end());
 					current_stream.insert(current_stream.end(), estream.begin(), estream.end());
 					vd = check_declaration_initializer_is_correct(p, make_shared<variable_declaration>(decl_type, current_name, ae, true, current_stream));
+					if (decl_type->type_kind() == type::kind::KIND_AUTO) decl_type = vd->variable_declaration_type();
 					_valid = _valid && vd->valid();
 				}
 				else {
+					if (decl_type->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR) {
+						p->report(error(error::kind::KIND_ERROR, "A 'constexpr' variable must be initialized.", current_stream, current_stream.size() - 1));
+						_contained_variable_declaration_list.push_back(make_shared<variable_declaration>(decl_type, current_name, true, current_stream));
+						_valid = false;
+						return;
+					}
+					if (orig_type->type_kind() == type::kind::KIND_AUTO) {
+						p->report(error(error::kind::KIND_ERROR, "An 'auto' variable must be initialized.", current_stream, current_stream.size() - 1));
+						_contained_variable_declaration_list.push_back(make_shared<variable_declaration>(decl_type, current_name, true, current_stream));
+						_valid = false;
+						return;
+					}
 					vd = check_declaration_initializer_is_correct(p, make_shared<variable_declaration>(decl_type, current_name, true, current_stream));
 					_valid = _valid && vd->valid();
 				}
@@ -2675,23 +2848,62 @@ namespace spectre {
 				vd->initialization(), false, vd->stream());
 			if (vd->variable_declaration_initialization_kind() == variable_declaration::initialization_kind::KIND_PRESENT) {
 				shared_ptr<type> decl_type = vd->variable_declaration_type(), i_type = vd->initialization()->assignment_expression_type();
-				if (decl_type->type_kind() != i_type->type_kind()) {
-					p->report(error(error::kind::KIND_ERROR, "Initialization of declaration cannot occur between two incompatible types.", vd->initialization()->stream(), 0));
-					return bad_variable;
+				if (decl_type->type_kind() != type::kind::KIND_AUTO) {
+					if (decl_type->type_kind() != i_type->type_kind()) {
+						p->report(error(error::kind::KIND_ERROR, "Initialization of declaration cannot occur between two incompatible types.", vd->initialization()->stream(), 0));
+						return bad_variable;
+					}
+					if (decl_type->type_array_kind() != i_type->type_array_kind()) {
+						p->report(error(error::kind::KIND_ERROR, "Cannot assign array and non-array types.", vd->initialization()->stream(), 0));
+						return bad_variable;
+					}
+					if (decl_type->array_dimensions() != i_type->array_dimensions()) {
+						p->report(error(error::kind::KIND_ERROR, "Cannot assign array types of unequal dimensions.", vd->initialization()->stream(), 0));
+						return bad_variable;
+					}
 				}
-				if (decl_type->type_array_kind() != i_type->type_array_kind()) {
-					p->report(error(error::kind::KIND_ERROR, "Cannot assign array and non-array types.", vd->initialization()->stream(), 0));
-					return bad_variable;
-				}
-				if (decl_type->array_dimensions() != i_type->array_dimensions()) {
-					p->report(error(error::kind::KIND_ERROR, "Cannot assign array types of unequal dimensions.", vd->initialization()->stream(), 0));
-					return bad_variable;
+				else {
+					if (decl_type->array_dimensions() > i_type->array_dimensions()) {
+						p->report(error(error::kind::KIND_ERROR, "The declared auto type and the initializer type cannot be compatible.", vd->initialization()->stream(), 0));
+						return bad_variable;
+					}
 				}
 				if (decl_type->array_dimensions() > 0 && decl_type->type_const_kind() == type::const_kind::KIND_NON_CONST &&
 					i_type->type_const_kind() == type::const_kind::KIND_CONST) {
 					p->report(error(error::kind::KIND_ERROR, "Cannot assign a const array to a non-const array (this could result in unintended side-effects).",
 						vd->initialization()->stream(), 0));
 					return bad_variable;
+				}
+				if (decl_type->type_kind() == type::kind::KIND_AUTO) {
+					type::static_kind sk = decl_type->type_static_kind();
+					type::const_kind ck = decl_type->type_const_kind();
+					type::constexpr_kind cek = decl_type->type_constexpr_kind();
+					int ad = i_type->array_dimensions();
+					if (i_type->type_kind() == type::kind::KIND_PRIMITIVE) {
+						shared_ptr<primitive_type> i_ptype = static_pointer_cast<primitive_type>(i_type);
+						primitive_type::kind pk = i_ptype->primitive_type_kind();
+						primitive_type::sign_kind psk = i_ptype->primitive_type_sign_kind();
+						decl_type = make_shared<primitive_type>(pk, ck, sk, cek, psk, ad);
+					}
+					else if (i_type->type_kind() == type::kind::KIND_FUNCTION) {
+						shared_ptr<function_type> i_ftype = static_pointer_cast<function_type>(i_type);
+						int fr = i_ftype->function_reference_number();
+						shared_ptr<type> rt = i_ftype->return_type();
+						vector<shared_ptr<variable_declaration>> pl = i_ftype->parameter_list();
+						decl_type = make_shared<function_type>(ck, sk, cek, rt, pl, fr, ad);
+					}
+					else if (i_type->type_kind() == type::kind::KIND_STRUCT) {
+						shared_ptr<struct_type> i_stype = static_pointer_cast<struct_type>(i_type);
+						token sn = i_stype->struct_name();
+						int sr = i_stype->struct_reference_number();
+						bool v = i_stype->valid();
+						decl_type = make_shared<struct_type>(ck, sk, cek, sn, sr, v, ad);
+					}
+					else {
+						p->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+						return nullptr;
+					}
+					vd = make_shared<variable_declaration>(decl_type, vd->variable_declaration_name(), vd->initialization(), vd->valid(), vd->stream());
 				}
 				if (decl_type->type_kind() == type::kind::KIND_PRIMITIVE && i_type->type_kind() == type::kind::KIND_PRIMITIVE) {
 					shared_ptr<primitive_type> decl_ptype = static_pointer_cast<primitive_type>(decl_type),
@@ -2936,7 +3148,8 @@ namespace spectre {
 			type_parser rtp(p);
 			shared_ptr<type> rt = rtp.contained_type();
 			vector<token> rt_stream = rtp.stream();
-			if(!rtp.valid()) {
+			if(!rtp.valid() || rtp.contained_type()->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR
+				|| rtp.contained_type()->type_kind() == type::kind::KIND_AUTO) {
 				p->report(error(error::kind::KIND_ERROR, "Expected a valid return type for a function.", stream, 0));
 				_contained_function_stmt = make_shared<function_stmt>(nullptr, bad_token, nullptr, vector<shared_ptr<stmt>>{}, function_stmt::defined_kind::KIND_NONE,
 					nullptr, false, stream);
@@ -2990,6 +3203,22 @@ namespace spectre {
 				}
 				if (vd_list[0]->variable_declaration_initialization_kind() == variable_declaration::initialization_kind::KIND_PRESENT) {
 					p->report(error(error::kind::KIND_ERROR, "Cannot initialize a function parameter.", vd_stream, 0));
+					_contained_function_stmt = make_shared<function_stmt>(nullptr, fn, nullptr, vector<shared_ptr<stmt>>{},
+						function_stmt::defined_kind::KIND_NONE, fs, false, stream);
+					_valid = false;
+					p->close_current_scope();
+					return;
+				}
+				if (vd_list[0]->variable_declaration_type()->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR) {
+					p->report(error(error::kind::KIND_ERROR, "A function parameter cannot be declared 'constexpr.'", vd_stream, 0));
+					_contained_function_stmt = make_shared<function_stmt>(nullptr, fn, nullptr, vector<shared_ptr<stmt>>{},
+						function_stmt::defined_kind::KIND_NONE, fs, false, stream);
+					_valid = false;
+					p->close_current_scope();
+					return;
+				}
+				if (vd_list[0]->variable_declaration_type()->type_kind() == type::kind::KIND_AUTO) {
+					p->report(error(error::kind::KIND_ERROR, "A function parameter cannot be declared as 'auto.'", vd_stream, 0));
 					_contained_function_stmt = make_shared<function_stmt>(nullptr, fn, nullptr, vector<shared_ptr<stmt>>{},
 						function_stmt::defined_kind::KIND_NONE, fs, false, stream);
 					_valid = false;
@@ -3095,7 +3324,8 @@ namespace spectre {
 					return;
 				}
 				if (sp.contained_stmt()->stmt_kind() == stmt::kind::KIND_FUNCTION || sp.contained_stmt()->stmt_kind() == stmt::kind::KIND_STRUCT ||
-					sp.contained_stmt()->stmt_kind() == stmt::kind::KIND_NAMESPACE) {
+					(sp.contained_stmt()->stmt_kind() == stmt::kind::KIND_NAMESPACE
+						&& sp.contained_stmt()->stmt_namespace()->namespace_stmt_kind() != namespace_stmt::kind::KIND_ALIAS)) {
 					p->report(error(error::kind::KIND_ERROR, "This statement cannot be nested within a function.",
 						stream.size() > 10 ? vector<token>(stream.end() - 10, stream.end()) : stream , 0));
 					_contained_function_stmt = make_shared<function_stmt>(ft, fn, fsym, fb, function_stmt::defined_kind::KIND_DEFINITION, fs, false, stream);
@@ -3567,7 +3797,9 @@ namespace spectre {
 		bool valid_statement_inside_block_scope(shared_ptr<stmt> s) {
 			if (s == nullptr || !s->valid() || s->stmt_kind() == stmt::kind::KIND_NONE)
 				return false;
-			return s->stmt_kind() != stmt::kind::KIND_FUNCTION && s->stmt_kind() != stmt::kind::KIND_STRUCT && s->stmt_kind() != stmt::kind::KIND_NAMESPACE;
+			if (s->stmt_kind() == stmt::kind::KIND_NAMESPACE)
+				return s->stmt_namespace()->namespace_stmt_kind() == namespace_stmt::kind::KIND_ALIAS;
+			return s->stmt_kind() != stmt::kind::KIND_FUNCTION && s->stmt_kind() != stmt::kind::KIND_STRUCT;
 		}
 
 		block_stmt_parser::block_stmt_parser(shared_ptr<parser> p) : _contained_block_stmt(nullptr), _valid(false) {
@@ -4200,8 +4432,22 @@ namespace spectre {
 			while (p->peek().token_kind() != token::kind::TOKEN_CLOSE_BRACE) {
 				variable_declaration_parser vdp(p);
 				vector<shared_ptr<variable_declaration>> vdl = vdp.contained_variable_declaration_list();
-				if (!vdp.valid()) {
+				if (!vdp.valid() || vdp.contained_variable_declaration_list().empty()) {
 					p->report(error(error::kind::KIND_ERROR, "Expected a valid variable declaration for a 'struct' member list.", stream, stream.size() - 1));
+					_contained_struct_stmt = make_shared<struct_stmt>(dk, struct_name, s_scope, s_type, s_symbol, struct_members, false, stream);
+					_valid = false;
+					p->close_current_scope();
+					return;
+				}
+				if (vdp.contained_variable_declaration_list()[0]->variable_declaration_type()->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR) {
+					p->report(error(error::kind::KIND_ERROR, "A member of a struct cannot be declared 'constexpr.'", stream, stream.size() - 1));
+					_contained_struct_stmt = make_shared<struct_stmt>(dk, struct_name, s_scope, s_type, s_symbol, struct_members, false, stream);
+					_valid = false;
+					p->close_current_scope();
+					return;
+				}
+				if (vdp.contained_variable_declaration_list()[0]->variable_declaration_type()->type_kind() == type::kind::KIND_AUTO) {
+					p->report(error(error::kind::KIND_ERROR, "A member of a struct cannot be declared as 'auto.'", stream, stream.size() - 1));
 					_contained_struct_stmt = make_shared<struct_stmt>(dk, struct_name, s_scope, s_type, s_symbol, struct_members, false, stream);
 					_valid = false;
 					p->close_current_scope();
@@ -4308,6 +4554,12 @@ namespace spectre {
 				tuple<bool, vector<token>, shared_ptr<symbol>> tup = handle_qualified_identifier_name(p, false);
 				if (!get<0>(tup)) {
 					p->report(error(error::kind::KIND_ERROR, "Expected a valid identifier to alias the name of a namespace of.", stream, 0));
+					_contained_namespace_stmt = make_shared<namespace_stmt>(k, dk, nn, n_scope, n_symbol, vector<shared_ptr<stmt>>{}, false, stream);
+					_valid = false;
+					return;
+				}
+				if (test_symbol != nullptr) {
+					p->report(error(error::kind::KIND_ERROR, "This symbol was already declared and cannot be used as a name for a namespace alias.", stream, 0));
 					_contained_namespace_stmt = make_shared<namespace_stmt>(k, dk, nn, n_scope, n_symbol, vector<shared_ptr<stmt>>{}, false, stream);
 					_valid = false;
 					return;
@@ -4808,7 +5060,9 @@ namespace spectre {
 			}
 			stream.push_back(p->pop());
 			type_parser tp(p);
-			if (!tp.valid() || !check_declaration_type_is_correct(p, make_shared<type_parser>(tp))) {
+			if (!tp.valid() || !check_declaration_type_is_correct(p, make_shared<type_parser>(tp))
+				|| tp.contained_type()->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR
+				|| tp.contained_type()->type_kind() == type::kind::KIND_AUTO) {
 				p->report(error(error::kind::KIND_ERROR, "Expected a valid type for an access statement.", stream, 0));
 				_contained_access_stmt = make_shared<access_stmt>(nullptr, vector<shared_ptr<symbol>>{}, stream, false);
 				_valid = false;
@@ -4901,10 +5155,10 @@ namespace spectre {
 					break;
 			}
 			if (p->peek().token_kind() != token::kind::TOKEN_SEMICOLON) {
-					p->report(error(error::kind::KIND_ERROR, "Expected a ';' to terminate an 'access' statement.", stream, 0));
-					_contained_access_stmt = make_shared<access_stmt>(dt, dsl, stream, false);
-					_valid = false;
-					return;
+				p->report(error(error::kind::KIND_ERROR, "Expected a ';' to terminate an 'access' statement.", stream, 0));
+				_contained_access_stmt = make_shared<access_stmt>(dt, dsl, stream, false);
+				_valid = false;
+				return;
 			}
 			stream.push_back(p->pop());
 			_valid = true;
@@ -4923,19 +5177,83 @@ namespace spectre {
 			return _contained_access_stmt;
 		}
 
-		bool is_constant_expression(shared_ptr<parser> p, shared_ptr<assignment_expression> aexpr) {
+		delete_stmt_parser::delete_stmt_parser(shared_ptr<parser> p) : _contained_delete_stmt(nullptr), _valid(false) {
+			vector<token> stream;
+			if (p->peek().token_kind() != token::kind::TOKEN_DELETE) {
+				_contained_delete_stmt = make_shared<delete_stmt>(nullptr, stream, false);
+				_valid = false;
+				return;
+			}
+			stream.push_back(p->pop());
+			shared_ptr<expression> e = expression_parser(p).contained_expression();
+			if (e == nullptr || !e->valid()) {
+				p->report(error(error::kind::KIND_ERROR, "Invalid expression for a \"delete\" expression.", stream, 0));
+				_contained_delete_stmt = make_shared<delete_stmt>(e, stream, false);
+				_valid = false;
+				return;
+			}
+			vector<token> estream = e->stream();
+			stream.insert(stream.end(), estream.begin(), estream.end());
+			shared_ptr<type> et = e->expression_type();
+			// std::lib::free(const byte* data) requires at least an array type.
+			if (et->type_array_kind() != type::array_kind::KIND_ARRAY) {
+				p->report(error(error::kind::KIND_ERROR, "Expected an array type for a \"delete\" expression.", stream, 0));
+				_contained_delete_stmt = make_shared<delete_stmt>(e, stream, false);
+				_valid = false;
+				return;
+			}
+			if (p->peek().token_kind() != token::kind::TOKEN_SEMICOLON) {
+				p->report(error(error::kind::KIND_ERROR, "Expected a semicolon (';') to end a \"delete\" statement.", stream, 0));
+				_contained_delete_stmt = make_shared<delete_stmt>(e, stream, false);
+				_valid = false;
+				return;
+			}
+			if (SYSTEM != 0) {
+				p->report(error(error::kind::KIND_ERROR, "Cannot use a delete statement (';') on a non-MIPS machine.", stream, 0));
+				_contained_delete_stmt = make_shared<delete_stmt>(e, stream, false);
+				_valid = false;
+				return;
+			}
+			stream.push_back(p->pop());
+			_contained_delete_stmt = make_shared<delete_stmt>(e, stream, true);
+			_valid = true;
+		}
+
+		delete_stmt_parser::~delete_stmt_parser() {
+
+		}
+
+		shared_ptr<delete_stmt> delete_stmt_parser::contained_delete_stmt() {
+			return _contained_delete_stmt;
+		}
+
+		bool delete_stmt_parser::valid() {
+			return _valid;
+		}
+
+		bool is_constant_expression(shared_ptr<parser> p, shared_ptr<assignment_expression> aexpr, bool mem) {
 			function<bool(shared_ptr<expression>)> descend_expression;
 			function<bool(shared_ptr<assignment_expression>)> descend_assignment_expression;
 			function<bool(shared_ptr<ternary_expression>)> descend_ternary_expression;
 			function<bool(shared_ptr<binary_expression>)> descend_binary_expression;
 			auto descend_primary_expression = [&](shared_ptr<primary_expression> pe) {
-				if (pe->primary_expression_kind() == primary_expression::kind::KIND_NEW || pe->primary_expression_kind() == primary_expression::kind::KIND_IDENTIFIER ||
-					pe->primary_expression_kind() == primary_expression::kind::KIND_STK) return false;
-				else if (pe->primary_expression_kind() == primary_expression::kind::KIND_SIZEOF_TYPE || pe->primary_expression_kind() == primary_expression::kind::KIND_LITERAL) return true;
+				if (pe->primary_expression_kind() == primary_expression::kind::KIND_NEW || pe->primary_expression_kind() == primary_expression::kind::KIND_STK) return false;
+				else if (pe->primary_expression_kind() == primary_expression::kind::KIND_IDENTIFIER)
+					return pe->primary_expression_type()->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR;
+				else if (pe->primary_expression_kind() == primary_expression::kind::KIND_SIZEOF_TYPE) return true;
+				else if (pe->primary_expression_kind() == primary_expression::kind::KIND_LITERAL) {
+					if (pe->literal_token().token_kind() == token::kind::TOKEN_STRING && !mem) return false;
+					return true;
+				}
 				else if (pe->primary_expression_kind() == primary_expression::kind::KIND_PARENTHESIZED_EXPRESSION ||
-					pe->primary_expression_kind() == primary_expression::kind::KIND_SIZEOF_EXPRESSION || pe->primary_expression_kind() == primary_expression::kind::KIND_RESV)
+					pe->primary_expression_kind() == primary_expression::kind::KIND_SIZEOF_EXPRESSION)
 					return descend_expression(pe->parenthesized_expression());
+				else if (pe->primary_expression_kind() == primary_expression::kind::KIND_RESV) {
+					if (!mem) return false;
+					return descend_expression(pe->parenthesized_expression());
+				}
 				else if (pe->primary_expression_kind() == primary_expression::kind::KIND_ARRAY_INITIALIZER) {
+					if (!mem) return false;
 					for (shared_ptr<assignment_expression> ae : pe->array_initializer())
 						if (!descend_assignment_expression(ae)) return false;
 					return true;
@@ -4945,16 +5263,16 @@ namespace spectre {
 			auto descend_postfix_expression = [&](shared_ptr<postfix_expression> pe) {
 				bool primary_constant = descend_primary_expression(pe->contained_primary_expression());
 				if (!primary_constant) return false;
-				shared_ptr<type> prev_type = pe->contained_primary_expression()->primary_expression_type();
+				shared_ptr<type> prev_type = pe->contained_primary_expression()->primary_expression_type(), orig_type = prev_type;
 				for (shared_ptr<postfix_expression::postfix_type> pt : pe->postfix_type_list()) {
 					if (pt->postfix_type_kind() != postfix_expression::kind::KIND_AS)
 						return false;
 					else {
 						shared_ptr<type> to_type = pt->postfix_type_type();
 						if (to_type->type_kind() == type::kind::KIND_STRUCT && to_type->type_array_kind() == type::array_kind::KIND_NON_ARRAY) return false;
-						else if (prev_type->type_kind() == type::kind::KIND_STRUCT && prev_type->type_array_kind() == type::array_kind::KIND_NON_ARRAY) return false;
-						else if ((prev_type->array_dimensions() == to_type->array_dimensions() && prev_type->type_array_kind() == to_type->type_array_kind()));
-						else if (prev_type->type_kind() == type::kind::KIND_PRIMITIVE && prev_type->type_array_kind() == type::array_kind::KIND_NON_ARRAY);
+						else if (prev_type->type_kind() == type::kind::KIND_FUNCTION && prev_type->type_array_kind() == type::array_kind::KIND_NON_ARRAY) return false;
+						else if (prev_type->array_dimensions() == to_type->array_dimensions() && prev_type->type_array_kind() == to_type->type_array_kind());
+						else if (orig_type->type_kind() == type::kind::KIND_PRIMITIVE && orig_type->type_array_kind() == type::array_kind::KIND_NON_ARRAY);
 						else return false;
 					}
 					prev_type = pt->postfix_type_type();

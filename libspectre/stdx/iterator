@@ -1,0 +1,61 @@
+namespace stdx {
+	namespace iterator_impl {
+
+		namespace cmp_dispatch {
+			static constexpr unsigned int EQ = 1;
+			static constexpr unsigned int NEQ = 1 << 1;
+			static constexpr unsigned int LT = 1 << 2;
+			static constexpr unsigned int GT = 1 << 3;
+			static constexpr unsigned int LTE = 1 << 4;
+			static constexpr unsigned int GTE = 1 << 5;
+		}
+
+		struct iterator {
+			byte* data, data_structure;
+			bool reverse;
+			fn type iterator*(const type iterator*,int) arith_fn;
+			fn int(const type iterator*,const type iterator*) iter_arith_fn;
+			fn byte*(const type iterator*) deref_fn;
+			fn bool(const type iterator*,const type iterator*,unsigned int) cmp_fn;
+			fn void(type iterator*) free_fn;
+			fn void(type iterator*,const type iterator*) data_copy_fn;
+			fn type iterator*(const type iterator*) iter_clone_fn;
+		}
+
+		func type iterator* new_iterator(byte* dt, bool r, byte* ds,
+			fn type iterator*(const type iterator*,int) a,
+			fn int(const type iterator*,const type iterator*) ia,
+			fn byte*(const type iterator*) d,
+			fn bool(const type iterator*,const type iterator*,unsigned int) c,
+			fn void(type iterator*) f,
+			fn void(type iterator*,const type iterator*) dc,
+			fn type iterator*(const type iterator*) ic);
+
+		func void delete_iterator(type iterator* it);
+
+		func bool lt(const type iterator* it1, const type iterator* it2);
+		func bool gt(const type iterator* it1, const type iterator* it2);
+		func bool eq(const type iterator* it1, const type iterator* it2);
+		func bool lte(const type iterator* it1, const type iterator* it2);
+		func bool gte(const type iterator* it1, const type iterator* it2);
+		func bool neq(const type iterator* it1, const type iterator* it2);
+
+		func type iterator* add(const type iterator* it1, int off);
+		func type iterator* advance(type iterator* it1, int off);
+		func type iterator* next(type iterator* it1);
+
+		func type iterator* sub(const type iterator* it1, int off);
+		func type iterator* back(type iterator* it1, int off);
+		func type iterator* prev(type iterator* it1);
+
+		func int iterator_sub(const type iterator* it1, const type iterator* it2);
+
+		func byte* deref(const type iterator* it1);
+		
+		func type iterator* copy(const type iterator* s);
+	}
+
+	namespace iterator {
+		namespace iterator = ::stdx::iterator_impl;
+	}
+}

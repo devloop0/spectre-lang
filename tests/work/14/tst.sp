@@ -48,7 +48,7 @@ func int search(type tst* root, const char* key) {
 	return search(root->middle, key[1]$);
 }
 
-func bool delete(type tst** root, const char* key) {
+func bool delete_tst(type tst** root, const char* key) {
 	if(!root as bool || !root@ as bool || !key as bool ||!isalpha(key@)) return false;
 	if(root@ as bool) {
 		if(!key[1] as bool && root@->data == key@ && root@->is_leaf) {
@@ -58,9 +58,9 @@ func bool delete(type tst** root, const char* key) {
 		}
 	}
 	bool res = false;
-	if(key@ < root@->data) res = delete(root@->lhs$, key[1]$);
-	else if(key@ > root@->data) res = delete(root@->rhs$, key[1]$);
-	else res = delete(root@->middle$, key[1]$);
+	if(key@ < root@->data) res = delete_tst(root@->lhs$, key[1]$);
+	else if(key@ > root@->data) res = delete_tst(root@->rhs$, key[1]$);
+	else res = delete_tst(root@->middle$, key[1]$);
 	if(res) if(!root@->lhs as bool && !root@->rhs as bool && !root@->middle as bool) root@ = NULL as type tst*;
 	return res;
 }
@@ -102,9 +102,9 @@ func int main() {
 	if(search(t, "insert") != 4) fail();
 	if(search(t, "insect") != 5) fail();
 
-	if(delete(t$, "inser")) fail();
-	if(delete(t$, "inserts")) fail();
-	if(!delete(t$, "insert")) fail();
+	if(delete_tst(t$, "inser")) fail();
+	if(delete_tst(t$, "inserts")) fail();
+	if(!delete_tst(t$, "insert")) fail();
 
 	if(search(t, "i") != 1) fail();
 	if(search(t, "in") != 2) fail();
@@ -112,8 +112,8 @@ func int main() {
 	if(search(t, "insert") != -1) fail();
 	if(search(t, "insect") != 5) fail();
 
-	if(delete(t$, "insert")) fail();
-	if(!delete(t$, "in")) fail();
+	if(delete_tst(t$, "insert")) fail();
+	if(!delete_tst(t$, "in")) fail();
 
 	if(search(t, "i") != 1) fail();
 	if(search(t, "in") != -1) fail();
@@ -157,7 +157,7 @@ func int main() {
 	if(search(t, "insect") != 5) fail();
 	if(search(t, "insert") != 6) fail();
 
-	if(delete(t$, "ints")) fail();
+	if(delete_tst(t$, "ints")) fail();
 
 	if(search(t, "i") != 1) fail();
 	if(search(t, "in") != 2) fail();
@@ -166,8 +166,8 @@ func int main() {
 	if(search(t, "insect") != 5) fail();
 	if(search(t, "insert") != 6) fail();
 
-	if(delete(t$, "ints")) fail();
-	if(!delete(t$, "int")) fail();
+	if(delete_tst(t$, "ints")) fail();
+	if(!delete_tst(t$, "int")) fail();
 
 	if(search(t, "i") != 1) fail();
 	if(search(t, "in") != 2) fail();
@@ -185,7 +185,7 @@ func int main() {
 	if(search(t, "insect") != 5) fail();
 	if(search(t, "insert") != 6) fail();
 
-	if(!delete(t$, "i")) fail();
+	if(!delete_tst(t$, "i")) fail();
 
 	if(search(t, "i") != -1) fail();
 	if(search(t, "in") != 2) fail();
@@ -194,7 +194,7 @@ func int main() {
 	if(search(t, "insect") != 5) fail();
 	if(search(t, "insert") != 6) fail();
 
-	if(!delete(t$, "int")) fail();
+	if(!delete_tst(t$, "int")) fail();
 
 	if(search(t, "i") != -1) fail();
 	if(search(t, "in") != 2) fail();
@@ -203,7 +203,7 @@ func int main() {
 	if(search(t, "insect") != 5) fail();
 	if(search(t, "insert") != 6) fail();
 
-	if(!delete(t$, "in")) fail();
+	if(!delete_tst(t$, "in")) fail();
 
 	if(search(t, "i") != -1) fail();
 	if(search(t, "in") != -1) fail();
@@ -212,7 +212,7 @@ func int main() {
 	if(search(t, "insect") != 5) fail();
 	if(search(t, "insert") != 6) fail();
 
-	if(!delete(t$, "intel")) fail();
+	if(!delete_tst(t$, "intel")) fail();
 
 	if(search(t, "i") != -1) fail();
 	if(search(t, "in") != -1) fail();
@@ -221,7 +221,7 @@ func int main() {
 	if(search(t, "insect") != 5) fail();
 	if(search(t, "insert") != 6) fail();
 
-	if(!delete(t$, "insert")) fail();
+	if(!delete_tst(t$, "insert")) fail();
 
 	if(search(t, "i") != -1) fail();
 	if(search(t, "in") != -1) fail();
@@ -230,7 +230,7 @@ func int main() {
 	if(search(t, "insect") != 5) fail();
 	if(search(t, "insert") != -1) fail();
 
-	if(!delete(t$, "insect")) fail();
+	if(!delete_tst(t$, "insect")) fail();
 
 	if(search(t, "i") != -1) fail();
 	if(search(t, "in") != -1) fail();

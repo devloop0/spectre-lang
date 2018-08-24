@@ -1,4 +1,5 @@
 import <"std/syscall">
+import <"std/string">
 
 import "../test.sp"
 

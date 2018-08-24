@@ -7,17 +7,20 @@
 #include <cmath>
 #include <limits>
 #include <sstream>
+#include <utility>
 #include <iomanip>
+#include <cstdlib>
 
 using std::make_shared;
 using std::make_pair;
 using std::to_string;
 using std::find;
+using std::atoi;
+using std::make_tuple;
 using std::stringstream;
 using std::setprecision;
 using std::static_pointer_cast;
 using std::remove;
-using std::atoi;
 using std::stoul;
 using std::get;
 using std::log2;
@@ -1278,6 +1281,21 @@ namespace spectre {
 			return _inside_function;
 		}
 
+		void mips_code::add_constexpr_mapping(string k, variant<bool, int, unsigned int, float, double, string> v) {
+			_constexpr_map[k] = v;
+		}
+
+		pair<bool, variant<bool, int, unsigned int, float, double, string>> mips_code::get_constexpr_mapping(string k) {
+			if (_constexpr_map.find(k) == _constexpr_map.end())
+				return make_pair(false, variant<bool, int, unsigned int, float, double, string>{});
+			else
+				return make_pair(true, _constexpr_map[k]);
+		}
+
+		bool mips_code::constexpr_mapping_exists(string k) {
+			return _constexpr_map.find(k) != _constexpr_map.end();
+		}
+
 		shared_ptr<operand> allocate_general_purpose_register(shared_ptr<mips_code> mc) {
 #if SYSTEM == 0 || SYSTEM == 1
 			int t0 = register_file1::register_2_int.at(register_file1::_t0), t1 = register_file1::register_2_int.at(register_file1::_t1),
@@ -1679,8 +1697,12 @@ namespace spectre {
 				case stmt::kind::KIND_ASM:
 					return generate_asm_stmt_mips(mc, s->stmt_asm());
 					break;
-				case stmt::kind::KIND_ACCESS:
+				case stmt::kind::KIND_DELETE:
+					return generate_delete_stmt_mips(mc, s->stmt_delete());
 				case stmt::kind::KIND_NAMESPACE:
+					if(s->stmt_namespace()->namespace_stmt_kind() == namespace_stmt::kind::KIND_ALIAS)
+						break;
+				case stmt::kind::KIND_ACCESS:
 				default:
 					mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 					break;
@@ -3060,7 +3082,7 @@ namespace spectre {
 				int val = stoul(raw_lit.c_str(), nullptr, base);
 				shared_ptr<primitive_type> ipt = make_shared<primitive_type>(primitive_type::kind::KIND_INT, primitive_type::const_kind::KIND_CONST,
 					primitive_type::static_kind::KIND_NON_STATIC, primitive_type::sign_kind::KIND_SIGNED);
-				if (val <= UINT16_MAX && val >= INT16_MIN) {
+				if (val <= INT16_MAX && val >= INT16_MIN) {
 					shared_ptr<operand> imm = make_shared<operand>(val);
 					if (lit.suffix_kind() == token::suffix::SUFFIX_DOUBLE || lit.suffix_kind() == token::suffix::SUFFIX_FLOAT) {
 						shared_ptr<operand> src = allocate_general_purpose_register(mc);
@@ -3156,6 +3178,101 @@ namespace spectre {
 			return nullptr;
 		}
 
+		pair<tuple<bool, bool, bool>, shared_ptr<operand>> generate_constexpr_identifier_mips(shared_ptr<mips_code> mc, shared_ptr<symbol> sym,
+			pair<bool, variant<bool, int, unsigned int, float, double, string>> res, shared_ptr<operand> init_reg) {
+			if (sym->symbol_kind() != symbol::kind::KIND_VARIABLE) {
+				mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+				return make_pair(make_tuple(false, false, false), nullptr);
+			}
+			shared_ptr<variable_symbol> vsym = static_pointer_cast<variable_symbol>(sym);
+			shared_ptr<type> vtype = vsym->variable_type();
+			bool integral = false, singlep = false, doublep = false;
+			if (vtype->type_array_kind() == type::array_kind::KIND_ARRAY)
+				integral = true;
+			else {
+				if (vtype->type_kind() != type::kind::KIND_PRIMITIVE) {
+					mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+					return make_pair(make_tuple(false, false, false), nullptr);
+				}
+				shared_ptr<primitive_type> ptype = static_pointer_cast<primitive_type>(vtype);
+				if (ptype->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE)
+					doublep = true;
+				else if (ptype->primitive_type_kind() == primitive_type::kind::KIND_FLOAT)
+					singlep = true;
+				else
+					integral = true;
+			}
+			auto handle_integral = [&init_reg, &mc, &integral, &doublep, &singlep](variant<bool, int, unsigned int, float, double, string> var) -> shared_ptr<operand> {
+				int val;
+				if (holds_alternative<bool>(var))
+					val = get<bool>(var);
+				else if (holds_alternative<int>(var))
+					val = get<int>(var);
+				else if (holds_alternative<unsigned int>(var))
+					val = get<unsigned int>(var);
+				else if (holds_alternative<float>(var))
+					val = get<float>(var);
+				else if (holds_alternative<double>(var))
+					val = get<double>(var);
+				else
+					return make_shared<operand>(false, get<string>(var));
+				if (val <= INT16_MAX && val >= INT16_MIN) {
+					if (init_reg != nullptr) {
+						mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDIU, init_reg, register_file2::_zero_register, make_shared<operand>(val)));
+						return init_reg;
+					}
+					else
+						return make_shared<operand>(val);
+				}
+				else {
+					shared_ptr<operand> reg = init_reg == nullptr ? allocate_general_purpose_register(mc) : init_reg;
+					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LUI, reg, make_shared<operand>((val >> 16) & 0xffff)));
+					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ORI, reg, make_shared<operand>(val & 0xffff)));
+					return reg;
+				}
+			};
+			auto handle_non_integral = [&init_reg, &mc, &integral, &doublep, &singlep](variant<bool, int, unsigned int, float, double, string> var) -> shared_ptr<operand> {
+				double val;
+				if (holds_alternative<bool>(var))
+					val = get<bool>(var);
+				else if (holds_alternative<int>(var))
+					val = get<int>(var);
+				else if (holds_alternative<unsigned int>(var))
+					val = get<unsigned int>(var);
+				else if (holds_alternative<float>(var))
+					val = get<float>(var);
+				else if (holds_alternative<double>(var))
+					val = get<double>(var);
+				else
+					return make_shared<operand>(false, get<string>(var));
+				shared_ptr<operand> freg = init_reg == nullptr ? allocate_general_purpose_fp_register(mc) : init_reg;
+				if (doublep) {
+					string dp_lit = "__dp_lit_" + to_string(mc->next_misc_counter());
+					mc->add_data_directive(make_shared<directive>(3));
+					mc->add_data_directive(make_shared<directive>(dp_lit, val));
+					freg->set_double_precision(true);
+					freg->set_single_precision(false);
+					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LDC1, freg, make_shared<operand>(false, dp_lit)));
+					return freg;
+				}
+				else if (singlep) {
+					string fp_lit = "__fp_lit_" + to_string(mc->next_misc_counter());
+					mc->add_data_directive(make_shared<directive>(2));
+					mc->add_data_directive(make_shared<directive>(fp_lit, (float)val));
+					freg->set_double_precision(false);
+					freg->set_single_precision(true);
+					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LWC1, freg, make_shared<operand>(false, fp_lit)));
+					return freg;
+				}
+				mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+				return nullptr;
+			};
+			if (integral) return make_pair(make_tuple(integral, singlep, doublep), handle_integral(res.second));
+			else if (singlep || doublep) return make_pair(make_tuple(integral, singlep, doublep), handle_non_integral(res.second));
+			mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+			return make_pair(make_tuple(false, false, false), nullptr);
+		}
+
 		shared_ptr<operand> generate_primary_expression_mips(shared_ptr<mips_code> mc, shared_ptr<primary_expression> pe, bool lvalue) {
 			if (pe == nullptr) return nullptr;
 			switch (pe->primary_expression_kind()) {
@@ -3197,8 +3314,12 @@ namespace spectre {
 					else
 						return make_shared<operand>(false, sym_string);
 				}
-				else
-					return mc->current_frame()->get_variable_offset(sym_string);
+				else {
+					pair<bool, variant<bool, int, unsigned int, float, double, string>> res = mc->get_constexpr_mapping(sym_string);
+					if(!res.first)
+						return mc->current_frame()->get_variable_offset(sym_string);
+					return generate_constexpr_identifier_mips(mc, sym, res, nullptr).second;
+				}
 			}
 				break;
 			case primary_expression::kind::KIND_ARRAY_INITIALIZER: {
@@ -3227,6 +3348,10 @@ namespace spectre {
 					shared_ptr<struct_type> st = static_pointer_cast<struct_type>(parent_type);
 					parent_type = make_shared<struct_type>(st->type_const_kind(), st->type_static_kind(), st->struct_name(), st->struct_reference_number(), st->array_dimensions() - 1);
 				}
+				else if (parent_type->type_kind() == type::kind::KIND_FUNCTION) {
+					shared_ptr<function_type> ft = static_pointer_cast<function_type>(parent_type);
+					parent_type = make_shared<function_type>(ft->type_const_kind(), ft->type_static_kind(), ft->return_type(), ft->parameter_list(), ft->function_reference_number(), ft->array_dimensions() - 1);
+				}
 				else {
 					mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 					return nullptr;
@@ -3251,6 +3376,8 @@ namespace spectre {
 						}
 						free_general_purpose_register(mc, reg);
 					}
+					else if (curr_type->type_kind() == type::kind::KIND_FUNCTION && curr_type->type_array_kind() == type::array_kind::KIND_NON_ARRAY)
+						mc->current_frame()->add_insn_to_body(make_shared<insn>(s, cres, make_shared<operand>(operand::offset_kind::KIND_TRUE, curr, res->register_number(), res->register_name())));
 					else {
 						mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 						return nullptr;
@@ -3342,6 +3469,7 @@ namespace spectre {
 					_4_2_store.push_back(-1);
 				if (_2_in_use) {
 					int o = -(mc->current_frame()->middle_section_size() + 8);
+					_4_2_store.push_back(o);
 					mc->current_frame()->update_middle_section_size(8);
 					mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_SW, _2, make_shared<operand>(operand::offset_kind::KIND_MIDDLE,
 						o, _30->register_number(), _30->register_name())));
@@ -4211,6 +4339,15 @@ namespace spectre {
 			int sz = (int)calculate_type_size(mc, vd_type);
 			int space = sz % 8 == 0 ? sz : (sz / 8 + 1) * 8;
 			shared_ptr<operand> o = nullptr;
+			if (vd_type->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR) {
+				if (vd->variable_declaration_initialization_kind() != variable_declaration::initialization_kind::KIND_PRESENT) {
+					mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+					return;
+				}
+				variant<bool, int, unsigned int, float, double, string> res = evaluate_constant_expression(mc, vd->initialization());
+				mc->add_constexpr_mapping(sym_string, res);
+				return;
+			}
 			if (on_stack) {
 				mc->current_frame()->update_top_section_size(space);
 				o = make_shared<operand>(operand::offset_kind::KIND_TOP, -mc->current_frame()->top_section_size(), fp->register_number(), fp->register_name());
@@ -5039,20 +5176,25 @@ namespace spectre {
 							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LA, reg_label, make_shared<operand>(false, sym_string)));
 					}
 					else if (at->identifier_symbol()->symbol_kind() == symbol::kind::KIND_VARIABLE) {
-						shared_ptr<operand> location = mc->current_frame()->get_variable_offset(sym_string);
-						if (location->operand_kind() == operand::kind::KIND_LABEL)
-							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LA, reg_label, location));
-						else if (location->operand_kind() == operand::kind::KIND_MEMORY) {
-							shared_ptr<operand> imm = make_shared<operand>(location->offset());
-							imm->set_operand_offset_kind(location->operand_offset_kind());
-							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDIU, reg_label, register_file2::int_2_register_object.at(location->register_number()), imm));
+						pair<bool, variant<bool, int, unsigned int, float, double, string>> check = mc->get_constexpr_mapping(sym_string);
+						if (!check.first) {
+							shared_ptr<operand> location = mc->current_frame()->get_variable_offset(sym_string);
+							if (location->operand_kind() == operand::kind::KIND_LABEL)
+								mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LA, reg_label, location));
+							else if (location->operand_kind() == operand::kind::KIND_MEMORY) {
+								shared_ptr<operand> imm = make_shared<operand>(location->offset());
+								imm->set_operand_offset_kind(location->operand_offset_kind());
+								mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDIU, reg_label, register_file2::int_2_register_object.at(location->register_number()), imm));
+							}
+							else if (location->operand_kind() == operand::kind::KIND_REGISTER)
+								mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDU, reg_label, register_file2::_zero_register, reg_label));
+							else {
+								mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+								return;
+							}
 						}
-						else if (location->operand_kind() == operand::kind::KIND_REGISTER)
-							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDU, reg_label, register_file2::_zero_register, reg_label));
-						else {
-							mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
-							return;
-						}
+						else
+							generate_constexpr_identifier_mips(mc, at->identifier_symbol(), check, reg_label);
 					}
 					else {
 						mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
@@ -5407,11 +5549,25 @@ namespace spectre {
 						int counter = mc->next_misc_counter();
 						string s_lit = "__sp_lit_" + to_string(counter);
 						mc->add_data_directive(make_shared<directive>(2));
-						mc->add_data_directive(make_shared<directive>(s_lit, raw_lit));
+						string concated_raw_lit;
+						for (token t : pexpr->stream())
+							concated_raw_lit += t.raw_text().substr(1, t.raw_text().length() - 2);
+						mc->add_data_directive(make_shared<directive>(s_lit, "\"" + concated_raw_lit + "\""));
 						result = s_lit;
 					}
 						break;
 					}
+					return result;
+				}
+				else if (pexpr->primary_expression_kind() == primary_expression::kind::KIND_IDENTIFIER) {
+					shared_ptr<symbol> sym = pexpr->identifier_symbol();
+					string sym_string = c_symbol_2_string(mc, sym);
+					pair<bool, variant<bool, int, unsigned int, float, double, string>> check = mc->get_constexpr_mapping(sym_string);
+					if (!check.first) {
+						mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+						return dummy;
+					}
+					result = check.second;
 					return result;
 				}
 				mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
@@ -5457,6 +5613,19 @@ namespace spectre {
 
 #undef SPECTRE_CAST_BODY
 					}
+					else {
+						if (holds_alternative<bool>(result))
+							result = (unsigned int)get<bool>(result);
+						else if (holds_alternative<int>(result))
+							result = (unsigned int)get<int>(result);
+						else if (holds_alternative<unsigned int>(result));
+						else if (holds_alternative<float>(result))
+							result = (unsigned int)get<float>(result);
+						else if (holds_alternative<double>(result))
+							result = (unsigned int)get<double>(result);
+						else;
+					}
+
 					prev_type = to_type;
 				}
 				return result;
@@ -5731,6 +5900,52 @@ namespace spectre {
 				string sym_name = c_symbol_2_string(mc, s);
 				mc->current_frame()->add_variable(sym_name, make_shared<operand>(false, sym_name));
 			}
+		}
+
+		void generate_delete_stmt_mips(shared_ptr<mips_code> mc, shared_ptr<delete_stmt> ds) {
+			if (ds == nullptr || !ds->valid()) return;
+			if (SYSTEM != 0)
+				mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+			shared_ptr<operand> e = generate_expression_mips(mc, ds->expr(), false);
+			e = load_value_into_register(mc, e, ds->expr()->expression_type());
+			shared_ptr<operand> _4 = register_file2::_a0_register, _2 = register_file2::_v0_register, _30 = register_file2::_fp_register;
+			vector<int> _4_2_store;
+			bool _4_in_use = mc->current_frame()->is_register_in_use(4), _2_in_use = mc->current_frame()->is_register_in_use(2);
+			if (_4_in_use) {
+				int o = -(mc->current_frame()->middle_section_size() + 8);
+				_4_2_store.push_back(o);
+				mc->current_frame()->update_middle_section_size(8);
+				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_SW, _4, make_shared<operand>(operand::offset_kind::KIND_MIDDLE,
+					o, _30->register_number(), _30->register_name())));
+			}
+			else
+				_4_2_store.push_back(-1);
+			if (_2_in_use) {
+				int o = -(mc->current_frame()->middle_section_size() + 8);
+				_4_2_store.push_back(o);
+				mc->current_frame()->update_middle_section_size(8);
+				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_SW, _2, make_shared<operand>(operand::offset_kind::KIND_MIDDLE,
+					o, _30->register_number(), _30->register_name())));
+			}
+			else
+				_4_2_store.push_back(-1);
+			tuple<vector<int>, vector<int>, int> res_s_tup = save_to_middle(mc);
+			vector<int> which_to_store = get<0>(res_s_tup), middle_offsets = get<1>(res_s_tup);
+			mc->current_frame()->add_insn_to_body(make_shared<insn>(
+				e->operand_kind() == operand::kind::KIND_INT_IMMEDIATE ? insn::kind::KIND_ADDIU : insn::kind::KIND_ADDU,
+				_4, register_file2::_zero_register, e));
+			mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_JAL, make_shared<operand>(false, program_delete_hook)));
+			restore_from_middle(mc, which_to_store, middle_offsets);
+			if (_4_in_use)
+				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LW, _4, make_shared<operand>(operand::offset_kind::KIND_MIDDLE,
+					_4_2_store[0], _30->register_number(), _30->register_name())));
+			if (_2_in_use)
+				mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LW, _2, make_shared<operand>(operand::offset_kind::KIND_MIDDLE,
+					_4_2_store[1], _2->register_number(), _2->register_name())));
+			if (e->register_number() > 31)
+				free_general_purpose_fp_register(mc, e);
+			else
+				free_general_purpose_register(mc, e);
 		}
 	}
 }

@@ -6,7 +6,6 @@ namespace std {
 		func void direct_sync() {
 			__asm__ (
 				LINUX_MIPS_SYNC "$2" : 
-				"lw $2, 0($2)" :
 				"syscall"
 			);
 		}

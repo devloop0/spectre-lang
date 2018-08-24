@@ -1,0 +1,98 @@
+import <"std/syscall">
+import <"std/string">
+import <"stdx/string">
+import <"stdx/vector">
+import <"std/lib">
+import <"std/ctype">
+
+namespace expr_eval {
+
+	namespace ssys = std::syscall;
+	namespace sstr = std::string;
+	namespace slib = std::lib;
+
+	namespace xstr = stdx::string::string;
+	namespace xvec = stdx::vector::vector;
+	
+	namespace token_kind {
+		constexpr static auto KIND_INT = 0;
+		constexpr static auto KIND_PLUS = 1;
+		constexpr static auto KIND_MINUS = 2;
+		constexpr static auto KIND_STAR = 3;
+		constexpr static auto KIND_SLASH = 4;
+		constexpr static auto KIND_PERCENT = 5;
+		constexpr static auto KIND_SHIFT_LEFT = 6;
+		constexpr static auto KIND_SHIFT_RIGHT = 7;
+		constexpr static auto KIND_EXCL = 8;
+		constexpr static auto KIND_GT = 9;
+		constexpr static auto KIND_LT = 10;
+		constexpr static auto KIND_GTE = 11;
+		constexpr static auto KIND_LTE = 12;
+		constexpr static auto KIND_EQ = 13;
+		constexpr static auto KIND_NEQ = 14;
+		constexpr static auto KIND_AMP = 15;
+		constexpr static auto KIND_BAR = 16;
+		constexpr static auto KIND_CARET = 17;
+		constexpr static auto KIND_DOUBLE_AMP = 18;
+		constexpr static auto KIND_DOUBLE_BAR = 19;
+		constexpr static auto KIND_COMMA = 20;
+		constexpr static auto KIND_SEMICOLON = 21;
+		constexpr static auto KIND_TILDE = 22;
+		constexpr static auto KIND_OPAR = 23;
+		constexpr static auto KIND_CPAR = 24;
+		constexpr static auto KIND_QMARK = 25;
+		constexpr static auto KIND_COLON = 26;
+		constexpr static auto KIND_ERROR = -1;
+	}
+
+	constexpr static auto STDIN = 0;
+	constexpr static auto STDOUT = 1;
+
+	struct token {
+		unsigned int _start_position, _end_position;
+		int _kind;
+		type xstr::string* _text;
+	}
+	
+	func type xstr::string* read_stdin();
+	func type xvec::vector* lex(type xstr::string* input);
+
+	# debug purposes
+	func void print_token(type token* tok);
+
+	struct buffer {
+		type xvec::vector* _toks;
+		unsigned int _pos;
+	}
+
+	struct result {
+		int _res;
+		bool _err;
+	}
+
+	func void print_int(int i);
+	func void print_uint(unsigned int u);
+
+	func type token next(type buffer* b);
+	func type token peek(type buffer* b);
+	func void error(type buffer* b);
+
+	func type result binary_expression_helper(int* toks, fn int(int,int)* ops, unsigned int len, 
+		fn type result(type buffer*) base, type buffer* b);
+
+	func void prog(type buffer* b);
+	func type result expression(type buffer* b);
+	func type result ternary(type buffer* b);
+	func type result logical_or(type buffer* b);
+	func type result logical_and(type buffer* b);
+	func type result bitwise_or(type buffer* b);
+	func type result bitwise_xor(type buffer* b);
+	func type result bitwise_and(type buffer* b);
+	func type result equality(type buffer* b);
+	func type result relational(type buffer* b);
+	func type result shift(type buffer* b);
+	func type result arith(type buffer* b);
+	func type result mult(type buffer* b);
+	func type result unary(type buffer* b);
+	func type result primary(type buffer* b);
+}

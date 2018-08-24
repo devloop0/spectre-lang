@@ -5,13 +5,28 @@ namespace spectre {
 
 		type::type(type::kind k, type::const_kind ck, type::static_kind sk) :
 			_type_kind(k), _type_const_kind(ck), _type_static_kind(sk), _valid(k != type::kind::KIND_NONE),
-			_array_dimensions(0), _type_array_kind(type::array_kind::KIND_NON_ARRAY) {
+			_array_dimensions(0), _type_array_kind(type::array_kind::KIND_NON_ARRAY),
+			_type_constexpr_kind(constexpr_kind::KIND_NON_CONSTEXPR) {
 
 		}
 
 		type::type(type::kind k, type::const_kind ck, type::static_kind sk, int ad) :
 			_type_kind(k), _type_const_kind(ck), _type_static_kind(sk), _array_dimensions(ad), _valid(k != type::kind::KIND_NONE),
-			_type_array_kind(ad == 0 ? type::array_kind::KIND_NON_ARRAY : type::array_kind::KIND_ARRAY) {
+			_type_array_kind(ad == 0 ? type::array_kind::KIND_NON_ARRAY : type::array_kind::KIND_ARRAY),
+			_type_constexpr_kind(type::constexpr_kind::KIND_NON_CONSTEXPR) {
+
+		}
+
+		type::type(type::kind k, type::const_kind ck, type::static_kind sk, type::constexpr_kind cek) :
+			_type_kind(k), _type_const_kind(ck), _type_static_kind(sk), _valid(k != type::kind::KIND_NONE),
+			_array_dimensions(0), _type_array_kind(type::array_kind::KIND_NON_ARRAY),
+			_type_constexpr_kind(cek) {
+		}
+
+		type::type(type::kind k, type::const_kind ck, type::static_kind sk, type::constexpr_kind cek, int ad) :
+			_type_kind(k), _type_const_kind(ck), _type_static_kind(sk), _array_dimensions(ad), _valid(k != type::kind::KIND_NONE),
+			_type_array_kind(ad == 0 ? type::array_kind::KIND_NON_ARRAY : type::array_kind::KIND_ARRAY),
+			_type_constexpr_kind(cek) {
 
 		}
 
@@ -43,6 +58,14 @@ namespace spectre {
 			return _type_array_kind;
 		}
 
+		type::constexpr_kind type::type_constexpr_kind() {
+			return _type_constexpr_kind;
+		}
+
+		void type::set_constexpr_kind(type::constexpr_kind cek) {
+			_type_constexpr_kind = cek;
+		}
+
 		primitive_type::primitive_type(primitive_type::kind k, type::const_kind ck, type::static_kind sk, primitive_type::sign_kind sk2) :
 			type(type::kind::KIND_PRIMITIVE, ck, sk), _primitive_type_kind(k), _valid(k != primitive_type::kind::KIND_NONE), _primitive_type_sign_kind(sk2) {
 
@@ -50,6 +73,17 @@ namespace spectre {
 
 		primitive_type::primitive_type(primitive_type::kind k, type::const_kind ck, type::static_kind sk, primitive_type::sign_kind sk2,
 			int ad) : type(type::kind::KIND_PRIMITIVE, ck, sk, ad), _primitive_type_kind(k), _valid(k != primitive_type::kind::KIND_NONE),
+			_primitive_type_sign_kind(sk2) {
+
+		}
+
+		primitive_type::primitive_type(primitive_type::kind k, type::const_kind ck, type::static_kind sk, type::constexpr_kind cek, primitive_type::sign_kind sk2) :
+			type(type::kind::KIND_PRIMITIVE, ck, sk, cek), _primitive_type_kind(k), _valid(k != primitive_type::kind::KIND_NONE), _primitive_type_sign_kind(sk2) {
+
+		}
+
+		primitive_type::primitive_type(primitive_type::kind k, type::const_kind ck, type::static_kind sk, type::constexpr_kind cek, primitive_type::sign_kind sk2,
+			int ad) : type(type::kind::KIND_PRIMITIVE, ck, sk, cek, ad), _primitive_type_kind(k), _valid(k != primitive_type::kind::KIND_NONE),
 			_primitive_type_sign_kind(sk2) {
 
 		}
@@ -78,6 +112,20 @@ namespace spectre {
 
 		function_type::function_type(type::const_kind ck, type::static_kind sk, shared_ptr<type> rt, vector<shared_ptr<variable_declaration>> pl, int r, int ad) :
 			type(type::kind::KIND_FUNCTION, ck, sk, ad), _return_type(rt), _parameter_list(pl), _valid(rt == nullptr || rt->type_kind() == type::kind::KIND_NONE),
+			_function_reference_number(r) {
+
+		}
+
+		function_type::function_type(type::const_kind ck, type::static_kind sk, type::constexpr_kind cek, shared_ptr<type> rt,
+			vector<shared_ptr<variable_declaration>> pl, int r) :
+			type(type::kind::KIND_FUNCTION, ck, sk, cek), _return_type(rt), _parameter_list(pl), _valid(rt == nullptr || rt->type_kind() == type::kind::KIND_NONE),
+			_function_reference_number(r) {
+
+		}
+
+		function_type::function_type(type::const_kind ck, type::static_kind sk, type::constexpr_kind cek, shared_ptr<type> rt,
+			vector<shared_ptr<variable_declaration>> pl, int r, int ad) :
+			type(type::kind::KIND_FUNCTION, ck, sk, cek, ad), _return_type(rt), _parameter_list(pl), _valid(rt == nullptr || rt->type_kind() == type::kind::KIND_NONE),
 			_function_reference_number(r) {
 
 		}
@@ -112,6 +160,16 @@ namespace spectre {
 
 		}
 
+		struct_type::struct_type(type::const_kind ck, type::static_kind sk, type::constexpr_kind cek, token t, int r, bool v) :
+			type(type::kind::KIND_STRUCT, ck, sk, cek), _struct_name(t), _struct_reference_number(r), _valid(v) {
+
+		}
+
+		struct_type::struct_type(type::const_kind ck, type::static_kind sk, type::constexpr_kind cek, token t, int r, bool v, int ad) :
+			type(type::kind::KIND_STRUCT, ck, sk, cek, ad), _struct_name(t), _struct_reference_number(r), _valid(v) {
+
+		}
+
 		struct_type::~struct_type() {
 
 		}
@@ -126,6 +184,26 @@ namespace spectre {
 
 		bool struct_type::valid() {
 			return _valid;
+		}
+
+		auto_type::auto_type(type::const_kind ck, type::static_kind sk) : type(type::kind::KIND_AUTO, ck, sk) {
+
+		}
+
+		auto_type::auto_type(type::const_kind ck, type::static_kind sk, int ad) : type(type::kind::KIND_AUTO, ck, sk, ad) {
+
+		}
+
+		auto_type::auto_type(type::const_kind ck, type::static_kind sk, type::constexpr_kind cek) : type(type::kind::KIND_AUTO, ck, sk, cek) {
+
+		}
+
+		auto_type::auto_type(type::const_kind ck, type::static_kind sk, type::constexpr_kind cek, int ad) : type(type::kind::KIND_AUTO, ck, sk, cek, ad) {
+
+		}
+
+		auto_type::~auto_type() {
+
 		}
 	}
 }

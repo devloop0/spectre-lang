@@ -1,0 +1,27 @@
+namespace stdx {
+	namespace allocator_impl {
+	
+		struct allocator {
+			fn byte*(const unsigned int) malloc;
+			fn void(const byte*) free;
+			fn byte*(byte*, const unsigned int) realloc;
+		}
+
+		func type allocator* new_allocator(fn byte*(const unsigned int) m,
+			fn void(const byte*) f, fn byte*(byte*, const unsigned int) r);
+
+		func void delete_allocator(type allocator* a);
+
+		func type allocator* standard_allocator();
+
+		func byte* allocate(type allocator* a, const unsigned int sz);
+
+		func void deallocate(type allocator* a, const byte* b);
+
+		func byte* reallocate(type allocator* a, byte* b, const unsigned int sz);
+	}
+
+	namespace allocator {
+		namespace allocator = ::stdx::allocator_impl;
+	}
+}

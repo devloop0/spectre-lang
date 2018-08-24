@@ -1,0 +1,13 @@
+------------Building ./strcspn_test.sp-------------
+------------Running ./strcspn_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./struct_args_2.sp-------------
+------------Running ./struct_args_2.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./tree.sp-------------
+------------Running ./tree.sp-------------
+1234567899
+23
+23------------Return code: 0-------------

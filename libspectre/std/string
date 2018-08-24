@@ -1,7 +1,7 @@
 namespace std {
 	namespace string {
 
-		static char* NULL = 0 as char*;
+		static constexpr char* NULL = 0 as char*;
 
 		struct strtok_data_t {
 			char* str;

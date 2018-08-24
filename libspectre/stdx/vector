@@ -1,11 +1,19 @@
+import <"stdx/iterator">
+
 namespace stdx {
 	namespace vector_impl {
+
+		using namespace stdx::iterator;
 		
 		static const unsigned int INIT_CAP = 16;
 			
 		struct vector {
 			byte* data;
 			unsigned int capacity, size, unit;
+		}
+
+		struct vector_iterator_data {
+			int pos;
 		}
 
 		func type vector* new_vector(unsigned int u);
@@ -24,9 +32,25 @@ namespace stdx {
 		
 		func unsigned int unit(const type vector* v);
 
-		func int insert(type vector* v, unsigned int idx, const byte* data);
+		func int uint_insert(type vector* v, unsigned int idx, const byte* data);
 
 		func void clear(type vector* v);
+
+		func byte* data(const type vector* v);
+
+		func type iterator::iterator* begin(const type vector* v);
+		func type iterator::iterator* rbegin(const type vector* v);
+
+		func type iterator::iterator* end(const type vector* v);
+		func type iterator::iterator* rend(const type vector* v);
+
+		func type iterator::iterator* vector_iterator_int_arith(const type iterator::iterator* it1, int off);
+		func int vector_iterator_iter_arith(const type iterator::iterator* it1, const type iterator::iterator* it2);
+		func byte* vector_iterator_deref(const type iterator::iterator* it1);
+		func bool vector_iterator_cmp(const type iterator::iterator* it1, const type iterator::iterator* it2, unsigned int d);
+		func void vector_iterator_free(type iterator::iterator* it);
+		func void vector_iterator_data_copy(type iterator::iterator* it1, const type iterator::iterator* it2);
+		func type iterator::iterator* vector_iterator_clone(const type iterator::iterator* it1);
 	}
 
 	namespace vector {

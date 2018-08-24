@@ -43,6 +43,8 @@ using spectre::ast::using_stmt;
 using spectre::ast::asm_stmt;
 using spectre::ast::include_stmt;
 using spectre::ast::access_stmt;
+using spectre::ast::delete_stmt;
+using spectre::ast::auto_type;
 using spectre::lexer::diagnostics;
 using spectre::lexer::error;
 using std::shared_ptr;
@@ -582,7 +584,18 @@ namespace spectre {
 			bool valid();
 		};
 
-		bool is_constant_expression(shared_ptr<parser> p, shared_ptr<assignment_expression> aexpr);
+		class delete_stmt_parser {
+		private:
+			shared_ptr<delete_stmt> _contained_delete_stmt;
+			bool _valid;
+		public:
+			delete_stmt_parser(shared_ptr<parser> p);
+			~delete_stmt_parser();
+			shared_ptr<delete_stmt> contained_delete_stmt();
+			bool valid();
+		};
+
+		bool is_constant_expression(shared_ptr<parser> p, shared_ptr<assignment_expression> aexpr, bool mem = true);
 		bool matching_function_types(shared_ptr<parser> p, shared_ptr<type> t1, shared_ptr<type> t2, bool e = false);
 		bool exact_type_match(shared_ptr<parser> p, shared_ptr<type> t1, shared_ptr<type> t2);
 	}
