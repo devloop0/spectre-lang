@@ -1,0 +1,16 @@
+namespace std {
+	namespace arg {
+
+		struct va_list {
+			byte* start;
+		}
+
+		func unsigned int align(unsigned int sz);
+
+		func type va_list* va_start(unsigned int aligned_pre, byte* last_arg);
+
+		func byte* va_arg(type va_list* v, byte* dest, unsigned int sz);
+
+		func void va_end(type va_list* v);
+	}
+}

@@ -1,0 +1,8 @@
+namespace std {
+	namespace lib {
+
+		func byte* alloca(const unsigned int sz);
+
+		func void freea(const byte* data);
+	}
+}

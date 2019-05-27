@@ -5,3 +5,6 @@ spectre-outputs/
 spectre.vcxproj
 spectre.vcxproj.filters
 spectre.vcxproj.user
+.clang_complete
+ir_tests
+.*.swp

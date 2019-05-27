@@ -1,0 +1,6 @@
+namespace std {
+	namespace io {
+
+		func int printf(const char* _fmt, ...);
+	}
+}

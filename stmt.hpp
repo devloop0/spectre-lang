@@ -36,7 +36,7 @@ namespace spectre {
 
 		class variable_declaration {
 		public:
-			enum initialization_kind {
+			enum class initialization_kind {
 				KIND_PRESENT, KIND_NOT_PRESENT, KIND_NONE
 			};
 		private:

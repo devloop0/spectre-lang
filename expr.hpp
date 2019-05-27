@@ -23,6 +23,7 @@ namespace spectre {
 
 		class expression;
 		class assignment_expression;
+		class block_stmt;
 
 		enum class value_kind {
 			VALUE_LVALUE, VALUE_RVALUE, VALUE_NONE
@@ -31,13 +32,15 @@ namespace spectre {
 		class primary_expression {
 		public:
 			enum class kind {
-				KIND_IDENTIFIER, KIND_LITERAL, KIND_PARENTHESIZED_EXPRESSION, KIND_ARRAY_INITIALIZER, KIND_NEW, KIND_STK, KIND_RESV, KIND_SIZEOF_EXPRESSION, KIND_SIZEOF_TYPE, KIND_NONE
+				KIND_IDENTIFIER, KIND_LITERAL, KIND_PARENTHESIZED_EXPRESSION, KIND_ARRAY_INITIALIZER, KIND_NEW, KIND_STK, KIND_RESV, KIND_SIZEOF_EXPRESSION,
+				KIND_SIZEOF_TYPE, KIND_STMT_EXPR, KIND_NONE
 			};
 		private:
 			kind _primary_expression_kind;
 			token _literal_token;
 			shared_ptr<type> _primary_expression_type;
 			shared_ptr<expression> _parenthesized_expression;
+			shared_ptr<block_stmt> _stmt_expression;
 			vector<shared_ptr<assignment_expression>> _array_initializer;
 			shared_ptr<symbol> _identifier_symbol;
 			vector<token> _stream;
@@ -52,6 +55,7 @@ namespace spectre {
 			primary_expression(kind pek, shared_ptr<type> nt, shared_ptr<expression> e, shared_ptr<type> pet, bool v, vector<token> s);
 			primary_expression(kind pek, shared_ptr<type> t, shared_ptr<type> pet, bool v, vector<token> s);
 			primary_expression(kind pek, shared_ptr<expression> e, shared_ptr<type> pet, bool v, vector<token> s);
+			primary_expression(kind pek, shared_ptr<block_stmt> se, shared_ptr<type> pet, bool v, vector<token> s);
 			primary_expression();
 			~primary_expression();
 			kind primary_expression_kind();
@@ -65,6 +69,7 @@ namespace spectre {
 			vector<shared_ptr<assignment_expression>> array_initializer();
 			shared_ptr<type> mem_type();
 			shared_ptr<type> sizeof_type();
+			shared_ptr<block_stmt> stmt_expression();
 		};
 
 		class postfix_expression {

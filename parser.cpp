@@ -593,21 +593,52 @@ namespace spectre {
 			else if (tok.token_kind() == token::kind::TOKEN_OPEN_PARENTHESIS) {
 				vector<token> stream;
 				stream.push_back(tok);
-				expression_parser ep(p);
-				shared_ptr<expression> e = ep.contained_expression();
-				for (token t : e->stream()) stream.push_back(t);
-				token close_parenthesis = p->pop();
-				stream.push_back(close_parenthesis);
-				if (close_parenthesis.token_kind() != token::kind::TOKEN_CLOSE_PARENTHESIS) {
-					p->report(error(error::kind::KIND_ERROR, "Expected a close parenthesis here.", stream, stream.size() - 1));
-					_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_PARENTHESIZED_EXPRESSION, e, e->expression_type(), false,
-						stream, e->expression_value_kind());
-					_valid = false;
-					return;
+				if (p->peek().token_kind() == token::kind::TOKEN_OPEN_BRACE) {
+					block_stmt_parser bsp(p);
+					shared_ptr<block_stmt> bs = bsp.contained_block_stmt();
+					for (token t : bs->stream()) stream.push_back(t);
+					token close_parenthesis = p->pop();
+					stream.push_back(close_parenthesis);
+					if (!bs->valid()) {
+						p->report(error(error::kind::KIND_ERROR, "Expected a valid block statement for a statement expression.", stream, 0));
+						_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_STMT_EXPR, bs, nullptr, false, stream);
+						_valid = false;
+						return;
+					}
+					shared_ptr<type> t = nullptr, void_type = make_shared<primitive_type>(primitive_type::kind::KIND_VOID, primitive_type::const_kind::KIND_NON_CONST,
+						primitive_type::static_kind::KIND_NON_STATIC, primitive_type::sign_kind::KIND_NONE);
+					if (bs->stmt_list().empty()) t = void_type;
+					else {
+						shared_ptr<stmt> last = *(bs->stmt_list().end() - 1);
+						if (last->stmt_kind() == stmt::kind::KIND_EXPRESSION) t = last->stmt_expression()->expression_type();
+						else t = void_type;
+					}
+					if (close_parenthesis.token_kind() != token::kind::TOKEN_CLOSE_PARENTHESIS) {
+						p->report(error(error::kind::KIND_ERROR, "Expected a close parenthesis here.", stream, stream.size() - 1));
+						_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_STMT_EXPR, bs, t, false, stream);
+						_valid = false;
+						return;
+					}
+					_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_STMT_EXPR, bs, t, true, stream);
+					_valid = true;
 				}
-				_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_PARENTHESIZED_EXPRESSION, e, e->expression_type(), e->valid(),
-					stream, e->expression_value_kind());
-				_valid = e->valid();
+				else {
+					expression_parser ep(p);
+					shared_ptr<expression> e = ep.contained_expression();
+					for (token t : e->stream()) stream.push_back(t);
+					token close_parenthesis = p->pop();
+					stream.push_back(close_parenthesis);
+					if (close_parenthesis.token_kind() != token::kind::TOKEN_CLOSE_PARENTHESIS) {
+						p->report(error(error::kind::KIND_ERROR, "Expected a close parenthesis here.", stream, stream.size() - 1));
+						_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_PARENTHESIZED_EXPRESSION, e, e->expression_type(), false,
+							stream, e->expression_value_kind());
+						_valid = false;
+						return;
+					}
+					_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_PARENTHESIZED_EXPRESSION, e, e->expression_type(), e->valid(),
+						stream, e->expression_value_kind());
+					_valid = e->valid();
+				}
 			}
 			else if (tok.token_kind() == token::kind::TOKEN_IDENTIFIER || tok.token_kind() == token::kind::TOKEN_COLON_COLON) {
 				p->backtrack();
@@ -750,12 +781,12 @@ namespace spectre {
 				else if (nt->type_kind() == type::kind::KIND_STRUCT) {
 					shared_ptr<struct_type> snt = static_pointer_cast<struct_type>(nt);
 					pet = make_shared<struct_type>(snt->type_const_kind(), snt->type_static_kind(), snt->struct_name(), snt->struct_reference_number(), snt->valid(),
-						snt->array_dimensions() + 1);
+						snt->array_dimensions() + 1, snt->is_union());
 				}
 				else if (nt->type_kind() == type::kind::KIND_FUNCTION) {
 					shared_ptr<function_type> fnt = static_pointer_cast<function_type>(nt);
 					pet = make_shared<function_type>(fnt->type_const_kind(), fnt->type_static_kind(), fnt->return_type(), fnt->parameter_list(), fnt->function_reference_number(),
-						fnt->array_dimensions() + 1);
+						fnt->array_dimensions() + 1, fnt->variadic());
 				}
 				else
 					p->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
@@ -845,12 +876,12 @@ namespace spectre {
 					else if (prev_type->type_kind() == type::kind::KIND_STRUCT) {
 						shared_ptr<struct_type> ss = static_pointer_cast<struct_type>(prev_type);
 						prev_type = make_shared<struct_type>(ss->type_const_kind(), ss->type_static_kind(), ss->struct_name(), ss->struct_reference_number(), ss->valid(),
-							ss->array_dimensions() + 1);
+							ss->array_dimensions() + 1, ss->is_union());
 					}
 					else if (prev_type->type_kind() == type::kind::KIND_FUNCTION) {
 						shared_ptr<function_type> ff = static_pointer_cast<function_type>(prev_type);
 						prev_type = make_shared<function_type>(ff->type_const_kind(), ff->type_static_kind(), ff->return_type(), ff->parameter_list(), ff->function_reference_number(),
-							ff->array_dimensions() + 1);
+							ff->array_dimensions() + 1, ff->variadic());
 					}
 					else {
 						p->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
@@ -887,12 +918,12 @@ namespace spectre {
 					else if (prev_type->type_kind() == type::kind::KIND_STRUCT) {
 						shared_ptr<struct_type> ss = static_pointer_cast<struct_type>(prev_type);
 						prev_type = make_shared<struct_type>(ss->type_const_kind(), ss->type_static_kind(), ss->struct_name(), ss->struct_reference_number(), ss->valid(),
-							ss->array_dimensions() - 1);
+							ss->array_dimensions() - 1, ss->is_union());
 					}
 					else if (prev_type->type_kind() == type::kind::KIND_FUNCTION) {
 						shared_ptr<function_type> ff = static_pointer_cast<function_type>(prev_type);
 						prev_type = make_shared<function_type>(ff->type_const_kind(), ff->type_static_kind(), ff->return_type(), ff->parameter_list(), ff->function_reference_number(),
-							ff->array_dimensions() - 1);
+							ff->array_dimensions() - 1, ff->variadic());
 					}
 					else {
 						p->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
@@ -1109,14 +1140,14 @@ namespace spectre {
 					}
 					else {
 						shared_ptr<function_type> t = static_pointer_cast<function_type>(prev_type);
-						if (t->parameter_list().size() != al.size()) {
+						if ((!t->variadic() && t->parameter_list().size() != al.size()) || (t->variadic() && al.size() < t->parameter_list().size())) {
 							p->report(error(error::kind::KIND_ERROR, "The argument number at the call site does not match the declared number of parameters.",
 								stream, 0));
 							_valid = false;
 							ptl.push_back(make_shared<postfix_expression::postfix_type>(prev_type, al, nullptr));
 							break;
 						}
-						for (int i = 0; i < al.size(); i++) {
+						for (int i = 0; i < t->parameter_list().size(); i++) {
 							shared_ptr<type> par_type = t->parameter_list()[i]->variable_declaration_type(),
 								arg_type = al[i]->assignment_expression_type();
 							if (par_type->type_kind() != arg_type->type_kind() || par_type->type_array_kind() != arg_type->type_array_kind() ||
@@ -1140,7 +1171,8 @@ namespace spectre {
 							}
 							else if (par_type->type_kind() == type::kind::KIND_STRUCT) {
 								shared_ptr<struct_type> ps = static_pointer_cast<struct_type>(par_type), as = static_pointer_cast<struct_type>(arg_type);
-								if (ps->struct_reference_number() != as->struct_reference_number() || ps->struct_name().raw_text() != as->struct_name().raw_text()) {
+								if (ps->struct_reference_number() != as->struct_reference_number() || ps->struct_name().raw_text() != as->struct_name().raw_text()
+									|| ps->is_union() != as->is_union()) {
 									p->report(error(error::kind::KIND_ERROR, "Expected matching struct types between a function parameter and the given function argument.",
 										stream, 0));
 									_valid = false;
@@ -1210,12 +1242,12 @@ namespace spectre {
 					else if (prev_type->type_kind() == type::kind::KIND_STRUCT) {
 						shared_ptr<struct_type> prev_st = static_pointer_cast<struct_type>(prev_type);
 						prev_type = make_shared<struct_type>(prev_st->type_const_kind(), prev_st->type_static_kind(), prev_st->struct_name(), prev_st->struct_reference_number(),
-							prev_st->valid(), prev_st->array_dimensions() - 1);
+							prev_st->valid(), prev_st->array_dimensions() - 1, prev_st->is_union());
 					}
 					else if (prev_type->type_kind() == type::kind::KIND_FUNCTION) {
 						shared_ptr<function_type> ff = static_pointer_cast<function_type>(prev_type);
 						prev_type = make_shared<function_type>(ff->type_const_kind(), ff->type_static_kind(), ff->return_type(), ff->parameter_list(), ff->function_reference_number(),
-							ff->array_dimensions() - 1);
+							ff->array_dimensions() - 1, ff->variadic());
 					}
 					else {
 						p->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
@@ -1501,7 +1533,7 @@ namespace spectre {
 					_valid = false;
 				}
 			}
-			else if (p->peek().token_kind() == token::kind::TOKEN_STRUCT) {
+			else if (p->peek().token_kind() == token::kind::TOKEN_STRUCT || p->peek().token_kind() == token::kind::TOKEN_UNION) {
 				shared_ptr<struct_stmt> s = struct_stmt_parser(p).contained_struct_stmt();
 				if (s != nullptr) {
 					_contained_stmt = make_shared<stmt>(stmt::kind::KIND_STRUCT, s, s->valid(), s->stream());
@@ -2009,7 +2041,8 @@ namespace spectre {
 					return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
 				}
 				shared_ptr<struct_type> s1 = static_pointer_cast<struct_type>(lhs_type), s2 = static_pointer_cast<struct_type>(rhs_type);
-				if(s1->struct_reference_number() != s2->struct_reference_number() || s1->struct_name().raw_text() != s2->struct_name().raw_text()) {
+				if(s1->struct_reference_number() != s2->struct_reference_number() || s1->struct_name().raw_text() != s2->struct_name().raw_text()
+					|| s1->is_union() != s2->is_union()) {
 					p->report(error(error::kind::KIND_ERROR, "Expected matching struct types to compare for equality or inequality.", stream, lhs->stream().size()));
 					return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
 				}
@@ -2215,10 +2248,11 @@ namespace spectre {
 			}
 			else if (t1->type_kind() == type::kind::KIND_STRUCT && t2->type_kind() == type::kind::KIND_STRUCT) {
 				shared_ptr<struct_type> s1 = static_pointer_cast<struct_type>(t1), s2 = static_pointer_cast<struct_type>(t2);
-				if (s1->struct_reference_number() != s2->struct_reference_number() || s1->struct_name().raw_text() != s2->struct_name().raw_text()) {
+				if (s1->struct_reference_number() != s2->struct_reference_number() || s1->struct_name().raw_text() != s2->struct_name().raw_text()
+					|| s1->is_union() != s2->is_union()) {
 					p->report(error(error::kind::KIND_ERROR, "Expected matching struct types between this colon.", stream, cond->stream().size() + true_path->stream().size() + 1));
 				}
-				return make_shared<struct_type>(ck, sk, s1->struct_name(), s1->struct_reference_number(), true, s1->array_dimensions());
+				return make_shared<struct_type>(ck, sk, s1->struct_name(), s1->struct_reference_number(), true, s1->array_dimensions(), s1->is_union());
 			}
 			else if (t1->type_kind() == type::kind::KIND_FUNCTION && t2->type_kind() == type::kind::KIND_FUNCTION) {
 				if (!matching_function_types(p, t1, t2))
@@ -2319,7 +2353,8 @@ namespace spectre {
 				}
 				shared_ptr<struct_type> lhs_stype = static_pointer_cast<struct_type>(lhs->unary_expression_type()),
 					ae_stype = static_pointer_cast<struct_type>(ae->assignment_expression_type());
-				if (lhs_stype->struct_reference_number() != ae_stype->struct_reference_number() || lhs_stype->struct_name().raw_text() != ae_stype->struct_name().raw_text()) {
+				if (lhs_stype->struct_reference_number() != ae_stype->struct_reference_number() || lhs_stype->struct_name().raw_text() != ae_stype->struct_name().raw_text()
+					|| lhs_stype->is_union() != ae_stype->is_union()) {
 					p->report(error(error::kind::KIND_ERROR, "Expected two compatible 'struct' types to assign between.", stream, lhs->stream().size() - 1));
 					return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE);
 				}
@@ -2398,7 +2433,8 @@ namespace spectre {
 				}
 				else if (t1->type_kind() == type::kind::KIND_STRUCT) {
 					shared_ptr<struct_type> st1 = static_pointer_cast<struct_type>(t1), st2 = static_pointer_cast<struct_type>(t2);
-					if (st1->struct_name().raw_text() == st2->struct_name().raw_text() && st1->struct_reference_number() == st2->struct_reference_number())
+					if (st1->struct_name().raw_text() == st2->struct_name().raw_text() && st1->struct_reference_number() == st2->struct_reference_number()
+						&& st1->is_union() == st2->is_union())
 						return value_kind::VALUE_LVALUE;
 					else
 						return value_kind::VALUE_RVALUE;
@@ -2420,7 +2456,7 @@ namespace spectre {
 			int start = p->get_buffer_position();
 			token tok = p->pop();
 			bool signed_unsigned_hit = false, const_hit = false, static_hit = false, primitive_hit = false, struct_hit = false, function_hit = false,
-				constexpr_hit = false, auto_hit = false;
+				constexpr_hit = false, auto_hit = false, variadic_fn_type = false;
 			shared_ptr<symbol> s_symbol = nullptr;
 			shared_ptr<type> r_type = nullptr;
 			vector<shared_ptr<variable_declaration>> param_list;
@@ -2531,6 +2567,11 @@ namespace spectre {
 					}
 					_stream.push_back(p->pop());
 					while (p->peek().token_kind() != token::kind::TOKEN_CLOSE_PARENTHESIS) {
+						if (p->peek().token_kind() == token::kind::TOKEN_ELLIPSIS) {
+							_stream.push_back(p->pop());
+							variadic_fn_type = true;
+							continue;
+						}
 						type_parser param_type_parser(p);
 						if (!param_type_parser.valid() || param_type_parser.contained_type()->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR
 							|| param_type_parser.contained_type()->type_kind() == type::kind::KIND_AUTO) {
@@ -2664,7 +2705,7 @@ namespace spectre {
 				shared_ptr<struct_symbol> ss = static_pointer_cast<struct_symbol>(s_symbol);
 				_contained_type = make_shared<struct_type>(const_hit ? type::const_kind::KIND_CONST : type::const_kind::KIND_NON_CONST, static_hit ? type::static_kind::KIND_STATIC :
 					type::static_kind::KIND_NON_STATIC, constexpr_hit ? type::constexpr_kind::KIND_CONSTEXPR : type::constexpr_kind::KIND_NON_CONSTEXPR,
-					important, ss->struct_symbol_type()->struct_reference_number(), true, ad);
+					important, ss->struct_symbol_type()->struct_reference_number(), true, ad, ss->struct_symbol_type()->is_union());
 				_valid = true;
 				return;
 			}
@@ -2672,7 +2713,7 @@ namespace spectre {
 				_contained_type = make_shared<function_type>(const_hit ? type::const_kind::KIND_CONST : type::const_kind::KIND_NON_CONST,
 					static_hit ? type::static_kind::KIND_STATIC : type::static_kind::KIND_NON_STATIC,
 					constexpr_hit ? type::constexpr_kind::KIND_CONSTEXPR : type::constexpr_kind::KIND_NON_CONSTEXPR,
-					r_type, param_list, -1, ad);
+					r_type, param_list, -1, ad, variadic_fn_type);
 				_valid = true;
 				return;
 			}
@@ -2890,14 +2931,14 @@ namespace spectre {
 						int fr = i_ftype->function_reference_number();
 						shared_ptr<type> rt = i_ftype->return_type();
 						vector<shared_ptr<variable_declaration>> pl = i_ftype->parameter_list();
-						decl_type = make_shared<function_type>(ck, sk, cek, rt, pl, fr, ad);
+						decl_type = make_shared<function_type>(ck, sk, cek, rt, pl, fr, ad, i_ftype->variadic());
 					}
 					else if (i_type->type_kind() == type::kind::KIND_STRUCT) {
 						shared_ptr<struct_type> i_stype = static_pointer_cast<struct_type>(i_type);
 						token sn = i_stype->struct_name();
 						int sr = i_stype->struct_reference_number();
 						bool v = i_stype->valid();
-						decl_type = make_shared<struct_type>(ck, sk, cek, sn, sr, v, ad);
+						decl_type = make_shared<struct_type>(ck, sk, cek, sn, sr, v, ad, i_stype->is_union());
 					}
 					else {
 						p->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
@@ -2936,7 +2977,8 @@ namespace spectre {
 				}
 				if (decl_type->type_kind() == type::kind::KIND_STRUCT && i_type->type_kind() == type::kind::KIND_STRUCT) {
 					shared_ptr<struct_type> d_stype = static_pointer_cast<struct_type>(decl_type), i_stype = static_pointer_cast<struct_type>(i_type);
-					if (d_stype->struct_reference_number() != i_stype->struct_reference_number() || d_stype->struct_name().raw_text() != i_stype->struct_name().raw_text()) {
+					if (d_stype->struct_reference_number() != i_stype->struct_reference_number() || d_stype->struct_name().raw_text() != i_stype->struct_name().raw_text()
+						|| d_stype->is_union() != i_stype->is_union()) {
 						p->report(error(error::kind::KIND_ERROR, "Expected compatible struct types between an initializer and a declaration type.", vd->stream(), 0));
 						return bad_variable;
 					}
@@ -3181,7 +3223,13 @@ namespace spectre {
 			}
 			stream.push_back(opar);
 			vector<shared_ptr<variable_declaration>> pl;
+			bool variadic = false;
 			while (p->peek().token_kind() != token::kind::TOKEN_CLOSE_PARENTHESIS) {
+				if (p->peek().token_kind() == token::kind::TOKEN_ELLIPSIS) {
+					stream.push_back(p->pop());
+					variadic = true;
+					continue;
+				}
 				variable_declaration_parser vp(p);
 				if (!vp.valid()) {
 					p->report(error(error::kind::KIND_ERROR, "Expected a valid parameter list for a function.", stream, 0));
@@ -3232,6 +3280,15 @@ namespace spectre {
 			}
 			p->close_current_scope();
 			token cpar = p->pop();
+			if (cpar.token_kind() != token::kind::TOKEN_CLOSE_PARENTHESIS) {
+				p->report(error(error::kind::KIND_ERROR, "Expected a close parenthesis at the end of a function parameter list.", stream, 0));
+				_contained_function_stmt = make_shared<function_stmt>(nullptr, fn, nullptr, vector<shared_ptr<stmt>>{},
+					function_stmt::defined_kind::KIND_NONE, fs, false, stream);
+				_valid = false;
+				p->close_current_scope();
+				return;
+			}
+			stream.push_back(cpar);
 			shared_ptr<function_type> ft = nullptr;
 			shared_ptr<symbol> res = p->find_symbol_in_current_scope(fn, true);
 			if(res != nullptr) {
@@ -3257,7 +3314,8 @@ namespace spectre {
 						bad = true;
 					}
 					if(!bad)
-						bad = !matching_function_symbol_and_partial_function_stmt(p, temp, make_shared<function_type>(ck, sk, rt, pl, p->next_function_reference_number()), fn, stream);
+						bad = !matching_function_symbol_and_partial_function_stmt(p, temp,
+							make_shared<function_type>(ck, sk, rt, pl, p->next_function_reference_number(), variadic), fn, stream);
 				}
 				if (bad) {
 					_contained_function_stmt = make_shared<function_stmt>(ft, fn, nullptr, vector<shared_ptr<stmt>>{}, function_stmt::defined_kind::KIND_NONE, fs, false,
@@ -3265,10 +3323,10 @@ namespace spectre {
 					_valid = false;
 					return;
 				}
-				ft = make_shared<function_type>(ck, sk, rt, pl, ft->function_reference_number());
+				ft = make_shared<function_type>(ck, sk, rt, pl, ft->function_reference_number(), variadic);
 			}
 			else
-				ft = make_shared<function_type>(ck, sk, rt, pl, p->next_function_reference_number());
+				ft = make_shared<function_type>(ck, sk, rt, pl, p->next_function_reference_number(), variadic);
 			if (cpar.token_kind() != token::kind::TOKEN_CLOSE_PARENTHESIS) {
 				p->report(error(error::kind::KIND_ERROR, "Expected a close parenthesis (')') to finish a parameter list.", stream, 0));
 				_contained_function_stmt = make_shared<function_stmt>(ft, fn, nullptr, vector<shared_ptr<stmt>>{}, function_stmt::defined_kind::KIND_NONE, fs, false,
@@ -3323,7 +3381,7 @@ namespace spectre {
 					p->close_current_scope();
 					return;
 				}
-				if (sp.contained_stmt()->stmt_kind() == stmt::kind::KIND_FUNCTION || sp.contained_stmt()->stmt_kind() == stmt::kind::KIND_STRUCT ||
+				if (sp.contained_stmt()->stmt_kind() == stmt::kind::KIND_FUNCTION ||
 					(sp.contained_stmt()->stmt_kind() == stmt::kind::KIND_NAMESPACE
 						&& sp.contained_stmt()->stmt_namespace()->namespace_stmt_kind() != namespace_stmt::kind::KIND_ALIAS)) {
 					p->report(error(error::kind::KIND_ERROR, "This statement cannot be nested within a function.",
@@ -3449,7 +3507,8 @@ namespace spectre {
 			}
 			else if (sym_rt->type_kind() == type::kind::KIND_STRUCT) {
 				shared_ptr<struct_type> sym_rt_stype = static_pointer_cast<struct_type>(sym_rt), rt_stype = static_pointer_cast<struct_type>(rt);
-				if (sym_rt_stype->struct_reference_number() != rt_stype->struct_reference_number() || sym_rt_stype->struct_name().raw_text() != rt_stype->struct_name().raw_text()) {
+				if (sym_rt_stype->struct_reference_number() != rt_stype->struct_reference_number() || sym_rt_stype->struct_name().raw_text() != rt_stype->struct_name().raw_text()
+					|| sym_rt_stype->is_union() != rt_stype->is_union()) {
 					p->report(error(error::kind::KIND_ERROR, "The function declaration and the given function statement's return types do not match.", s, 0));
 					p->report(error(error::kind::KIND_NOTE, "Originally declared here.", sym_stream, 0));
 					return false;
@@ -3459,7 +3518,7 @@ namespace spectre {
 				p->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 				return false;
 			}
-			if (sym_pl.size() != pl.size()) {
+			if (sym_pl.size() != pl.size() || fsym->function_symbol_type()->variadic() != ft->variadic()) {
 				p->report(error(error::kind::KIND_ERROR, "The function declaration and the given function statment's parameter lists differ.", s, 0));
 				p->report(error(error::kind::KIND_ERROR, "Originally declared here.", sym_stream, 0));
 				return false;
@@ -3483,7 +3542,8 @@ namespace spectre {
 					shared_ptr<struct_type> spar_t_stype = static_pointer_cast<struct_type>(spar_t),
 						par_t_stype = static_pointer_cast<struct_type>(par_t);
 					if (spar_t_stype->struct_reference_number() != par_t_stype->struct_reference_number() || spar_t_stype->struct_name().raw_text() != par_t_stype->struct_name().raw_text() ||
-						spar_t_stype->type_array_kind() != par_t_stype->type_array_kind() || spar_t_stype->array_dimensions() != par_t_stype->array_dimensions()) {
+						spar_t_stype->type_array_kind() != par_t_stype->type_array_kind() || spar_t_stype->array_dimensions() != par_t_stype->array_dimensions()
+						|| spar_t_stype->is_union() != par_t_stype->is_union()) {
 						p->report(error(error::kind::KIND_ERROR, "The function declaration and the given function statment's parameter lists differ.", s, 0));
 						p->report(error(error::kind::KIND_ERROR, "Originally declared here.", sym_stream, 0));
 						return false;
@@ -3538,13 +3598,14 @@ namespace spectre {
 				else if (deduced->type_kind() == type::kind::KIND_STRUCT) {
 					shared_ptr<struct_type> dst = static_pointer_cast<struct_type>(deduced),
 						st = static_pointer_cast<struct_type>(t);
-					if (dst->struct_reference_number() != st->struct_reference_number() || dst->struct_name().raw_text() != st->struct_name().raw_text()) {
+					if (dst->struct_reference_number() != st->struct_reference_number() || dst->struct_name().raw_text() != st->struct_name().raw_text()
+						|| dst->is_union() != st->is_union()) {
 						p->report(error(error::kind::KIND_ERROR, "Expected comparable types in an array initializer list.", e->stream(), 0));
 						p->report(error(error::kind::KIND_NOTE, "From this initializer list.", stream, 0));
 						return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE, 0);
 					}
 					deduced = make_shared<struct_type>(type::const_kind::KIND_NON_CONST, type::static_kind::KIND_NON_STATIC, dst->struct_name(), dst->struct_reference_number(), true,
-						dst->array_dimensions());
+						dst->array_dimensions(), dst->is_union());
 				}
 				else if (deduced->type_kind() == type::kind::KIND_FUNCTION) {
 					shared_ptr<function_type> dft = static_pointer_cast<function_type>(t);
@@ -3554,7 +3615,7 @@ namespace spectre {
 						return make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NONE, type::static_kind::KIND_NONE, 0);
 					}
 					dft = make_shared<function_type>(type::const_kind::KIND_NON_CONST, type::static_kind::KIND_NON_STATIC, dft->return_type(), dft->parameter_list(),
-						dft->function_reference_number(), dft->array_dimensions());
+						dft->function_reference_number(), dft->array_dimensions(), dft->variadic());
 				}
 				else {
 					p->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
@@ -3569,12 +3630,12 @@ namespace spectre {
 			else if (deduced->type_kind() == type::kind::KIND_STRUCT) {
 				shared_ptr<struct_type> d = static_pointer_cast<struct_type>(deduced);
 				return make_shared<struct_type>(type::const_kind::KIND_NON_CONST, type::static_kind::KIND_NON_STATIC, d->struct_name(), d->struct_reference_number(), true,
-					d->array_dimensions() + 1);
+					d->array_dimensions() + 1, d->is_union());
 			}
 			else if (deduced->type_kind() == type::kind::KIND_FUNCTION) {
 				shared_ptr<function_type> d = static_pointer_cast<function_type>(deduced);
 				return make_shared<function_type>(type::const_kind::KIND_NON_CONST, type::static_kind::KIND_NON_STATIC, d->return_type(), d->parameter_list(),
-					d->function_reference_number(), d->array_dimensions() + 1);
+					d->function_reference_number(), d->array_dimensions() + 1, d->variadic());
 			}
 			else {
 				p->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
@@ -3669,7 +3730,8 @@ namespace spectre {
 			}
 			else if (rt->type_kind() == type::kind::KIND_STRUCT) {
 				shared_ptr<struct_type> srt = static_pointer_cast<struct_type>(rt), sfrt = static_pointer_cast<struct_type>(frt);
-				if (srt->struct_reference_number() != sfrt->struct_reference_number() || srt->struct_name().raw_text() != sfrt->struct_name().raw_text()) {
+				if (srt->struct_reference_number() != sfrt->struct_reference_number() || srt->struct_name().raw_text() != sfrt->struct_name().raw_text()
+					|| srt->is_union() != sfrt->is_union()) {
 					p->report(error(error::kind::KIND_ERROR, "A return statement inside of a function cannot contradict a function declaration's return type.", stream, 0));
 					_contained_return_stmt = make_shared<return_stmt>(rv, false, stream);
 					_valid = false;
@@ -3799,7 +3861,7 @@ namespace spectre {
 				return false;
 			if (s->stmt_kind() == stmt::kind::KIND_NAMESPACE)
 				return s->stmt_namespace()->namespace_stmt_kind() == namespace_stmt::kind::KIND_ALIAS;
-			return s->stmt_kind() != stmt::kind::KIND_FUNCTION && s->stmt_kind() != stmt::kind::KIND_STRUCT;
+			return s->stmt_kind() != stmt::kind::KIND_FUNCTION;
 		}
 
 		block_stmt_parser::block_stmt_parser(shared_ptr<parser> p) : _contained_block_stmt(nullptr), _valid(false) {
@@ -4219,7 +4281,8 @@ namespace spectre {
 				}
 				else if (ce_type->type_kind() == type::kind::KIND_STRUCT) {
 					shared_ptr<struct_type> ce_stype = static_pointer_cast<struct_type>(ce_type), s_stype = static_pointer_cast<struct_type>(p_type);
-					if (ce_stype->struct_reference_number() != s_stype->struct_reference_number() || ce_stype->struct_name().raw_text() != s_stype->struct_name().raw_text()) {
+					if (ce_stype->struct_reference_number() != s_stype->struct_reference_number() || ce_stype->struct_name().raw_text() != s_stype->struct_name().raw_text()
+						|| ce_stype->is_union() != s_stype->is_union()) {
 						p->report(error(error::kind::KIND_ERROR, "Expected compatible types for a switch scope's case.", stream, 0));
 						p->report(error(error::kind::KIND_ERROR, "Original expression being compared against is here.", p_scope->parent_expression()->stream(), 0));
 						_valid = false;
@@ -4364,14 +4427,16 @@ namespace spectre {
 		}
 
 		struct_stmt_parser::struct_stmt_parser(shared_ptr<parser> p) : _contained_struct_stmt(nullptr), _valid(false) {
-			if (p->peek().token_kind() != token::kind::TOKEN_STRUCT) {
+			if (p->peek().token_kind() != token::kind::TOKEN_STRUCT && p->peek().token_kind() != token::kind::TOKEN_UNION) {
 				_contained_struct_stmt = make_shared<struct_stmt>(struct_stmt::defined_kind::KIND_NONE, bad_token, nullptr, nullptr, nullptr, vector<shared_ptr<variable_declaration>>{},
 					false, vector<token>{});
 				_valid = false;
 				return;
 			}
 			vector<token> stream;
-			stream.push_back(p->pop());
+			token su = p->pop();
+			bool is_union = su.token_kind() == token::kind::TOKEN_UNION;
+			stream.push_back(su);
 			struct_stmt::defined_kind dk = struct_stmt::defined_kind::KIND_NONE;
 			if (p->peek().token_kind() != token::kind::TOKEN_IDENTIFIER) {
 				p->report(error(error::kind::KIND_ERROR, "Expected an identifier in order to declare a 'struct'.", stream, 0));
@@ -4396,8 +4461,8 @@ namespace spectre {
 				s_symbol = static_pointer_cast<struct_symbol>(test_symbol);
 				s_type = s_symbol->struct_symbol_type();
 				s_scope = s_symbol->struct_symbol_scope();
-				if (s_symbol->struct_symbol_defined_kind() == struct_stmt::defined_kind::KIND_DEFINED) {
-					p->report(error(error::kind::KIND_ERROR, "Redefinition/redeclaration of an already defined 'struct.'", stream, 0));
+				if (s_symbol->struct_symbol_defined_kind() == struct_stmt::defined_kind::KIND_DEFINED || s_type->is_union() != is_union) {
+					p->report(error(error::kind::KIND_ERROR, "Redefinition/redeclaration of an already defined 'struct' or 'union.'", stream, 0));
 					p->report(error(error::kind::KIND_ERROR, "Originally declared here.", s_symbol->stream(), 0));
 					_contained_struct_stmt = make_shared<struct_stmt>(dk, struct_name, s_scope, s_type, s_symbol, vector<shared_ptr<variable_declaration>>{}, false, stream);
 					_valid = false;
@@ -4405,7 +4470,8 @@ namespace spectre {
 				}
 			}
 			else {
-				s_type = make_shared<struct_type>(type::const_kind::KIND_NON_CONST, type::static_kind::KIND_NON_STATIC, struct_name, p->next_struct_reference_number(), true);
+				s_type = make_shared<struct_type>(type::const_kind::KIND_NON_CONST, type::static_kind::KIND_NON_STATIC, struct_name, p->next_struct_reference_number(), true,
+					is_union);
 				s_scope = make_shared<scope>(scope::kind::KIND_STRUCT, p->current_scope());
 				s_symbol = make_shared<struct_symbol>(p->current_scope(), s_type, struct_name, s_scope, stream, dk);
 				p->add_symbol_to_current_scope(s_symbol);
@@ -4467,7 +4533,8 @@ namespace spectre {
 					}
 					if (vd->variable_declaration_type()->type_kind() == type::kind::KIND_STRUCT) {
 						shared_ptr<struct_type> st = static_pointer_cast<struct_type>(vd->variable_declaration_type());
-						if (st->struct_reference_number() == s_type->struct_reference_number() && vd->variable_declaration_type()->type_array_kind() != type::array_kind::KIND_ARRAY) {
+						if (st->struct_reference_number() == s_type->struct_reference_number() && st->is_union() == s_type->is_union()
+							&& vd->variable_declaration_type()->type_array_kind() != type::array_kind::KIND_ARRAY) {
 							p->report(error(error::kind::KIND_ERROR, "Cannot have an incomplete type inside of a struct definition.", vec, 0));
 							_contained_struct_stmt = make_shared<struct_stmt>(dk, struct_name, s_scope, s_type, s_symbol, struct_members, false, stream);
 							_valid = false;
@@ -5320,7 +5387,8 @@ namespace spectre {
 				return matching_function_types(p, t1, t2, true);
 			else if (t1->type_kind() == type::kind::KIND_STRUCT) {
 				shared_ptr<struct_type> s1 = static_pointer_cast<struct_type>(t1), s2 = static_pointer_cast<struct_type>(t2);
-				return s1->struct_reference_number() == s2->struct_reference_number() && s1->struct_name().raw_text() == s2->struct_name().raw_text();
+				return s1->struct_reference_number() == s2->struct_reference_number() && s1->struct_name().raw_text() == s2->struct_name().raw_text()
+					&& s1->is_union() == s2->is_union();
 			}
 			return false;
 		}
@@ -5337,7 +5405,7 @@ namespace spectre {
 			shared_ptr<function_type> ft1 = static_pointer_cast<function_type>(t1), ft2 = static_pointer_cast<function_type>(t2);
 			if (!exact_type_match(p, ft1->return_type(), ft2->return_type()))
 				return false;
-			if (ft1->parameter_list().size() != ft2->parameter_list().size())
+			if (ft1->parameter_list().size() != ft2->parameter_list().size() || ft1->variadic() != ft2->variadic())
 				return false;
 			for (int i = 0; i < ft1->parameter_list().size(); i++)
 				if (!exact_type_match(p, ft1->parameter_list()[i]->variable_declaration_type(), ft2->parameter_list()[i]->variable_declaration_type())) return false;

@@ -1,0 +1,28 @@
+------------Building ./stmt_expr_1.sp-------------
+------------Running ./stmt_expr_1.sp-------------
+test
+test
+Y
+------------Return code: 0-------------
+------------Building ./printf_ret_test.sp-------------
+------------Running ./printf_ret_test.sp-------------
+hello world
+Y
+------------Return code: 0-------------
+------------Building ./stmt_expr_2.sp-------------
+------------Running ./stmt_expr_2.sp-------------
+Hello world!
+Y
+------------Return code: 0-------------
+------------Building ./nested_struct_test.sp-------------
+------------Running ./nested_struct_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./stmt_expr_3.sp-------------
+------------Running ./stmt_expr_3.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./unsigned_check.sp-------------
+------------Running ./unsigned_check.sp-------------
+8808644812
+------------Return code: 0-------------

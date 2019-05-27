@@ -1,0 +1,24 @@
+namespace std {
+	namespace limits {
+
+		constexpr unsigned int CHAR_BIT = 8;
+
+		constexpr int SCHAR_MIN = -128;
+		constexpr int SCHAR_MAX = 127;
+		constexpr unsigned int UCHAR_MAX = 255;
+		constexpr unsigned int CHAR_MIN = 0;
+		constexpr unsigned int CHAR_MAX = UCHAR_MAX;
+
+		constexpr int SHRT_MIN = -32768;
+		constexpr int SHRT_MAX = 32767;
+		constexpr unsigned int USHRT_MAX = 65536;
+
+		constexpr int INT_MIN = -2147483648;
+		constexpr int INT_MAX = 2147483647;
+		constexpr unsigned int UINT_MAX = 4294967295;
+
+		constexpr int LONG_MIN = INT_MIN;
+		constexpr int LONG_MAX = INT_MAX;
+		constexpr unsigned int ULONG_MAX = UINT_MAX;
+	}
+}

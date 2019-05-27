@@ -6,6 +6,9 @@ namespace std {
 	namespace math {}
 	namespace string {}
 	namespace syscall {}
+	namespace limits {}
+	namespace arg {}
+	namespace io {}
 
 	namespace aliases {
 		namespace cast = std::cast;
@@ -15,5 +18,8 @@ namespace std {
 		namespace math = std::math;
 		namespace str = std::string;
 		namespace sys = std::syscall;
+		namespace lims = std::limits;
+		namespace arg = std::arg;
+		namespace io = std::io;
 	}
 }

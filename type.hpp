@@ -100,17 +100,18 @@ namespace spectre {
 		private:
 			shared_ptr<type> _return_type;
 			vector<shared_ptr<variable_declaration>> _parameter_list;
-			bool _valid;
+			bool _valid, _variadic;
 			int _function_reference_number;
 		public:
-			function_type(type::const_kind ck, type::static_kind sk, shared_ptr<type> rt, vector<shared_ptr<variable_declaration>> pl, int r);
-			function_type(type::const_kind ck, type::static_kind sk, shared_ptr<type> rt, vector<shared_ptr<variable_declaration>> pl, int r, int ad);
-			function_type(type::const_kind ck, type::static_kind sk, type::constexpr_kind cek, shared_ptr<type> rt, vector<shared_ptr<variable_declaration>> pl, int r);
-			function_type(type::const_kind ck, type::static_kind sk, type::constexpr_kind cek, shared_ptr<type> rt, vector<shared_ptr<variable_declaration>> pl, int r, int ad);
+			function_type(type::const_kind ck, type::static_kind sk, shared_ptr<type> rt, vector<shared_ptr<variable_declaration>> pl, int r, bool v = false);
+			function_type(type::const_kind ck, type::static_kind sk, shared_ptr<type> rt, vector<shared_ptr<variable_declaration>> pl, int r, int ad, bool v = false);
+			function_type(type::const_kind ck, type::static_kind sk, type::constexpr_kind cek, shared_ptr<type> rt, vector<shared_ptr<variable_declaration>> pl, int r, bool v = false);
+			function_type(type::const_kind ck, type::static_kind sk, type::constexpr_kind cek, shared_ptr<type> rt, vector<shared_ptr<variable_declaration>> pl, int r, int ad, bool v = false);
 			~function_type();
 			shared_ptr<type> return_type();
 			vector<shared_ptr<variable_declaration>> parameter_list();
 			bool valid();
+			bool variadic();
 			int function_reference_number();
 		};
 
@@ -119,15 +120,17 @@ namespace spectre {
 			token _struct_name;
 			int _struct_reference_number;
 			bool _valid;
+			bool _union;
 		public:
-			struct_type(type::const_kind ck, type::static_kind sk, token t, int r, bool v);
-			struct_type(type::const_kind ck, type::static_kind sk, token t, int r, bool v, int ad);
-			struct_type(type::const_kind ck, type::static_kind sk, type::constexpr_kind cek, token t, int r, bool v);
-			struct_type(type::const_kind ck, type::static_kind sk, type::constexpr_kind cek, token t, int r, bool v, int ad);
+			struct_type(type::const_kind ck, type::static_kind sk, token t, int r, bool v, bool u = false);
+			struct_type(type::const_kind ck, type::static_kind sk, token t, int r, bool v, int ad, bool u = false);
+			struct_type(type::const_kind ck, type::static_kind sk, type::constexpr_kind cek, token t, int r, bool v, bool u = false);
+			struct_type(type::const_kind ck, type::static_kind sk, type::constexpr_kind cek, token t, int r, bool v, int ad, bool u = false);
 			~struct_type();
 			token struct_name();
 			int struct_reference_number();
 			bool valid();
+			bool is_union();
 		};
 
 		class auto_type : public type {

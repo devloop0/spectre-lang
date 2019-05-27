@@ -355,6 +355,9 @@ namespace spectre {
 					   break;
 			case '.': {
 				if (_index + 1 < _source_code.length() && isdigit(_source_code[_index + 1]));
+				else if (_index + 1 < _source_code.length() && _source_code[_index + 1] == '.'
+					&& _index + 2 < _source_code.length() && _source_code[_index + 2] == '.')
+					return update(token(_parent_directory, _file_name, _current_line_number, _current_column_number, _current_column_number + 3, token::kind::TOKEN_ELLIPSIS, "..."));
 				else
 					return update(token(_parent_directory, _file_name, _current_line_number, _current_column_number, _current_column_number + 1, token::kind::TOKEN_DOT, "."));
 			}
@@ -828,6 +831,8 @@ namespace spectre {
 					tok = token(_parent_directory, _file_name, _current_line_number, start, _current_column_number, token::kind::TOKEN_AUTO, ident);
 				else if (ident == keywords::_delete)
 					tok = token(_parent_directory, _file_name, _current_line_number, start, _current_column_number, token::kind::TOKEN_DELETE, ident);
+				else if (ident == keywords::_union)
+					tok = token(_parent_directory, _file_name, _current_line_number, start, _current_column_number, token::kind::TOKEN_UNION, ident);
 				else
 					tok = token(_parent_directory, _file_name, _current_line_number, start, _current_column_number, token::kind::TOKEN_IDENTIFIER, ident);
 				_consumed_token_list.push_back(tok);

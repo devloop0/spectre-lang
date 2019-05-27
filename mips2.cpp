@@ -27,6 +27,8 @@ using std::log2;
 using std::holds_alternative;
 using std::visit;
 using std::stol;
+using std::reverse;
+using std::max;
 using namespace spectre::parser;
 
 namespace spectre {
@@ -2219,7 +2221,6 @@ namespace spectre {
 			case binary_expression::kind::KIND_BINARY_EXPRESSION: {
 				switch (be->binary_expression_operator_kind()) {
 				case binary_expression::operator_kind::KIND_SUBTRACT:
-				case binary_expression::operator_kind::KIND_MODULUS:
 				case binary_expression::operator_kind::KIND_BITWISE_XOR:
 				case binary_expression::operator_kind::KIND_SHIFT_LEFT:
 				case binary_expression::operator_kind::KIND_SHIFT_RIGHT:
@@ -2232,6 +2233,7 @@ namespace spectre {
 					return binary_expression_helper_1(mc, o1, be->binary_expression_operator_kind(), o2, be->binary_expression_type(), false);
 				}
 					break;
+				case binary_expression::operator_kind::KIND_MODULUS:
 				case binary_expression::operator_kind::KIND_MULTIPLY:
 				case binary_expression::operator_kind::KIND_DIVIDE:
 				case binary_expression::operator_kind::KIND_EQUALS_EQUALS:
@@ -2723,20 +2725,22 @@ namespace spectre {
 						shared_ptr<struct_symbol> ss = mc->find_struct_symbol(st->struct_name(), st->struct_reference_number());
 						shared_ptr<scope> s_scope = ss->struct_symbol_scope();
 						int off = 0;
-						for (shared_ptr<symbol> sym : s_scope->symbol_list()) {
-							if (sym->symbol_kind() == symbol::kind::KIND_VARIABLE) {
-								shared_ptr<variable_symbol> vsym = static_pointer_cast<variable_symbol>(sym);
-								if (vsym->variable_name().raw_text() != mem.raw_text()) {
-									shared_ptr<type> vt = vsym->variable_type();
-									int vt_sz = (int)calculate_type_size(mc, vt);
-									off += vt_sz % 8 == 0 ? vt_sz : (vt_sz / 8 + 1) * 8;
+						if (!st->is_union()) {
+							for (shared_ptr<symbol> sym : s_scope->symbol_list()) {
+								if (sym->symbol_kind() == symbol::kind::KIND_VARIABLE) {
+									shared_ptr<variable_symbol> vsym = static_pointer_cast<variable_symbol>(sym);
+									if (vsym->variable_name().raw_text() != mem.raw_text()) {
+										shared_ptr<type> vt = vsym->variable_type();
+										int vt_sz = (int)calculate_type_size(mc, vt);
+										off += vt_sz % 8 == 0 ? vt_sz : (vt_sz / 8 + 1) * 8;
+									}
+									else
+										break;
 								}
-								else
-									break;
-							}
-							else {
-								mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
-								return nullptr;
+								else {
+									mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+									return nullptr;
+								}
 							}
 						}
 						if (op->operand_kind() == operand::kind::KIND_LABEL) {
@@ -2767,7 +2771,7 @@ namespace spectre {
 					shared_ptr<type> ret_type = ftype->return_type();
 					vector<shared_ptr<variable_declaration>> vdecl_list = ftype->parameter_list();
 					vector<shared_ptr<assignment_expression>> ae_list = pt->argument_list();
-					if (vdecl_list.size() != ae_list.size()) {
+					if ((!ftype->variadic() && vdecl_list.size() != ae_list.size()) || (ftype->variadic() && ae_list.size() < vdecl_list.size())) {
 						mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 						return nullptr;
 					}
@@ -2775,42 +2779,67 @@ namespace spectre {
 					tuple<vector<int>, vector<int>, int> res_s_tup = save_to_middle(mc);
 					vector<int> which_to_store = get<0>(res_s_tup), middle_offsets = get<1>(res_s_tup);
 					vector<int> register_args, fp_register_args;
-					for (int i = 0; i < vdecl_list.size(); i++) {
-						shared_ptr<variable_declaration> vdecl = vdecl_list[i];
-						shared_ptr<type> vtype = vdecl->variable_declaration_type();
+					for (int i = 0; i < ae_list.size(); i++) {
+						shared_ptr<type> vtype = nullptr;
+						if (!ftype->variadic())
+							vtype = vdecl_list[i]->variable_declaration_type();
+						else {
+							if (i < vdecl_list.size())
+								vtype = vdecl_list[i]->variable_declaration_type();
+							else
+								vtype = ae_list[i]->assignment_expression_type();
+						}
 						bool is_prim = vtype->type_kind() == type::kind::KIND_PRIMITIVE && vtype->type_array_kind() == type::array_kind::KIND_NON_ARRAY;
 						bool is_not_struct = !(vtype->type_kind() == type::kind::KIND_STRUCT && vtype->type_array_kind() == type::array_kind::KIND_NON_ARRAY);
 						bool is_fp = static_pointer_cast<primitive_type>(vtype)->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE ||
 							static_pointer_cast<primitive_type>(vtype)->primitive_type_kind() == primitive_type::kind::KIND_FLOAT;
 #if SYSTEM == 0 || SYSTEM == 1
-						if (fp_register_args.size() < 2 && is_prim && is_fp)
+						if (fp_register_args.size() < 2 && is_prim && is_fp && !ftype->variadic())
 							fp_register_args.push_back(i);
 #elif SYSTEM == 2
-						if (fp_register_args.size() < 8 && is_prim && is_fp)
+						if (fp_register_args.size() < 8 && is_prim && is_fp && !ftype->variadic())
 							fp_register_args.push_back(i);
 #endif
 #if SYSTEM == 0 || SYSTEM == 1
-						else if (register_args.size() < 4 && is_not_struct && !(is_fp && is_prim))
+						else if (register_args.size() < 4 && is_not_struct && !(is_fp && is_prim) && !ftype->variadic())
 #elif SYSTEM == 2
-						else if (register_args.size() < 8 && is_not_struct && !(is_fp && is_prim))
+						else if (register_args.size() < 8 && is_not_struct && !(is_fp && is_prim) && !ftype->variadic())
 #endif
 							register_args.push_back(i);
-						else
-							sz_to_offset += (int)calculate_type_size(mc, vtype);
+						else {
+							int sz = (int)calculate_type_size(mc, vtype);
+							sz = sz % 8 == 0 ? sz : (sz / 8 + 1) * 8;
+							sz_to_offset += sz;
+						}
 					}
 					if (sz_to_offset > mc->current_frame()->frame_size())
 						mc->current_frame()->set_frame_size(sz_to_offset);
 					int curr_off = 0;
-					for (int i = 0; i < vdecl_list.size(); i++) {
+					std::vector<std::tuple<int, int, std::vector<int>>> move_from_middle;
+					for (int i = 0; i < ae_list.size(); i++) {
 						int fp_index = find(fp_register_args.begin(), fp_register_args.end(), i) - fp_register_args.begin(),
 							reg_index = find(register_args.begin(), register_args.end(), i) - register_args.begin();
 						shared_ptr<assignment_expression> ae = ae_list[i];
-						shared_ptr<variable_declaration> vdecl = vdecl_list[i];
-						shared_ptr<type> arg_type = ae->assignment_expression_type(), parm_type = vdecl->variable_declaration_type();
+						shared_ptr<type> arg_type = ae->assignment_expression_type();
+						shared_ptr<type> parm_type = nullptr;
+						if (!ftype->variadic()) {
+							shared_ptr<variable_declaration> vdecl = vdecl_list[i];
+							parm_type = vdecl->variable_declaration_type();
+						}
+						else {
+							if (i < vdecl_list.size())
+								parm_type = vdecl_list[i]->variable_declaration_type();
+							else
+								parm_type = ae->assignment_expression_type();
+						}
 						shared_ptr<operand> evaluated_arg = generate_assignment_expression_mips(mc, ae, false);
 						evaluated_arg = load_value_into_register(mc, evaluated_arg, arg_type);
 						evaluated_arg = cast_between_types(mc, evaluated_arg, arg_type, parm_type);
 						if (fp_index < fp_register_args.size()) {
+							if (ftype->variadic()) {
+								mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+								return nullptr;
+							}
 #if SYSTEM == 0 || SYSTEM == 1
 							shared_ptr<operand> correct_reg = register_file2::int_2_register_object.at(f12->register_number() + fp_index * 2);
 							mc->current_frame()->mark_register(f12->register_number() + fp_index * 2);
@@ -2833,6 +2862,10 @@ namespace spectre {
 							}
 						}
 						else if (reg_index < register_args.size()) {
+							if (ftype->variadic()) {
+								mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+								return nullptr;
+							}
 							shared_ptr<operand> correct_reg = register_file2::int_2_register_object.at(a0->register_number() + reg_index);
 							mc->current_frame()->mark_register(a0->register_number() + reg_index);
 							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_ADDU, correct_reg, evaluated_arg, register_file2::_zero_register));
@@ -2840,20 +2873,33 @@ namespace spectre {
 						else {
 							int sz = (int)calculate_type_size(mc, parm_type);
 							sz = sz % 8 == 0 ? sz : (sz / 8 + 1) * 8;
+							std::vector<int> middle_offsets;
 							if (parm_type->type_kind() == type::kind::KIND_STRUCT && parm_type->type_array_kind() == type::array_kind::KIND_NON_ARRAY) {
 								shared_ptr<operand> reg = allocate_general_purpose_register(mc);
 								for (int o = 0; o < sz; o += 4) {
+									int middle_offset = -(mc->current_frame()->middle_section_size() + 4);
+									middle_offsets.push_back(middle_offset);
+									mc->current_frame()->update_middle_section_size(4);
 									mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LW, reg, make_shared<operand>(operand::offset_kind::KIND_TRUE, o,
 										evaluated_arg->register_number(), evaluated_arg->register_name())));
-									mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_SW, reg, make_shared<operand>(operand::offset_kind::KIND_TRUE, curr_off + o,
-										fp->register_number(), fp->register_name())));
+									mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_SW, reg, make_shared<operand>(operand::offset_kind::KIND_MIDDLE,
+										middle_offset, fp->register_number(), fp->register_name())));
 								}
+								move_from_middle.push_back(make_tuple(curr_off, sz, middle_offsets));
 								free_general_purpose_register(mc, reg);
 							}
 							else {
 								insn::kind s = load_store_insn_from_type(mc, parm_type, false);
-								mc->current_frame()->add_insn_to_body(make_shared<insn>(s, evaluated_arg, make_shared<operand>(operand::offset_kind::KIND_TRUE, curr_off, fp->register_number(),
-									fp->register_name())));
+								int middle_offset = -(mc->current_frame()->middle_section_size() + 4);
+								middle_offsets.push_back(middle_offset);
+								mc->current_frame()->update_middle_section_size(4);
+								int middle_offset2 = -(mc->current_frame()->middle_section_size() + 4);
+								middle_offsets.push_back(middle_offset2);
+								mc->current_frame()->update_middle_section_size(4);
+								mc->current_frame()->add_insn_to_body(make_shared<insn>(s, evaluated_arg, make_shared<operand>(operand::offset_kind::KIND_MIDDLE,
+									middle_offset2, fp->register_number(), fp->register_name())));
+								std::reverse(middle_offsets.begin(), middle_offsets.end());
+								move_from_middle.push_back(make_tuple(curr_off, sz, middle_offsets));
 							}
 							curr_off += sz;
 						}
@@ -2862,6 +2908,20 @@ namespace spectre {
 						else
 							free_general_purpose_register(mc, evaluated_arg);
 					}
+					shared_ptr<operand> trans = allocate_general_purpose_register(mc);
+					for (const std::tuple<int, int, std::vector<int>>& middle : move_from_middle) {
+						int true_off = get<0>(middle), sz = get<1>(middle);
+						std::vector<int> middle_offs = get<2>(middle);
+						int curr = 0;
+						for (int moff : middle_offs) {
+							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_LW, trans, make_shared<operand>(operand::offset_kind::KIND_MIDDLE,
+								moff, fp->register_number(), fp->register_name())));
+							mc->current_frame()->add_insn_to_body(make_shared<insn>(insn::kind::KIND_SW, trans, make_shared<operand>(operand::offset_kind::KIND_TRUE,
+								true_off + curr, fp->register_number(), fp->register_name())));
+							curr += 4;
+						}
+					}
+					free_general_purpose_register(mc, trans);
 					if (op->is_immediate()) {
 						mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 						return nullptr;
@@ -3282,6 +3342,23 @@ namespace spectre {
 			case primary_expression::kind::KIND_PARENTHESIZED_EXPRESSION:
 				return generate_expression_mips(mc, pe->parenthesized_expression(), lvalue);
 				break;
+			case primary_expression::kind::KIND_STMT_EXPR: {
+				shared_ptr<block_stmt> block = pe->stmt_expression();
+				shared_ptr<operand> ret = register_file2::_zero_register;
+				for (int i = 0; i < block->stmt_list().size(); i++) {
+					shared_ptr<stmt> s = block->stmt_list()[i];
+					if (i == block->stmt_list().size() - 1 && s->stmt_kind() == stmt::kind::KIND_EXPRESSION) {
+						shared_ptr<type> et = s->stmt_expression()->expression_type();
+						shared_ptr<expression> e = s->stmt_expression();
+						ret = generate_expression_mips(mc, e, false);
+						ret = load_value_into_register(mc, ret, et);
+					}
+					else
+						generate_stmt_mips(mc, s);
+				}
+				return ret;
+			}
+				break;
 			case primary_expression::kind::KIND_SIZEOF_TYPE: {
 				int sz = (int)calculate_type_size(mc, pe->sizeof_type());
 				return make_shared<operand>(sz);
@@ -3346,7 +3423,8 @@ namespace spectre {
 				}
 				else if (parent_type->type_kind() == type::kind::KIND_STRUCT) {
 					shared_ptr<struct_type> st = static_pointer_cast<struct_type>(parent_type);
-					parent_type = make_shared<struct_type>(st->type_const_kind(), st->type_static_kind(), st->struct_name(), st->struct_reference_number(), st->array_dimensions() - 1);
+					parent_type = make_shared<struct_type>(st->type_const_kind(), st->type_static_kind(), st->struct_name(), st->struct_reference_number(), st->array_dimensions() - 1,
+						st->is_union());
 				}
 				else if (parent_type->type_kind() == type::kind::KIND_FUNCTION) {
 					shared_ptr<function_type> ft = static_pointer_cast<function_type>(parent_type);
@@ -4124,25 +4202,28 @@ namespace spectre {
 				if (ss == nullptr)
 					mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 				shared_ptr<scope> s_scope = ss->struct_symbol_scope();
-				unsigned int sz = 0;
+				unsigned int sz = 0, max_mem_sz = 0;
 				for (shared_ptr<symbol> sym : s_scope->symbol_list()) {
 					if (sym->symbol_kind() == symbol::kind::KIND_STRUCT) {
 						shared_ptr<struct_symbol> ssym = static_pointer_cast<struct_symbol>(sym);
 						shared_ptr<type> t = ssym->struct_symbol_type();
 						int sz1 = calculate_type_size(mc, t);
+						max_mem_sz = max(max_mem_sz, (unsigned int) sz1);
 						sz += sz1 % 8 == 0 ? sz1 : (sz1 / 8 + 1) * 8;
 					}
 					else if (sym->symbol_kind() == symbol::kind::KIND_VARIABLE) {
 						shared_ptr<variable_symbol> vsym = static_pointer_cast<variable_symbol>(sym);
 						shared_ptr<type> t = vsym->variable_type();
 						int sz1 = calculate_type_size(mc, t);
+						max_mem_sz = max(max_mem_sz, (unsigned int) sz1);
 						sz += sz1 % 8 == 0 ? sz1 : (sz1 / 8 + 1) * 8;
 					}
 					else
 						mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 				}
 				if (sz == 0) sz = 4;
-				return sz;
+				if (max_mem_sz == 0) max_mem_sz = 4;
+				return st->is_union() ? max_mem_sz : sz;
 			}
 			else if (t->type_kind() == type::kind::KIND_FUNCTION)
 				return 4;
@@ -4191,7 +4272,7 @@ namespace spectre {
 			}
 			else if (t->type_kind() == type::kind::KIND_STRUCT) {
 				shared_ptr<struct_type> s = static_pointer_cast<struct_type>(t);
-				return "struct" + sep + s->struct_name().raw_text() + "_" + arr;
+				return (s->is_union() ? "union" : "struct") + sep + s->struct_name().raw_text() + "_" + arr;
 			}
 			else if (t->type_kind() == type::kind::KIND_FUNCTION) {
 				shared_ptr<function_type> ft = static_pointer_cast<function_type>(t);
@@ -4658,16 +4739,16 @@ namespace spectre {
 				bool is_fp = static_pointer_cast<primitive_type>(curr_type)->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE ||
 					static_pointer_cast<primitive_type>(curr_type)->primitive_type_kind() == primitive_type::kind::KIND_FLOAT;
 #if SYSTEM == 0 || SYSTEM == 1
-				if (fp_register_args.size() < 2 && (is_prim && is_fp))
+				if (fp_register_args.size() < 2 && (is_prim && is_fp) && !fs->function_stmt_type()->variadic())
 					fp_register_args.push_back(i);
 #elif SYSTEM == 2
-				if (fp_register_args.size() < 8 && (is_prim && is_fp))
+				if (fp_register_args.size() < 8 && (is_prim && is_fp) && !fs->function_stmt_type()->variadic())
 					fp_register_args.push_back(i);
 #endif
 #if SYSTEM == 0 || SYSTEM == 1
-				else if (register_args.size() < 4 && is_not_struct && !(is_fp && is_prim))
+				else if (register_args.size() < 4 && is_not_struct && !(is_fp && is_prim) && !fs->function_stmt_type()->variadic())
 #elif SYSTEM == 2
-				else if (register_args.size() < 8 && is_not_struct && !(is_fp && is_prim))
+				else if (register_args.size() < 8 && is_not_struct && !(is_fp && is_prim) && !fs->function_stmt_type()->variadic())
 #endif
 						register_args.push_back(i);
 			}
@@ -4679,6 +4760,10 @@ namespace spectre {
 				int fp_index = find(fp_register_args.begin(), fp_register_args.end(), i) - fp_register_args.begin(),
 					reg_index = find(register_args.begin(), register_args.end(), i) - register_args.begin();
 				if (fp_index < fp_register_args.size()) {
+					if (fs->function_stmt_type()->variadic()) {
+						mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+						return;
+					}
 					if (curr_type->type_kind() != type::kind::KIND_PRIMITIVE && curr_type->type_array_kind() != type::array_kind::KIND_NON_ARRAY) {
 						mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 						return;
@@ -4715,6 +4800,10 @@ namespace spectre {
 					}
 				}
 				else if (reg_index < register_args.size()) {
+					if (fs->function_stmt_type()->variadic()) {
+						mc->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+						return;
+					}
 					int sz = (int)calculate_type_size(mc, curr_type);
 					sz = sz % 8 == 0 ? sz : (sz / 8 + 1) * 8;
 					mc->current_frame()->update_top_section_size(sz);

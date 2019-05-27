@@ -53,6 +53,12 @@ namespace spectre {
 
 		}
 
+		primary_expression::primary_expression(kind pek, shared_ptr<block_stmt> se, shared_ptr<type> pet, bool v, vector<token> s) :
+			_primary_expression_kind(pek), _stmt_expression(se), _primary_expression_type(pet), _valid(v), _stream(s),
+			_primary_expression_value_kind(value_kind::VALUE_RVALUE), _literal_token(bad_token) {
+
+		}
+
 		primary_expression::~primary_expression() {
 
 		}
@@ -99,6 +105,10 @@ namespace spectre {
 
 		shared_ptr<type> primary_expression::sizeof_type() {
 			return _sizeof_type;
+		}
+
+		shared_ptr<block_stmt> primary_expression::stmt_expression() {
+			return _stmt_expression;
 		}
 
 		postfix_expression::postfix_expression(vector<shared_ptr<postfix_expression::postfix_type>> ptl, shared_ptr<primary_expression> cpe, shared_ptr<type> t, bool v,
