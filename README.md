@@ -70,7 +70,7 @@ If you don't have access to a physical MIPS machine, I would recommend using QEM
 ## Config
 If you absolutely don't have access to a physical MIPS system, you'll lose access to the standard library, but there are still ways to use spectre.
 Inside the `config.hpp` file, you'll see some preprocessor macros that you can change to change the behavior of spectre itself.
-Please only touch the `SYSTEM`, `PROG_TERM`, and `PROG_NEW` macros.
+Please only touch the `SYSTEM`, `PROG_TERM`, `PROG_NEW`, and `BACKEND` macros.
 Here are the options for the `SYSTEM` macro:
 * `REAL_MIPS`: the default, spectre compiles the program as if it were going to be run on a real Linux machine.
 * `MARS`: spectre compiles the program as if it were going to be run on the MARS MIPS emulator.
@@ -84,10 +84,16 @@ Here are the options for the `PROG_NEW` macro:
 * `PROG_NEW_SBRK`: calls the sbrk syscall. Does not require a malloc implementation.
 * `PROG_NEW_MALLOC`: more intuitive, and the memory you allocate can actually be freed. However, this requires an actual mips system.
 
+Here are the options for the `BACKEND` macro:
+* `BACKEND_AST`: the (old) backend that generates MIPS assembly straight from a program's AST.
+* `BACKEND_IR`: generates an IR first (with potentially some optimization passes), and will eventually generate assembly from the IR.
+
 These options fall into the following sets:
 * `REAL_MIPS` - { `PROG_TERM_ABORT`, `PROG_TERM_EXIT`, `PROG_NEW_MALLOC` }
 * `MARS` - { `PROG_TERM_ABORT`, `PROG_NEW_SBRK` }
 * `RISCV` - { `PROG_TERM_ABORT`, `PROG_NEW_SBRK` }
+The `BACKEND` can be toggled independently of the `SYSTEM` macro. Note that as of now `BACKEND_IR` is the default backend, so that means Spectre can/might not generate assembly at all.
+If you would like to go back to the old `BACKEND`, switch the `BACKEND` config flag to `BACKEND_AST` instead of `BACKEND_IR`.
 
 In other words, if you're compiling for MARS, you can only use `PROG_TERM_ABORT` option.
 
