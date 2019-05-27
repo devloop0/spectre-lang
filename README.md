@@ -92,10 +92,10 @@ These options fall into the following sets:
 * `REAL_MIPS` - { `PROG_TERM_ABORT`, `PROG_TERM_EXIT`, `PROG_NEW_MALLOC` }
 * `MARS` - { `PROG_TERM_ABORT`, `PROG_NEW_SBRK` }
 * `RISCV` - { `PROG_TERM_ABORT`, `PROG_NEW_SBRK` }
+
 In other words, if you're compiling for MARS, you can only use `PROG_TERM_ABORT` option.
 
 The `BACKEND` can be toggled independently of the `SYSTEM` macro. Note that as of now `BACKEND_IR` is the default backend, so that means Spectre can/might not generate assembly at all.
-
 If you would like to go back to the old `BACKEND`, switch the `BACKEND` config flag to `BACKEND_AST` instead of `BACKEND_IR`.
 
 
