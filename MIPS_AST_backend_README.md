@@ -1,6 +1,6 @@
 # Old Backend
 The new backend that'll officially be worked on from now on involves an IR that can be optimized and targeted towards numerous assembly language platforms.
-Currently, the only platform supported is ARMV6L; but since MIPS hasn't been ported, the I have left that backend there. It should be relatively stable, since it passes
+Currently, the only platform supported is ARMV6L; since MIPS hasn't been ported, I have left that backend there. It should be relatively stable, since it passes
 a core set of tests in `tests/`. However, there'll probably be some minor issues here and there due to the fact it goes from AST -> assembly directly while
 also avoiding using a stack machine implementation. As a result, there might be some register coloring problems or inefficiencies. Note that this backend is not
 currently optimizing.
