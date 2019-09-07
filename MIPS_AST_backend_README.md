@@ -5,8 +5,8 @@ a core set of tests in `tests/`. However, there'll probably be some minor issues
 also avoiding using a stack machine implementation. As a result, there might be some register coloring problems or inefficiencies. Note that this backend is not
 currently optimizing.
 
-The following sections describe from future work that could done on this backend (this is separate from the current AST -> IR -> assembly backend discussed in
-length above).
+The following sections describe toggling configurations for this backend (including how to turn it on, since it is off by default), and future work that could done on
+this backend (this is separate from the current AST -> IR -> assembly backend discussed in length in the other README).
 
 ## Toggling the Backends
 I've hidden the old MIPS backend behind a toggle-able `BACKEND` macro. Note that `BACKEND_IR` is the one that is currently being worked on and is the default
