@@ -4,40 +4,44 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <queue>
+#include <vector>
+#include <algorithm>
 
 using std::unordered_set;
 using std::unordered_map;
 using std::queue;
+using std::vector;
+using std::hash;
 
 namespace spectre {
 	namespace ir {
-		template<class T> class directed_graph {
+		template<class T, class H = hash<T>> class directed_graph {
 		private:
-			unordered_map<T, unordered_set<T>> _adjacency_list;
+			unordered_map<T, unordered_set<T, H>, H> _adjacency_list;
 		public:
-			directed_graph() : _adjacency_list(unordered_map<T, unordered_set<T>>{}) {
+			directed_graph() : _adjacency_list(unordered_map<T, unordered_set<T, H>, H>{}) {
 
 			}
 
-			~directed_graph() {
+			virtual ~directed_graph() {
 
 			}
 
-			void add_edge(T u, T v) {
+			virtual void add_edge(T u, T v) {
 				_adjacency_list[u].insert(v);
 			}
 
-			void add_vertex(T u) {
+			virtual void add_vertex(T u) {
 				auto it = _adjacency_list.find(u);
 				if (it == _adjacency_list.end())
-					_adjacency_list[u] = unordered_set<T>{};
+					_adjacency_list[u] = unordered_set<T, H>{};
 			}
 
-			bool vertex_exists(T u) const {
+			virtual bool vertex_exists(T u) const {
 				return _adjacency_list.find(u) != _adjacency_list.end();
 			}
 
-			bool edge_exists(T u, T v) const {
+			virtual bool edge_exists(T u, T v) const {
 				auto it = _adjacency_list.find(u);
 				if (it == _adjacency_list.end())
 					return false;
@@ -45,22 +49,22 @@ namespace spectre {
 				return adj_to_set.find(v) != adj_to_set.end();
 			}
 
-			unordered_set<T> vertices() const {
-				unordered_set<T> ret;
+			virtual unordered_set<T, H> vertices() const {
+				unordered_set<T, H> ret;
 				for (const auto&[u, adj] : _adjacency_list)
 					ret.insert(u);
 				return ret;
 			}
 
-			unordered_set<T> adjacent(T u) const {
+			virtual unordered_set<T, H> adjacent(T u) const {
 				auto it = _adjacency_list.find(u);
 				if (it == _adjacency_list.end())
-					return unordered_set<T>{};
+					return unordered_set<T, H>{};
 				else
 					return it->second;
 			}
 
-			void remove_edge(T u, T v) {
+			virtual void remove_edge(T u, T v) {
 				auto uit = _adjacency_list.find(u);
 				if (uit == _adjacency_list.end())
 					return;
@@ -70,31 +74,32 @@ namespace spectre {
 				uit->second.erase(vit);
 			}
 
-			void remove_vertex(T u) {
+			virtual void remove_vertex(T u) {
 				auto uit = _adjacency_list.find(u);
 				if (uit == _adjacency_list.end())
 					return;
 				for (auto& [_, v] : _adjacency_list)
 					v.erase(u);
+				_adjacency_list.erase(u);
 			}
 		};
 
-		template<class T> unordered_map<T, unordered_set<T>> get_predecessors(const directed_graph<T>& d) {
-			unordered_map<T, unordered_set<T>> preds;
+		template<class T, class H = hash<T>> unordered_map<T, unordered_set<T, H>, H> get_predecessors(const directed_graph<T, H>& d) {
+			unordered_map<T, unordered_set<T, H>, H> preds;
 			for (const auto& v : d.vertices()) {
 				for (const auto& a : d.adjacent(v))
 					preds[a].insert(v);
 			}
 			for (const auto& v : d.vertices()) {
 				if (preds.find(v) == preds.end())
-					preds[v] = unordered_set<T>{};
+					preds[v] = unordered_set<T, H>{};
 			}
 			return preds;
 		}
 
-		template<class T> vector<T> topological_sort(const directed_graph<T>& d) {
+		template<class T, class H = hash<T>> vector<T> topological_sort(const directed_graph<T>& d) {
 			vector<T> ret;
-			unordered_map<T, int> in_degrees;
+			unordered_map<T, int, H> in_degrees;
 			for (const auto& u : d.vertices()) {
 				for (const auto& v : d.adjacent(u))
 					in_degrees[v]++;
@@ -120,7 +125,8 @@ namespace spectre {
 			return ret;
 		}
 
-		template<class T> bool has_cycle_helper(const directed_graph<T>& d, const T& v, unordered_map<T, bool>& visited, unordered_map<T, bool>& cycle_stack) {
+		template<class T, class H = hash<T>> bool has_cycle_helper(const directed_graph<T, H>& d, const T& v,
+			unordered_map<T, bool, H>& visited, unordered_map<T, bool, H>& cycle_stack) {
 			if (!visited[v]) {
 				visited[v] = cycle_stack[v] = true;
 				for (const auto& adj : d.adjacent(v)) {
@@ -134,8 +140,8 @@ namespace spectre {
 			return false;
 		}
 
-		template<class T> bool has_cycle(const directed_graph<T>& d) {
-			unordered_map<T, bool> visited, cycle_stack;
+		template<class T, class H = hash<T>> bool has_cycle(const directed_graph<T, H>& d) {
+			unordered_map<T, bool, H> visited, cycle_stack;
 			for (const auto& v : d.vertices())
 				visited[v] = cycle_stack[v] = false;
 			for (const auto& v : d.vertices())

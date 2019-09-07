@@ -38,7 +38,3 @@ sp string_sort.sp
 
 echo Building x2d.sp
 sp x2d.sp
-
-echo Building expr_eval/expr_eval.sp
-cd expr_eval
-sp expr_eval.sp

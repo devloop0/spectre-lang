@@ -85,14 +85,15 @@ namespace spectre {
 				case insn::kind::KIND_ACCESS: {
 					shared_ptr<access_insn> ai = static_pointer_cast<access_insn>(i);
 					basic_taint_check(ai->variable());
-				};
+				}
 					break;
 				case insn::kind::KIND_ALIGN:
 					break;
 				case insn::kind::KIND_ASM: {
-					for (const auto& n : pruned_variable_registers)
-						tainted.insert(n);
-				};
+					shared_ptr<asm_insn> ai = static_pointer_cast<asm_insn>(i);
+					if (ai->asm_insn_kind() == asm_insn::kind::KIND_LA)
+						tainted.insert(ai->la().second->virtual_register_number());
+				}
 					break;
 				case insn::kind::KIND_CALL: {
 					shared_ptr<call_insn> ci = static_pointer_cast<call_insn>(i);
@@ -100,7 +101,7 @@ namespace spectre {
 					basic_taint_check(ci->function_operand());
 					for (const auto& o : ci->argument_list())
 						basic_taint_check(o);
-				};
+				}
 					break;
 				case insn::kind::KIND_BINARY: {
 					shared_ptr<binary_insn> bi = static_pointer_cast<binary_insn>(i);
@@ -108,7 +109,7 @@ namespace spectre {
 					basic_taint_check(dst);
 					basic_taint_check(s1);
 					basic_taint_check(s2);
-				};
+				}
 					break;
 				case insn::kind::KIND_CONDITIONAL:
 					break;
@@ -116,7 +117,7 @@ namespace spectre {
 					shared_ptr<ext_insn> ei = static_pointer_cast<ext_insn>(i);
 					basic_taint_check(ei->lhs());
 					basic_taint_check(ei->rhs());
-				};
+				}
 					break;
 				case insn::kind::KIND_FUNCTION:
 					bbs->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
@@ -128,7 +129,7 @@ namespace spectre {
 					shared_ptr<memcpy_insn> mi = static_pointer_cast<memcpy_insn>(i);
 					basic_taint_check(mi->destination());
 					basic_taint_check(mi->source());
-				};
+				}
 					break;
 				case insn::kind::KIND_RETURN: {
 					shared_ptr<return_insn> ri = static_pointer_cast<return_insn>(i);
@@ -140,7 +141,7 @@ namespace spectre {
 					shared_ptr<trunc_insn> ti = static_pointer_cast<trunc_insn>(i);
 					basic_taint_check(ti->lhs());
 					basic_taint_check(ti->rhs());
-				};
+				}
 					break;
 				case insn::kind::KIND_UNARY: {
 					shared_ptr<unary_insn> ui = static_pointer_cast<unary_insn>(i);
@@ -174,7 +175,7 @@ namespace spectre {
 							}
 						}
 					}
-				};
+				}
 					break;
 				default:
 					break;
@@ -222,8 +223,12 @@ namespace spectre {
 					shared_ptr<unary_insn> ui = static_pointer_cast<unary_insn>(i);
 					if (ui->unary_expr_kind() == unary_insn::kind::KIND_STK && ui->dst_operand()->operand_kind() == operand::kind::KIND_REGISTER) {
 						shared_ptr<register_operand> dst_reg = static_pointer_cast<register_operand>(ui->dst_operand());
-						if (!dst_reg->dereference() && qualifying_registers.find(dst_reg->virtual_register_number()) != qualifying_registers.end())
-							allocating_insn_replacements.push_back(make_pair(_, make_shared<var_insn>(dst_reg, ui->src_operand())));
+						shared_ptr<operand> src = ui->src_operand();
+						DEDUP(dst_reg);
+						DEDUP(src);
+						if (!dst_reg->dereference() && qualifying_registers.find(dst_reg->virtual_register_number()) != qualifying_registers.end()) {
+							allocating_insn_replacements.push_back(make_pair(_, make_shared<var_insn>(dst_reg, src)));
+						}
 					}
 				}
 				_++;
@@ -254,6 +259,7 @@ namespace spectre {
 						int true_reg = base_register_mapping[ro->virtual_register_number()];
 						ro->set_dereference(false);
 						ro->set_virtual_register_number(true_reg);
+						ro->set_base_virtual_register_number(true_reg);
 					}
 				}
 			};
@@ -265,10 +271,15 @@ namespace spectre {
 				case insn::kind::KIND_ACCESS: {
 					shared_ptr<access_insn> ai = static_pointer_cast<access_insn>(i);
 					replacement_check(ai->variable());
-				};
+				}
 					break;
 				case insn::kind::KIND_ALIGN:
-				case insn::kind::KIND_ASM:
+					break;
+				case insn::kind::KIND_ASM: {
+					shared_ptr<asm_insn> ai = static_pointer_cast<asm_insn>(i);
+					if (ai->asm_insn_kind() == asm_insn::kind::KIND_LA)
+						replacement_check(ai->la().second);
+				}
 					break;
 				case insn::kind::KIND_BINARY: {
 					shared_ptr<binary_insn> bi = static_pointer_cast<binary_insn>(i);
@@ -363,7 +374,7 @@ namespace spectre {
 						replacement_check(d);
 						replacement_check(s);
 					}
-				};
+				}
 					break;
 				default:
 					break;

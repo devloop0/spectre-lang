@@ -1,18 +1,32 @@
 #include "basic_dce.hpp"
 #include "cvt2ssa.hpp"
 #include "mem2reg.hpp"
+#include "insns_in_bb.hpp"
 
 #include <algorithm>
 #include <memory>
 #include <iterator>
+#include <functional>
+#include <vector>
+#include <unordered_set>
+#include <unordered_map>
+#include <iostream>
 
 using std::to_string;
 using std::static_pointer_cast;
 using std::copy_if;
+using std::copy;
 using std::inserter;
+using std::back_inserter;
 using std::sort;
 using std::greater;
 using std::make_pair;
+using std::function;
+using std::copy;
+using std::vector;
+using std::unordered_map;
+using std::unordered_set;
+using std::unique;
 
 namespace spectre {
 	namespace opt {
@@ -78,7 +92,12 @@ namespace spectre {
 				}
 					break;
 				case insn::kind::KIND_ALIGN:
-				case insn::kind::KIND_ASM:
+					break;
+				case insn::kind::KIND_ASM: {
+					shared_ptr<asm_insn> ai = static_pointer_cast<asm_insn>(i);
+					if (ai->asm_insn_kind() == asm_insn::kind::KIND_LA)
+						wrapped_handle_rhs(ai->la().second, bb_index, insn_index);
+				}
 					break;
 				case insn::kind::KIND_BINARY: {
 					shared_ptr<binary_insn> bi = static_pointer_cast<binary_insn>(i);
@@ -142,14 +161,13 @@ namespace spectre {
 				case insn::kind::KIND_UNARY: {
 					shared_ptr<unary_insn> ui = static_pointer_cast<unary_insn>(i);
 					wrapped_handle_rhs(ui->src_operand(), bb_index, insn_index);
-					if (ui->unary_expr_kind() == unary_insn::kind::KIND_NEW ||
-						ui->unary_expr_kind() == unary_insn::kind::KIND_STK ||
+					if (ui->unary_expr_kind() == unary_insn::kind::KIND_STK ||
 						ui->unary_expr_kind() == unary_insn::kind::KIND_RESV) {
 						shared_ptr<operand> d = ui->dst_operand();
 						if (d->operand_kind() == operand::kind::KIND_REGISTER) {
 							shared_ptr<register_operand> ro = static_pointer_cast<register_operand>(d);
 							all_regs.insert(ro->virtual_register_number());
-							if (!ro->dereference())
+							if (!ro->dereference() && ui->unary_expr_kind() == unary_insn::kind::KIND_STK)
 								var_alloc_2_pos[ro->virtual_register_number()] = make_pair(bb_index, insn_index);
 							else
 								wrapped_handle_rhs(ro, bb_index, insn_index);
@@ -176,6 +194,19 @@ namespace spectre {
 			};
 
 			bool changed = true;
+			unordered_map<int, vector<shared_ptr<phi_insn::pred_data>>> phi_preds;
+			vector<shared_ptr<phi_insn>> phi_insn_list;
+			for (shared_ptr<basic_block> bb : bbs->get_basic_blocks()) {
+				for (shared_ptr<insn> i : bb->get_insns(bbs)) {
+					if (i->insn_kind() == insn::kind::KIND_PHI) {
+						shared_ptr<phi_insn> pi = static_pointer_cast<phi_insn>(i);
+						phi_insn_list.push_back(pi);
+						for (shared_ptr<phi_insn::pred_data> pd : pi->pred_data_list())
+							phi_preds[pd->bb_pred].push_back(pd);
+					}
+				}
+			}
+			vector<int> will_be_removed;
 			while (changed) {
 				changed = false;
 
@@ -214,14 +245,116 @@ namespace spectre {
 
 				bb_counter = 0;
 				for (shared_ptr<basic_block> bb : bbs->get_basic_blocks()) {
-					for (const auto& index : to_remove[bb_counter])
+					for (const auto& index : to_remove[bb_counter]) {
 						bb->remove_insn(index);
+						if (bb->get_insns(bbs).empty())
+							will_be_removed.push_back(bb_counter);
+					}
 					bb_counter++;
 				}
 
 				all_regs.clear(), regs_read_from.clear();
 				dst_reg_2_pos.clear(), var_alloc_2_pos.clear();
 			}
+			sort(will_be_removed.begin(), will_be_removed.end(), greater{});
+			unique(will_be_removed.begin(), will_be_removed.end());
+			unordered_set<int> will_be_removed_set;
+			copy(will_be_removed.begin(), will_be_removed.end(), inserter(will_be_removed_set,
+						will_be_removed_set.end()));
+			for (auto& pi : phi_insn_list) {
+				vector<int> removed_bbs;
+				for (int i = 0; i < pi->pred_data_list().size(); i++) {
+					if (will_be_removed_set.find(pi->pred_data_list()[i]->bb_pred) != will_be_removed_set.end())
+						removed_bbs.push_back(i);
+				}
+				reverse(removed_bbs.begin(), removed_bbs.end());
+				for (const auto& r : removed_bbs)
+					pi->remove_pred(r);
+			}
+			for (const auto& u : will_be_removed) {
+				for (auto& [bb_index, pds] : phi_preds) {
+					if (bb_index > u) {
+						for (auto& pd : pds)
+							pd->bb_pred--;
+					}
+				}
+			}
+		}
+
+		void remove_unreachable_bbs(shared_ptr<basic_blocks> bbs) {
+			pair<unordered_set<int>, unordered_set<int>> funcs_and_glob = function_and_global_headers(bbs);
+			unordered_set<int> funcs = funcs_and_glob.first, glob = funcs_and_glob.second;
+
+			unordered_set<int> visited, all = bbs->cfg().vertices(), unreachable_set;
+			vector<int> unreachable;
+			function<void(int)> reachable = [&visited, &bbs, &reachable] (int j) {
+				if (visited.find(j) != visited.end())
+					return;
+
+				visited.insert(j);
+				unordered_set<int> adj = bbs->cfg().adjacent(j);
+				for (const auto& v : adj)
+					reachable(v);
+			};
+
+			for (const auto& v : funcs)
+				reachable(v);
+			for (const auto& v : glob)
+				reachable(v);
+
+			copy_if(all.begin(), all.end(), back_inserter(unreachable),
+				[&visited] (const auto& a) { return visited.find(a) == visited.end(); });
+			if (unreachable.empty())
+				return;
+			sort(unreachable.begin(), unreachable.end(), greater{});
+			copy(unreachable.begin(), unreachable.end(), inserter(unreachable_set,
+				unreachable_set.end()));
+
+			unordered_map<int, vector<shared_ptr<phi_insn::pred_data>>> phi_preds;
+			for (const auto& v : bbs->cfg().vertices()) {
+				shared_ptr<basic_block> bb = bbs->get_basic_block(v);
+				if (bb == nullptr)
+					continue;
+				for (shared_ptr<insn> i : bb->get_insns(bbs)) {
+					if (i->insn_kind() == insn::kind::KIND_PHI) {
+						shared_ptr<phi_insn> pi = static_pointer_cast<phi_insn>(i);
+						vector<int> to_remove;
+						for (int index = 0; index < pi->pred_data_list().size(); index++) {
+							shared_ptr<phi_insn::pred_data> pd = pi->pred_data_list()[index];
+							if (unreachable_set.find(pd->bb_pred) != unreachable_set.end())
+								to_remove.push_back(index);
+							else
+								phi_preds[pd->bb_pred].push_back(pd);
+						}
+						sort(to_remove.begin(), to_remove.end(), greater{});
+						for (const auto& r : to_remove)
+							pi->remove_pred(r);
+					}
+				}
+			}
+			for (const auto& u : unreachable) {
+				bbs->cfg().remove_vertex(u);
+				bbs->remove_basic_block(u);
+				for (auto& [bb_index, pds] : phi_preds) {
+					if (bb_index > u) {
+						for (auto& pd : pds)
+							pd->bb_pred--;
+					}
+				}
+			}
+		}
+
+		shared_ptr<basic_blocks> insns_in_bb_2_straight_line(shared_ptr<basic_blocks> bbs) {
+			vector<shared_ptr<insn>> all_insns;
+			for (shared_ptr<basic_block> bb : bbs->get_basic_blocks()) {
+				vector<shared_ptr<insn>> temp = bb->get_insns(bbs);
+				all_insns.insert(all_insns.end(), temp.begin(), temp.end());
+				bb->clear_insn_list();
+				bb->set_insns_contained(false);
+			}
+			bbs->get_middle_ir()->clear_global_insn_list();
+			bbs->get_middle_ir()->set_insn_list(all_insns);
+			return generate_cfg(bbs->get_middle_ir());
 		}
 
 		basic_dce_pass::basic_dce_pass(shared_ptr<pass_manager> pm) : pass("basic_dce", "Removes trivially unused registers",
@@ -231,7 +364,7 @@ namespace spectre {
 
 		basic_dce_pass::basic_dce_pass(shared_ptr<pass_manager> pm, int counter, unordered_set<string> deps) :
 			pass("basic_dce" + to_string(counter), "Removes trivially unused registers", pm->next_pass_id(),
-					(deps.insert("insns_in_bb"), deps)) {
+					(deps.insert("insns_in_bb"), deps)), _debug_ctx(pm->debug()) {
 
 		}
 
@@ -241,6 +374,16 @@ namespace spectre {
 
 		shared_ptr<basic_blocks> basic_dce_pass::run_pass(shared_ptr<basic_blocks> bbs) {
 			remove_unused_registers(bbs);
+			bbs = insns_in_bb_2_straight_line(bbs);
+			clean_up_phi_insns(bbs);
+			place_insns_in_bb(bbs);
+
+			remove_unreachable_bbs(bbs);
+			bbs = insns_in_bb_2_straight_line(bbs);
+			clean_up_phi_insns(bbs);
+			if (_debug_ctx >= pass_manager::debug_level::KIND_DEBUG)
+				ssa_sanity_check(bbs);
+			place_insns_in_bb(bbs);
 			return bbs;
 		}
 	}

@@ -46,7 +46,7 @@ for f in $(find . -name '*.s'); do
 	fbase=$(basename $f)
 	fname="${fbase%.*}"
 	fo="$fname.o"
-	as -mips32 -mshared $fbase -o $fo
+	as -mfloat-abi=hard -mfpu=vfp $fbase -o $fo
 	mv $fo ../o
 done
 

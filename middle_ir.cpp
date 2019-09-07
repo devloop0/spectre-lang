@@ -4,6 +4,9 @@
 #include <memory>
 #include <iostream>
 #include <tuple>
+#include <sstream>
+#include <iomanip>
+#include <limits>
 
 using std::get;
 using spectre::parser::block_scope;
@@ -14,6 +17,12 @@ using std::stoi;
 using std::make_pair;
 using std::make_tuple;
 using std::holds_alternative;
+using std::stoul;
+using std::stringstream;
+using std::setprecision;
+using std::fixed;
+using std::numeric_limits;
+using std::remove;
 
 namespace spectre {
 	namespace ir {
@@ -28,6 +37,65 @@ namespace spectre {
 
 		insn::kind insn::insn_kind() {
 			return _insn_kind;
+		}
+
+		global_array_insn::global_array_insn(directive_kind dk, shared_ptr<label_operand> l, vector<shared_ptr<operand>> d, shared_ptr<type> t) :
+			insn(insn::kind::KIND_GLOBAL_ARRAY), _directive(dk), _label(l), _data(d), _array_type(t) {
+
+		}
+
+		global_array_insn::~global_array_insn() {
+
+		}
+
+		shared_ptr<label_operand> global_array_insn::label() {
+			return _label;
+		}
+
+		shared_ptr<type> global_array_insn::array_type() {
+			return _array_type;
+		}
+
+		vector<shared_ptr<operand>> global_array_insn::data() {
+			return _data;
+		}
+
+		global_array_insn::directive_kind global_array_insn::directive() {
+			return _directive;
+		}
+
+		string global_array_insn::to_string() {
+			string ret;
+			switch(_directive) {
+			case directive_kind::KIND_BYTE:
+				ret += "arr_byte ";
+				break;
+			case directive_kind::KIND_HALF:
+				ret += "arr_half ";
+				break;
+			case directive_kind::KIND_WORD:
+				ret += "arr_word ";
+				break;
+			case directive_kind::KIND_FLOAT:
+				ret += "arr_float ";
+				break;
+			case directive_kind::KIND_DOUBLE:
+				ret += "arr_double ";
+				break;
+			}
+
+			ret += _label->to_string() + " ";
+			for (int i = 0; i < _data.size(); i++) {
+				ret += _data[i]->to_string();
+				if (i != _data.size() - 1)
+					ret += ", ";
+			}
+			return ret;
+		}
+
+		void global_array_insn::deduplicate() {
+			for (auto& o : _data)
+				DEDUP(o);
 		}
 
 		asm_insn::asm_insn(string d) : insn(insn::kind::KIND_ASM), _data(d), _asm_insn_kind(asm_insn::kind::KIND_RAW_STRING) {
@@ -93,6 +161,10 @@ namespace spectre {
 			return _label;
 		}
 
+		void jump_insn::set_label(shared_ptr<label_operand> l) {
+			_label = l;
+		}
+
 		access_insn::access_insn(string s, shared_ptr<operand> v) : insn(insn::kind::KIND_ACCESS), _variable(v), _symbol(s) {
 
 		}
@@ -145,12 +217,42 @@ namespace spectre {
 			DEDUP(_expr);
 		}
 
-		label_insn::label_insn(shared_ptr<label_operand> l) : insn(insn::kind::KIND_LABEL), _label(l) {
+		label_insn::label_insn(shared_ptr<label_operand> l) : insn(insn::kind::KIND_LABEL), _label(l), _func_param_regs(vector<int>{}), _func_return_reg(-1),
+		       _orig_func_insn(nullptr) {
+
+		}
+
+		label_insn::label_insn(shared_ptr<label_operand> l, vector<int> fpr, int frr, shared_ptr<function_insn> ofi) : insn(insn::kind::KIND_LABEL),
+			_label(l), _func_param_regs(fpr), _func_return_reg(frr), _orig_func_insn(ofi) {
 
 		}
 
 		label_insn::~label_insn() {
 
+		}
+
+		void label_insn::set_orig_func_insn(shared_ptr<function_insn> ofi) {
+			_orig_func_insn = ofi;
+		}
+
+		shared_ptr<function_insn> label_insn::orig_func_insn() {
+			return _orig_func_insn;
+		}
+
+		int label_insn::func_return_reg() {
+			return _func_return_reg;
+		}
+
+		void label_insn::set_func_return_reg(int i) {
+			_func_return_reg = i;
+		}
+
+		vector<int> label_insn::func_param_regs() {
+			return _func_param_regs;
+		}
+
+		void label_insn::set_func_param_regs(vector<int> regs) {
+			_func_param_regs = regs;
 		}
 
 		shared_ptr<label_operand> label_insn::label() {
@@ -181,6 +283,10 @@ namespace spectre {
 			return _branch;
 		}
 
+		void conditional_insn::set_branch(shared_ptr<label_operand> l) {
+			_branch = l;
+		}
+
 		string conditional_insn::to_string() {
 			return "cond " + _src->to_string() + ", " + _branch->to_string();
 		}
@@ -189,18 +295,25 @@ namespace spectre {
 			DEDUP(_src);
 		}
 
-		call_insn::call_insn(shared_ptr<type> rt, shared_ptr<operand> d, shared_ptr<operand> fo, vector<shared_ptr<operand>> al) : insn(insn::kind::KIND_CALL), _result_type(rt), _function_operand(fo), _argument_list(al), _is_variable(false),
-			_variable_decl(nullptr), _dest_operand(d) {
+		call_insn::call_insn(shared_ptr<type> rt, shared_ptr<operand> d, shared_ptr<operand> fo,
+			vector<shared_ptr<operand>> al, shared_ptr<function_type> ft)
+			: insn(insn::kind::KIND_CALL), _result_type(rt), _function_operand(fo), _argument_list(al), _is_variable(false),
+			_variable_decl(nullptr), _dest_operand(d), _called_function_type(ft) {
 
 		}
 
-		call_insn::call_insn(shared_ptr<type> rt, shared_ptr<operand> d, shared_ptr<operand> fo, vector<shared_ptr<operand>> al, shared_ptr<variable_declaration> vd) : insn(insn::kind::KIND_CALL), _result_type(rt), _function_operand(fo),
-			_argument_list(al), _is_variable(true), _variable_decl(vd), _dest_operand(d) {
+		call_insn::call_insn(shared_ptr<type> rt, shared_ptr<operand> d, shared_ptr<operand> fo, vector<shared_ptr<operand>> al,
+			shared_ptr<variable_declaration> vd, shared_ptr<function_type> ft) : insn(insn::kind::KIND_CALL), _result_type(rt),
+			_function_operand(fo), _argument_list(al), _is_variable(true), _variable_decl(vd), _dest_operand(d), _called_function_type(ft) {
 
 		}
 
 		call_insn::~call_insn() {
 
+		}
+
+		shared_ptr<function_type> call_insn::called_function_type() {
+			return _called_function_type;
 		}
 
 		shared_ptr<type> call_insn::result_type() {
@@ -321,6 +434,8 @@ namespace spectre {
 				return "cshl";
 			case binary_insn::kind::KIND_CSHR:
 				return "cshr";
+			case binary_insn::kind::KIND_CSHRA:
+				return "cshra";
 			case binary_insn::kind::KIND_CSUB:
 				return "csub";
 			case binary_insn::kind::KIND_DADD:
@@ -393,6 +508,8 @@ namespace spectre {
 				return "ishl";
 			case binary_insn::kind::KIND_ISHR:
 				return "ishr";
+			case binary_insn::kind::KIND_ISHRA:
+				return "ishra";
 			case binary_insn::kind::KIND_ISUB:
 				return "isub";
 			case binary_insn::kind::KIND_LADD:
@@ -425,6 +542,8 @@ namespace spectre {
 				return "lshl";
 			case binary_insn::kind::KIND_LSHR:
 				return "lshr";
+			case binary_insn::kind::KIND_LSHRA:
+				return "lshra";
 			case binary_insn::kind::KIND_LSUB:
 				return "lsub";
 			case binary_insn::kind::KIND_NONE:
@@ -459,6 +578,8 @@ namespace spectre {
 				return "sshl";
 			case binary_insn::kind::KIND_SSHR:
 				return "sshr";
+			case binary_insn::kind::KIND_SSHRA:
+				return "sshra";
 			case binary_insn::kind::KIND_SSUB:
 				return "ssub";
 			case binary_insn::kind::KIND_UCDIV:
@@ -570,7 +691,6 @@ namespace spectre {
 			string ret = "\n";
 			for (shared_ptr<insn> i : _insn_list)
 				ret += i->to_string() + "\n";
-			ret += "ret *" + _return_register->to_string() + "\n";
 			return ret + "\n";
 		}
 
@@ -653,18 +773,6 @@ namespace spectre {
 				return "sbnot";
 			case unary_insn::kind::KIND_CBNOT:
 				return "cbnot";
-			case unary_insn::kind::KIND_LAT:
-				return "lat";
-			case unary_insn::kind::KIND_IAT:
-				return "iat";
-			case unary_insn::kind::KIND_SAT:
-				return "sat";
-			case unary_insn::kind::KIND_CAT:
-				return "cat";
-			case unary_insn::kind::KIND_DAT:
-				return "dat";
-			case unary_insn::kind::KIND_FAT:
-				return "fat";
 			case unary_insn::kind::KIND_LMOV:
 				return "lmov";
 			case unary_insn::kind::KIND_IMOV:
@@ -681,8 +789,6 @@ namespace spectre {
 				return "resv";
 			case unary_insn::kind::KIND_STK:
 				return "stk";
-			case unary_insn::kind::KIND_NEW:
-				return "new";
 			case unary_insn::kind::KIND_LTOD:
 				return "ltod";
 			case unary_insn::kind::KIND_LTOF:
@@ -751,8 +857,6 @@ namespace spectre {
 				return "ftouc";
 			case unary_insn::kind::KIND_FTOD:
 				return "ftod";
-			case unary_insn::kind::KIND_DELETE:
-				return "delete";
 			case unary_insn::kind::KIND_NONE:
 				return "";
 			default:
@@ -1047,10 +1151,16 @@ namespace spectre {
 			switch (_immediate_operand_kind) {
 			case immediate_operand::kind::KIND_CHAR:
 				return std::to_string(get<char>(_immediate));
-			case immediate_operand::kind::KIND_DOUBLE:
-				return std::to_string(get<double>(_immediate));
-			case immediate_operand::kind::KIND_FLOAT:
-				return std::to_string(get<float>(_immediate));
+			case immediate_operand::kind::KIND_DOUBLE: {
+				stringstream ss;
+				ss << fixed << setprecision(numeric_limits<double>::max_digits10) << get<double>(_immediate);
+				return ss.str();
+			}
+			case immediate_operand::kind::KIND_FLOAT: {
+				stringstream ss;
+				ss << fixed << setprecision(numeric_limits<double>::max_digits10) << get<float>(_immediate);
+				return ss.str();
+			}
 			case immediate_operand::kind::KIND_INT:
 				return std::to_string(get<int>(_immediate));
 			case immediate_operand::kind::KIND_LONG:
@@ -1068,7 +1178,7 @@ namespace spectre {
 		}
 
 		register_operand::register_operand(bool d, int vrn, shared_ptr<type> rt) : operand(operand::kind::KIND_REGISTER), _dereference(d),
-			_virtual_register_number(vrn), _register_type(rt), _original_virtual_register_number(vrn) {
+			_virtual_register_number(vrn), _register_type(rt), _original_virtual_register_number(vrn), _base_virtual_register_number(vrn) {
 
 		}
 
@@ -1086,12 +1196,24 @@ namespace spectre {
 				_original_virtual_register_number = _virtual_register_number;
 		}
 
+		void register_operand::set_base_virtual_register_number(int vrn) {
+			_base_virtual_register_number = vrn;
+		}
+
 		int register_operand::original_virtual_register_number() {
 			return _original_virtual_register_number;
 		}
 
+		int register_operand::base_virtual_register_number() {
+			return _base_virtual_register_number;
+		}
+
 		shared_ptr<type> register_operand::register_type() {
 			return _register_type;
+		}
+
+		void register_operand::set_register_type(shared_ptr<type> t) {
+			_register_type = t;
 		}
 
 		bool register_operand::dereference() {
@@ -1106,10 +1228,10 @@ namespace spectre {
 			return string(_dereference ? "*" : "") + "r" + std::to_string(_virtual_register_number);
 		}
 
-		middle_ir::middle_ir(shared_ptr<spectre::parser::parser> p) : _ast_parser(p), _mangled_name_2_ast_map(map<string, shared_ptr<variable_declaration>>{}), _insn_list(vector<shared_ptr<insn>>{}), _virtual_register_counter(0),
+		middle_ir::middle_ir(shared_ptr<spectre::parser::parser> p) : _ast_parser(p), _mangled_name_2_ast_map(map<string, shared_ptr<variable_declaration>>{}), _insn_list(vector<shared_ptr<insn>>{}), _virtual_register_counter(0), _misc_counter(0),
 			_label_counter(0), _loop_start_stack(stack<shared_ptr<label_operand>>{}), _loop_end_stack(stack<shared_ptr<label_operand>>{}), _function_ctx(nullptr),
 			_function_ctx_set(false), _mangled_name_2_register_map(map<string, shared_ptr<register_operand>>{}), _return_label(nullptr), _return_register(nullptr),
-			_global_insn_list(vector<shared_ptr<insn>>{}), _global_ctx_set(false), _mangled_name_2_constexpr_value_map(map<string, shared_ptr<operand>>{}),
+			_global_insn_list(vector<shared_ptr<insn>>{}), _global_ctx_set(false), _mangled_name_2_constexpr_value_map(map<string, variant<bool, int, unsigned int, float, double, string>>{}),
 			_function_insn_list(vector<shared_ptr<function_insn>>{}), _register_2_type(unordered_map<int, shared_ptr<type>>{}) {
 
 		}
@@ -1125,6 +1247,8 @@ namespace spectre {
 		}
 
 		shared_ptr<type> middle_ir::get_register_type(int j) {
+			if (_register_2_type.find(j) == _register_2_type.end())
+				return nullptr;
 			return _register_2_type[j];
 		}
 
@@ -1171,6 +1295,10 @@ namespace spectre {
 
 		void middle_ir::report_internal(string msg, string fn, int ln, string fl) {
 			_ast_parser->report_internal(msg, fn, ln, fl);
+		}
+
+		void middle_ir::report(error e) {
+			_ast_parser->report(e);
 		}
 
 		void middle_ir::push_loop_start_stack(shared_ptr<label_operand> l) {
@@ -1246,14 +1374,15 @@ namespace spectre {
 			return _mangled_name_2_register_map[mangled_name];
 		}
 
-		shared_ptr<operand> middle_ir::lookup_constexpr_mapping(string mangled_name) {
+		pair<bool, variant<bool, int, unsigned int, float, double, string>> middle_ir::lookup_constexpr_mapping(string mangled_name) {
+			variant<bool, int, unsigned int, float, double, string> dummy;
 			if (_mangled_name_2_constexpr_value_map.find(mangled_name) == _mangled_name_2_constexpr_value_map.end())
-				return nullptr;
-			return _mangled_name_2_constexpr_value_map[mangled_name];
+				return make_pair(false, dummy);
+			return make_pair(true, _mangled_name_2_constexpr_value_map[mangled_name]);
 		}
 
-		void middle_ir::add_constexpr_mapping(string mangled_name, shared_ptr<operand> op) {
-			_mangled_name_2_constexpr_value_map[mangled_name] = op;
+		void middle_ir::add_constexpr_mapping(string mangled_name, variant<bool, int, unsigned int, float, double, string> c) {
+			_mangled_name_2_constexpr_value_map[mangled_name] = c;
 		}
 
 		shared_ptr<register_operand> middle_ir::generate_next_register(shared_ptr<type> t) {
@@ -1304,6 +1433,10 @@ namespace spectre {
 			return _virtual_register_counter++;
 		}
 
+		int middle_ir::next_misc_counter() {
+			return _misc_counter++;
+		}
+
 		int middle_ir::get_virtual_register_number() {
 			return _virtual_register_counter;
 		}
@@ -1312,7 +1445,7 @@ namespace spectre {
 			if (s == nullptr) return r;
 			switch (s->scope_kind()) {
 			case scope::kind::KIND_GLOBAL:
-				return "_" + r;
+				return GLOBAL_SCOPE_PREFIX + r;
 				break;
 			case scope::kind::KIND_BLOCK:
 				return c_scope_2_string_helper(mi, s->parent_scope(), "b" + to_string(static_pointer_cast<block_scope>(s)->block_number()) + "$_" + r);
@@ -1341,18 +1474,19 @@ namespace spectre {
 		string c_symbol_2_string(shared_ptr<middle_ir> mi, shared_ptr<symbol> s) {
 			if (s == nullptr) return "";
 			string parent_scope_string = c_scope_2_string(mi, s->parent_scope());
+			string scope_prefix = parent_scope_string == "_" ? "_" : parent_scope_string + "_";
 			switch (s->symbol_kind()) {
 			case symbol::kind::KIND_FUNCTION:
-				return parent_scope_string + "_" + static_pointer_cast<function_symbol>(s)->function_name().raw_text();
+				return scope_prefix + static_pointer_cast<function_symbol>(s)->function_name().raw_text();
 				break;
 			case symbol::kind::KIND_NAMESPACE:
-				return parent_scope_string + "_" + static_pointer_cast<namespace_symbol>(s)->namespace_symbol_name().raw_text();
+				return scope_prefix + static_pointer_cast<namespace_symbol>(s)->namespace_symbol_name().raw_text();
 				break;
 			case symbol::kind::KIND_STRUCT:
-				return parent_scope_string + "_" + static_pointer_cast<struct_symbol>(s)->struct_name().raw_text();
+				return scope_prefix + static_pointer_cast<struct_symbol>(s)->struct_name().raw_text();
 				break;
 			case symbol::kind::KIND_VARIABLE:
-				return parent_scope_string + "_" + static_pointer_cast<variable_symbol>(s)->variable_name().raw_text();
+				return scope_prefix + static_pointer_cast<variable_symbol>(s)->variable_name().raw_text();
 				break;
 			}
 			mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
@@ -1494,11 +1628,11 @@ namespace spectre {
 				uk = unary_insn::kind::KIND_FMOV;
 			else if (is_long_type(mi, imm_type))
 				uk = unary_insn::kind::KIND_LMOV;
-			else if (is_int_type(mi, imm_type))
+			else if (is_int_type(mi, imm_type) || is_pointer_type(mi, imm_type))
 				uk = unary_insn::kind::KIND_IMOV;
 			else if (is_short_type(mi, imm_type))
 				uk = unary_insn::kind::KIND_SMOV;
-			else if (is_bool_type(mi, imm_type) || is_char_type(mi, imm_type))
+			else if (is_bool_type(mi, imm_type) || is_char_type(mi, imm_type) || is_byte_type(mi, imm_type))
 				uk = unary_insn::kind::KIND_CMOV;
 			else
 				mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
@@ -1612,9 +1746,9 @@ namespace spectre {
 			if (src == nullptr || from == nullptr || to == nullptr)
 				mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 			auto generate_conversion = [&](unary_insn::kind op) {
-					shared_ptr<operand> cvt = mi->generate_next_register(to);
-					mi->add_insn(make_shared<unary_insn>(op, cvt, src, to));
-					return cvt;
+				shared_ptr<operand> cvt = mi->generate_next_register(to);
+				mi->add_insn(make_shared<unary_insn>(op, cvt, src, to));
+				return cvt;
 			};
 			auto generate_trunc = [&](unsigned int f, unsigned int t) {
 				shared_ptr<operand> cvt = mi->generate_next_register(to);
@@ -1631,14 +1765,24 @@ namespace spectre {
 				mi->add_insn(make_shared<binary_insn>(op, cvt, src, imm, bool_type));
 				return cvt;
 			};
+			auto copy_src_with_final_type = [&] () {
+				if (src->operand_kind() == operand::kind::KIND_REGISTER) {
+					shared_ptr<register_operand> src_reg = static_pointer_cast<register_operand>(src);
+					src_reg = make_shared<register_operand>(*src_reg);
+					src_reg->set_register_type(to);
+					src = src_reg;
+				}
+				return src;
+			};
+
 			if (is_double_type(mi, from) || is_float_type(mi, from)) {
 				bool f = is_float_type(mi, from);
 				if (is_double_type(mi, to)) {
 					if (f) return generate_conversion(unary_insn::kind::KIND_FTOD);
-					else return src;
+					else return copy_src_with_final_type();
 				}
 				else if (is_float_type(mi, to)) {
-					if (f) return src;
+					if (f) return copy_src_with_final_type();
 					else return generate_conversion(unary_insn::kind::KIND_DTOF);
 				}
 				else if (is_long_type(mi, to)) {
@@ -1666,7 +1810,7 @@ namespace spectre {
 					else return generate_bool_test(binary_insn::kind::KIND_DNE, make_shared<immediate_operand>(from, (double)0));
 				}
 				else if (is_void_type(mi, to))
-					return src;
+					return copy_src_with_final_type();
 				else
 					mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 			}
@@ -1677,7 +1821,7 @@ namespace spectre {
 				else if (is_float_type(mi, to))
 					return generate_conversion(u ? unary_insn::kind::KIND_ULTOF : unary_insn::kind::KIND_LTOF);
 				else if (is_long_type(mi, to))
-					return src;
+					return copy_src_with_final_type();
 				else if (is_int_type(mi, to) || is_pointer_type(mi, to) || is_struct_type(mi, to))
 					return generate_trunc(SIZEOF_LONG, SIZEOF_INT);
 				else if (is_short_type(mi, to))
@@ -1687,7 +1831,7 @@ namespace spectre {
 				else if (is_bool_type(mi, to))
 					return generate_bool_test(binary_insn::kind::KIND_LNE, make_shared<immediate_operand>(from, (long)0));
 				else if (is_void_type(mi, to))
-					return src;
+					return copy_src_with_final_type();
 				else
 					mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 			}
@@ -1702,13 +1846,13 @@ namespace spectre {
 					return generate_ext(tu ? ext_insn::kind::KIND_ZEXT : ext_insn::kind::KIND_SEXT, SIZEOF_INT, SIZEOF_LONG);
 				}
 				else if (is_int_type(mi, to) || is_struct_type(mi, to) || is_pointer_type(mi, to))
-					return src;
+					return copy_src_with_final_type();
 				else if (is_short_type(mi, to))
 					return generate_trunc(SIZEOF_INT, SIZEOF_SHORT);
 				else if (is_char_type(mi, to) || is_byte_type(mi, to))
 					return generate_trunc(SIZEOF_INT, SIZEOF_CHAR);
 				else if (is_void_type(mi, to))
-					return src;
+					return copy_src_with_final_type();
 				else if (is_bool_type(mi, to))
 					return generate_bool_test(binary_insn::kind::KIND_INE, make_shared<immediate_operand>(from, (int)0));
 				else
@@ -1729,11 +1873,11 @@ namespace spectre {
 					return generate_ext(tu ? ext_insn::kind::KIND_ZEXT : ext_insn::kind::KIND_SEXT, SIZEOF_SHORT, SIZEOF_INT);
 				}
 				else if (is_short_type(mi, to))
-					return src;
+					return copy_src_with_final_type();
 				else if (is_char_type(mi, to) || is_byte_type(mi, to))
 					return generate_trunc(SIZEOF_SHORT, SIZEOF_CHAR);
 				else if (is_void_type(mi, to))
-					return src;
+					return copy_src_with_final_type();
 				else if (is_bool_type(mi, to))
 					return generate_bool_test(binary_insn::kind::KIND_SNE, make_shared<immediate_operand>(from, (short)0));
 				else
@@ -1758,18 +1902,20 @@ namespace spectre {
 					return generate_ext(tu ? ext_insn::kind::KIND_ZEXT : ext_insn::kind::KIND_SEXT, SIZEOF_CHAR, SIZEOF_SHORT);
 				}
 				else if (is_char_type(mi, to) || is_byte_type(mi, to))
-					return src;
+					return copy_src_with_final_type();
 				else if (is_void_type(mi, to))
-					return src;
+					return copy_src_with_final_type();
 				else if (is_bool_type(mi, to)) {
 					if (is_char_type(mi, from) || is_byte_type(mi, from))
 						return generate_bool_test(binary_insn::kind::KIND_CNE, make_shared<immediate_operand>(from, (char)0));
 					else
-						return src;
+						return copy_src_with_final_type();
 				}
 				else
 					mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 			}
+			else if (is_void_type(mi, from))
+				return copy_src_with_final_type();
 			else
 				mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 			return nullptr;
@@ -1783,6 +1929,7 @@ namespace spectre {
 			case operand::kind::KIND_REGISTER:
 				ret = make_shared<register_operand>(*static_pointer_cast<register_operand>(op));
 				ret->set_dereference(true);
+				ret->set_register_type(dereference(ret->register_type()));
 				break;
 			case operand::kind::KIND_IMMEDIATE:
 				ret = to_register_operand(mi, op);
@@ -1790,6 +1937,7 @@ namespace spectre {
 			case operand::kind::KIND_LABEL:
 				ret = to_register_operand(mi, op);
 				ret->set_dereference(true);
+				ret->set_register_type(dereference(ret->register_type()));
 				break;
 			default:
 				mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
@@ -1963,6 +2111,36 @@ namespace spectre {
 			return ret;
 		}
 
+		shared_ptr<type> copy_type(shared_ptr<type> t) {
+			switch (t->type_kind()) {
+			case type::kind::KIND_PRIMITIVE:
+				return make_shared<primitive_type>(*static_pointer_cast<primitive_type>(t));
+			case type::kind::KIND_STRUCT:
+				return make_shared<struct_type>(*static_pointer_cast<struct_type>(t));
+			case type::kind::KIND_FUNCTION:
+				return make_shared<function_type>(*static_pointer_cast<function_type>(t));
+			case type::kind::KIND_AUTO:
+				return make_shared<auto_type>(*static_pointer_cast<auto_type>(t));
+			}
+			return make_shared<type>(*t);
+		}
+		
+		shared_ptr<type> add_indirection(shared_ptr<type> t) {
+			shared_ptr<type> c = copy_type(t);
+			c->set_array_dimensions(c->array_dimensions() + 1);
+			c->set_type_array_kind(type::array_kind::KIND_ARRAY);
+			return c;
+		}
+
+		shared_ptr<type> dereference(shared_ptr<type> t) {
+			shared_ptr<type> c = copy_type(t);
+			if (c->array_dimensions() != 0) {
+				c->set_array_dimensions(c->array_dimensions() - 1);
+				c->set_type_array_kind(c->array_dimensions() == 0 ? type::array_kind::KIND_NON_ARRAY : type::array_kind::KIND_ARRAY);
+			}
+			return c;
+		}
+
 		shared_ptr<type> dominant_type(shared_ptr<middle_ir> mi, shared_ptr<type> t1, shared_ptr<type> t2) {
 			if (t1 == nullptr || t2 == nullptr)
 				mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
@@ -1982,22 +2160,66 @@ namespace spectre {
 				return t1;
 			else if (is_float_type(mi, t2))
 				return t2;
-			else if (is_long_type(mi, t1))
-				return t1;
-			else if (is_long_type(mi, t2))
-				return t2;
-			else if (is_int_type(mi, t1))
-				return t1;
-			else if (is_int_type(mi, t2))
-				return t2;
-			else if (is_short_type(mi, t1))
-				return t1;
-			else if (is_short_type(mi, t2))
-				return t2;
-			else if (is_char_type(mi, t1) || is_byte_type(mi, t1) || is_bool_type(mi, t1))
-				return t1;
-			else if (is_char_type(mi, t2) || is_byte_type(mi, t2) || is_bool_type(mi, t2))
-				return t2;
+			else if (is_long_type(mi, t1)) {
+				if (is_unsigned_type(mi, t2) || is_unsigned_type(mi, t1))
+					return ulong_type;
+				else
+					return t1;
+			}
+			else if (is_long_type(mi, t2)) {
+				if (is_unsigned_type(mi, t1) || is_unsigned_type(mi, t2))
+					return ulong_type;
+				else
+					return t2;
+			}
+			else if (is_int_type(mi, t1)) {
+				if (is_unsigned_type(mi, t2) || is_unsigned_type(mi, t1))
+					return uint_type;
+				else
+					return t1;
+			}
+			else if (is_int_type(mi, t2)) {
+				if (is_unsigned_type(mi, t1) || is_unsigned_type(mi, t2))
+					return uint_type;
+				else
+					return t2;
+			}
+			else if (is_short_type(mi, t1)) {
+				if (is_unsigned_type(mi, t2) || is_unsigned_type(mi, t1))
+					return ushort_type;
+				else
+					return t1;
+			}
+			else if (is_short_type(mi, t2)) {
+				if (is_unsigned_type(mi, t1) || is_unsigned_type(mi, t2))
+					return ushort_type;
+				else
+					return t2;
+			}
+			else if (is_char_type(mi, t1) || is_byte_type(mi, t1) || is_bool_type(mi, t1)) {
+				if (is_unsigned_type(mi, t2) || is_unsigned_type(mi, t1)) {
+					if (is_char_type(mi, t1))
+						return uchar_type;
+					else if (is_byte_type(mi, t1))
+						return ubyte_type;
+					else
+						return bool_type;
+				}
+				else
+					return t1;
+			}
+			else if (is_char_type(mi, t2) || is_byte_type(mi, t2) || is_bool_type(mi, t2)) {
+				if (is_unsigned_type(mi, t1) || is_unsigned_type(mi, t2)) {
+					if (is_char_type(mi, t2))
+						return uchar_type;
+					else if (is_byte_type(mi, t2))
+						return ubyte_type;
+					else
+						return bool_type;
+				}
+				else
+					return t2;
+			}
 			else if (is_void_type(mi, t1))
 				return t1;
 			else if (is_void_type(mi, t2))
@@ -2016,11 +2238,13 @@ namespace spectre {
 				umov = unary_insn::kind::KIND_DMOV;
 			else if (is_float_type(mi, t))
 				umov = unary_insn::kind::KIND_FMOV;
+			else if (is_long_type(mi, t))
+				umov = unary_insn::kind::KIND_LMOV;
 			else if (is_int_type(mi, t) || is_pointer_type(mi, t))
 				umov = unary_insn::kind::KIND_IMOV;
 			else if (is_short_type(mi, t))
 				umov = unary_insn::kind::KIND_SMOV;
-			else if (is_bool_type(mi, t) || is_char_type(mi, t) || is_byte_type(mi, t))
+			else if (is_bool_type(mi, t) || is_char_type(mi, t) || is_byte_type(mi, t) || is_void_type(mi, t))
 				umov = unary_insn::kind::KIND_CMOV;
 			else
 				mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
@@ -2039,7 +2263,20 @@ namespace spectre {
 				deref_reg_lhs->set_dereference(true);
 				shared_ptr<type> lhs_type = ae->lhs_assignment()->unary_expression_type(),
 					rhs_type = ae->rhs_assignment()->assignment_expression_type();
+				deref_reg_lhs->set_register_type(lhs_type);
+				if (rhs->operand_kind() == operand::kind::KIND_REGISTER) {
+					shared_ptr<register_operand> rhs_reg = static_pointer_cast<register_operand>(rhs);
+					rhs_reg = make_shared<register_operand>(*rhs_reg);
+					rhs_reg->set_register_type(rhs_type);
+					rhs = rhs_reg;
+				}
 				shared_ptr<operand> casted_rhs = ir_cast(mi, rhs, rhs_type, lhs_type);
+				if (casted_rhs->operand_kind() == operand::kind::KIND_REGISTER) {
+					shared_ptr<register_operand> casted_rhs_reg = static_pointer_cast<register_operand>(casted_rhs);
+					casted_rhs_reg = make_shared<register_operand>(*casted_rhs_reg);
+					casted_rhs_reg->set_register_type(lhs_type);
+					casted_rhs = casted_rhs_reg;
+				}
 				if (is_double_type(mi, lhs_type) || is_float_type(mi, lhs_type) || is_long_type(mi, lhs_type) || is_int_type(mi, lhs_type)
 					|| is_short_type(mi, lhs_type) || is_char_type(mi, lhs_type) || is_byte_type(mi, lhs_type)
 					|| is_bool_type(mi, lhs_type)) {
@@ -2051,7 +2288,7 @@ namespace spectre {
 							uop = unary_insn::kind::KIND_DMOV;
 						else if (is_float_type(mi, lhs_type))
 							uop = unary_insn::kind::KIND_FMOV;
-						else if (is_int_type(mi, lhs_type))
+						else if (is_int_type(mi, lhs_type) || is_long_type(mi, lhs_type))
 							uop = unary_insn::kind::KIND_IMOV;
 						else if (is_short_type(mi, lhs_type))
 							uop = unary_insn::kind::KIND_SMOV;
@@ -2084,11 +2321,70 @@ namespace spectre {
 					case binary_expression::operator_kind::KIND_MULTIPLY_EQUALS:
 						ARITH_OPGEN(MUL)
 							break;
-					case binary_expression::operator_kind::KIND_DIVIDE_EQUALS:
-						ARITH_OPGEN(DIV)
-							break;
 #undef ARITH_OPGEN
-#define BITWISE_OPGEN(OP) \
+					case binary_expression::operator_kind::KIND_DIVIDE_EQUALS: {
+						if (is_double_type(mi, lhs_type))
+							bop = binary_insn::kind::KIND_DDIV;
+						else if (is_float_type(mi, lhs_type))
+							bop = binary_insn::kind::KIND_FDIV;
+						else if (is_long_type(mi, lhs_type)) {
+							if (is_unsigned_type(mi, lhs_type))
+								bop = binary_insn::kind::KIND_ULDIV;
+							else
+								bop = binary_insn::kind::KIND_LDIV;
+						}
+						else if (is_int_type(mi, lhs_type)) {
+							if (is_unsigned_type(mi, lhs_type))
+								bop = binary_insn::kind::KIND_UIDIV;
+							else
+								bop = binary_insn::kind::KIND_IDIV;
+						}
+						else if (is_short_type(mi, lhs_type)) {
+							if (is_unsigned_type(mi, lhs_type))
+								bop = binary_insn::kind::KIND_USDIV;
+							else
+								bop = binary_insn::kind::KIND_SDIV;
+						}
+						else if (is_char_type(mi, lhs_type) || is_byte_type(mi, lhs_type)){
+							if (is_unsigned_type(mi, lhs_type))
+								bop = binary_insn::kind::KIND_UCDIV;
+							else
+								bop = binary_insn::kind::KIND_CDIV;
+						}
+						else
+							mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+					}
+						break;
+					case binary_expression::operator_kind::KIND_MODULUS_EQUALS: {
+						if (is_long_type(mi, lhs_type)) {
+							if (is_unsigned_type(mi, lhs_type))
+								bop = binary_insn::kind::KIND_ULMOD;
+							else
+								bop = binary_insn::kind::KIND_LMOD;
+						}
+						else if (is_int_type(mi, lhs_type)) {
+							if (is_unsigned_type(mi, lhs_type))
+								bop = binary_insn::kind::KIND_UIMOD;
+							else
+								bop = binary_insn::kind::KIND_IMOD;
+						}
+						else if (is_short_type(mi, lhs_type)) {
+							if (is_unsigned_type(mi, lhs_type))
+								bop = binary_insn::kind::KIND_USMOD;
+							else
+								bop = binary_insn::kind::KIND_SMOD;
+						}
+						else if (is_char_type(mi, lhs_type) || is_byte_type(mi, lhs_type)){
+							if (is_unsigned_type(mi, lhs_type))
+								bop = binary_insn::kind::KIND_UCMOD;
+							else
+								bop = binary_insn::kind::KIND_CMOD;
+						}
+						else
+							mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+					}
+						break;
+#define INTEGRAL_ARITH_OPGEN(OP) \
 					if (is_long_type(mi, lhs_type)) \
 						bop = binary_insn::kind::KIND_L ## OP; \
 					else if (is_int_type(mi, lhs_type)) \
@@ -2100,21 +2396,27 @@ namespace spectre {
 					else \
 						mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 					case binary_expression::operator_kind::KIND_SHIFT_LEFT_EQUALS:
-						BITWISE_OPGEN(SHL);
+						INTEGRAL_ARITH_OPGEN(SHL);
 						break;
-					case binary_expression::operator_kind::KIND_SHIFT_RIGHT_EQUALS:
-						BITWISE_OPGEN(SHR);
+					case binary_expression::operator_kind::KIND_SHIFT_RIGHT_EQUALS: {
+						if (is_unsigned_type(mi, lhs_type)) {
+							INTEGRAL_ARITH_OPGEN(SHR);
+						}
+						else {
+							INTEGRAL_ARITH_OPGEN(SHRA);
+						}
+					}
 						break;
 					case binary_expression::operator_kind::KIND_BITWISE_AND_EQUALS:
-						BITWISE_OPGEN(BAND);
+						INTEGRAL_ARITH_OPGEN(BAND);
 						break;
 					case binary_expression::operator_kind::KIND_BITWISE_OR_EQUALS:
-						BITWISE_OPGEN(BOR);
+						INTEGRAL_ARITH_OPGEN(BOR);
 						break;
 					case binary_expression::operator_kind::KIND_BITWISE_XOR_EQUALS:
-						BITWISE_OPGEN(BXOR);
+						INTEGRAL_ARITH_OPGEN(BXOR);
 						break;
-#undef BITWISE_OPGEN
+#undef INTEGRAL_ARITH_OPGEN
 					case binary_expression::operator_kind::KIND_LOGICAL_AND_EQUALS:
 						bop = binary_insn::kind::KIND_CBAND;
 						break;
@@ -2127,8 +2429,46 @@ namespace spectre {
 					}
 					if (bop == binary_insn::kind::KIND_NONE && uop != unary_insn::kind::KIND_NONE)
 						mi->add_insn(make_shared<unary_insn>(uop, deref_reg_lhs, casted_rhs, lhs_type));
-					else if (uop == unary_insn::kind::KIND_NONE && bop != binary_insn::kind::KIND_NONE)
-						mi->add_insn(make_shared<binary_insn>(bop, deref_reg_lhs, deref_reg_lhs, casted_rhs, lhs_type));
+					else if (uop == unary_insn::kind::KIND_NONE && bop != binary_insn::kind::KIND_NONE) {
+						if (bop == binary_insn::kind::KIND_LDIV
+							|| bop == binary_insn::kind::KIND_IDIV
+							|| bop == binary_insn::kind::KIND_SDIV
+							|| bop == binary_insn::kind::KIND_CDIV) {
+							mi->add_insn(make_shared<call_insn>(idiv_type->return_type(), deref_reg_lhs,
+								make_shared<label_operand>(idiv_symbol_name, idiv_type), vector<shared_ptr<operand>>{
+									deref_reg_lhs, casted_rhs
+								}, idiv_type));
+						}
+						else if (bop == binary_insn::kind::KIND_ULDIV
+							|| bop == binary_insn::kind::KIND_UIDIV
+							|| bop == binary_insn::kind::KIND_USDIV
+							|| bop == binary_insn::kind::KIND_UCDIV) {
+							mi->add_insn(make_shared<call_insn>(uidiv_type->return_type(), deref_reg_lhs,
+								make_shared<label_operand>(uidiv_symbol_name, uidiv_type), vector<shared_ptr<operand>>{
+									deref_reg_lhs, casted_rhs
+								}, uidiv_type));
+						}
+						else if (bop == binary_insn::kind::KIND_LMOD
+							|| bop == binary_insn::kind::KIND_IMOD
+							|| bop == binary_insn::kind::KIND_SMOD
+							|| bop == binary_insn::kind::KIND_CMOD) {
+							mi->add_insn(make_shared<call_insn>(imod_type->return_type(), deref_reg_lhs,
+								make_shared<label_operand>(imod_symbol_name, imod_type), vector<shared_ptr<operand>>{
+									deref_reg_lhs, casted_rhs
+								}, imod_type));
+						}
+						else if (bop == binary_insn::kind::KIND_ULMOD
+							|| bop == binary_insn::kind::KIND_UIMOD
+							|| bop == binary_insn::kind::KIND_USMOD
+							|| bop == binary_insn::kind::KIND_UCMOD) {
+							mi->add_insn(make_shared<call_insn>(uimod_type->return_type(), deref_reg_lhs,
+								make_shared<label_operand>(uimod_symbol_name, uimod_type), vector<shared_ptr<operand>>{
+									deref_reg_lhs, casted_rhs
+								}, uimod_type));
+						}
+						else
+							mi->add_insn(make_shared<binary_insn>(bop, deref_reg_lhs, deref_reg_lhs, casted_rhs, lhs_type));
+					}
 					else
 						mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 				}
@@ -2145,7 +2485,7 @@ namespace spectre {
 				}
 				else
 					mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
-				return lvalue ? lhs : deref_reg_lhs;
+				return (is_struct_type(mi, lhs_type) || lvalue) ? lhs : deref_reg_lhs;
 			}
 				break;
 			case assignment_expression::kind::KIND_TERNARY:
@@ -2172,6 +2512,8 @@ namespace spectre {
 					unary_insn::kind uop = unary_insn::kind::KIND_NONE;
 					bool is_struct = false;
 					shared_ptr<size_data> sd = nullptr;
+					if (lvalue)
+						true_type = add_indirection(true_type), false_type = add_indirection(false_type);
 					if (is_struct_type(mi, true_type) && is_struct_type(mi, false_type)) {
 						sd = spectre_sizeof(mi, true_type);
 						is_struct = true;
@@ -2201,6 +2543,12 @@ namespace spectre {
 					shared_ptr<register_operand> res = mi->generate_next_register(true_type);
 					mi->add_insn(make_shared<conditional_insn>(cond, true_lab));
 					shared_ptr<operand> fres = generate_ternary_expression_middle_ir(mi, te->false_path(), lvalue);
+					if (fres->operand_kind() == operand::kind::KIND_REGISTER) {
+						shared_ptr<register_operand> fres_reg = static_pointer_cast<register_operand>(fres);
+						if (lvalue)
+							fres_reg->set_register_type(false_type);
+						fres = fres_reg;
+					}
 					if (uop != unary_insn::kind::KIND_NONE)
 						mi->add_insn(make_shared<unary_insn>(uop, res, fres, res_type));
 					else if (is_struct)
@@ -2210,6 +2558,12 @@ namespace spectre {
 					mi->add_insn(make_shared<jump_insn>(done_lab));
 					mi->add_insn(make_shared<label_insn>(true_lab));
 					shared_ptr<operand> tres = generate_expression_middle_ir(mi, te->true_path(), lvalue);
+					if (tres->operand_kind() == operand::kind::KIND_REGISTER) {
+						shared_ptr<register_operand> tres_reg = static_pointer_cast<register_operand>(tres);
+						if (lvalue)
+							tres_reg->set_register_type(true_type);
+						tres = tres_reg;
+					}
 					if (uop != unary_insn::kind::KIND_NONE)
 						mi->add_insn(make_shared<unary_insn>(uop, res, tres, res_type));
 					else if (is_struct)
@@ -2228,6 +2582,8 @@ namespace spectre {
 						uop = unary_insn::kind::KIND_DMOV;
 					else if (is_float_type(mi, dom))
 						uop = unary_insn::kind::KIND_FMOV;
+					else if (is_long_type(mi, dom))
+						uop = unary_insn::kind::KIND_LMOV;
 					else if (is_int_type(mi, dom) || is_pointer_type(mi, dom))
 						uop = unary_insn::kind::KIND_IMOV;
 					else if (is_short_type(mi, dom))
@@ -2300,6 +2656,18 @@ namespace spectre {
 						to_cast = res_type;
 					shared_ptr<operand> casted_lhs = ir_cast(mi, lhs_op, lhs_type, to_cast),
 						casted_rhs = ir_cast(mi, rhs_op, rhs_type, to_cast);
+					if (casted_lhs->operand_kind() == operand::kind::KIND_REGISTER) {
+						shared_ptr<register_operand> casted_lhs_reg = static_pointer_cast<register_operand>(casted_lhs);
+						casted_lhs_reg = make_shared<register_operand>(*casted_lhs_reg);
+						casted_lhs_reg->set_register_type(to_cast);
+						casted_lhs = casted_lhs_reg;
+					}
+					if (casted_rhs->operand_kind() == operand::kind::KIND_REGISTER) {
+						shared_ptr<register_operand> casted_rhs_reg = static_pointer_cast<register_operand>(casted_rhs);
+						casted_rhs_reg = make_shared<register_operand>(*casted_rhs_reg);
+						casted_rhs_reg->set_register_type(to_cast);
+						casted_rhs = casted_rhs_reg;
+					}
 					shared_ptr<operand> cvt = mi->generate_next_register(res_type);
 					binary_insn::kind bop = binary_insn::kind::KIND_NONE;
 					switch (be->binary_expression_operator_kind()) {
@@ -2374,9 +2742,9 @@ namespace spectre {
 		bop = binary_insn::kind::KIND_F ## OP; \
 	else if (is_long_type(mi, to_cast)) { \
 		if (is_unsigned_type(mi, to_cast)) \
-			bop = binary_insn::kind::KIND_L ## OP; \
-		else \
 			bop = binary_insn::kind::KIND_UL ## OP; \
+		else \
+			bop = binary_insn::kind::KIND_L ## OP; \
 	} \
 	else if (is_int_type(mi, to_cast)) { \
 		if (is_unsigned_type(mi, to_cast)) \
@@ -2487,7 +2855,12 @@ namespace spectre {
 					}
 						break;
 					case binary_expression::operator_kind::KIND_SHIFT_RIGHT: {
-						UNSIGNED_INTEGRAL_OPGEN(SHR)
+						if (is_unsigned_type(mi, res_type)) {
+							UNSIGNED_INTEGRAL_OPGEN(SHR)
+						}
+						else {
+							UNSIGNED_INTEGRAL_OPGEN(SHRA);
+						}
 					}
 						break;
 					case binary_expression::operator_kind::KIND_BITWISE_AND: {
@@ -2506,7 +2879,44 @@ namespace spectre {
 						mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 						break;
 					}
-					mi->add_insn(make_shared<binary_insn>(bop, cvt, casted_lhs, casted_rhs, res_type));
+					if (bop == binary_insn::kind::KIND_LDIV
+						|| bop == binary_insn::kind::KIND_IDIV
+						|| bop == binary_insn::kind::KIND_SDIV
+						|| bop == binary_insn::kind::KIND_CDIV) {
+						mi->add_insn(make_shared<call_insn>(idiv_type->return_type(), cvt,
+							make_shared<label_operand>(idiv_symbol_name, idiv_type), vector<shared_ptr<operand>>{
+								casted_lhs, casted_rhs
+							}, idiv_type));
+					}
+					else if (bop == binary_insn::kind::KIND_ULDIV
+						|| bop == binary_insn::kind::KIND_UIDIV
+						|| bop == binary_insn::kind::KIND_USDIV
+						|| bop == binary_insn::kind::KIND_UCDIV) {
+						mi->add_insn(make_shared<call_insn>(uidiv_type->return_type(), cvt,
+							make_shared<label_operand>(uidiv_symbol_name, uidiv_type), vector<shared_ptr<operand>>{
+								casted_lhs, casted_rhs
+							}, uidiv_type));
+					}
+					else if (bop == binary_insn::kind::KIND_LMOD
+						|| bop == binary_insn::kind::KIND_IMOD
+						|| bop == binary_insn::kind::KIND_SMOD
+						|| bop == binary_insn::kind::KIND_CMOD) {
+						mi->add_insn(make_shared<call_insn>(imod_type->return_type(), cvt,
+							make_shared<label_operand>(imod_symbol_name, imod_type), vector<shared_ptr<operand>>{
+								casted_lhs, casted_rhs
+							}, imod_type));
+					}
+					else if (bop == binary_insn::kind::KIND_ULMOD
+						|| bop == binary_insn::kind::KIND_UIMOD
+						|| bop == binary_insn::kind::KIND_USMOD
+						|| bop == binary_insn::kind::KIND_UCMOD) {
+						mi->add_insn(make_shared<call_insn>(uimod_type->return_type(), cvt,
+							make_shared<label_operand>(uimod_symbol_name, uimod_type), vector<shared_ptr<operand>>{
+								casted_lhs, casted_rhs
+							}, uimod_type));
+					}
+					else
+						mi->add_insn(make_shared<binary_insn>(bop, cvt, casted_lhs, casted_rhs, res_type));
 					return cvt;
 				}
 				else {
@@ -2564,6 +2974,7 @@ namespace spectre {
 					shared_ptr<register_operand> reg_op = to_register_operand(mi, op),
 						deref_reg_op = make_shared<register_operand>(*reg_op);
 					deref_reg_op->set_dereference(true);
+					deref_reg_op->set_register_type(t);
 					if (pt->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE) 
 						mi->add_insn(make_shared<binary_insn>(inc ? binary_insn::kind::KIND_DADD : binary_insn::kind::KIND_DSUB, deref_reg_op, deref_reg_op,
 							make_shared<immediate_operand>(pt, (double)1), pt));
@@ -2672,11 +3083,13 @@ namespace spectre {
 					if (prev_type->type_kind() != type::kind::KIND_PRIMITIVE)
 						mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 					shared_ptr<primitive_type> pt = static_pointer_cast<primitive_type>(prev_type);
+					loaded = make_shared<register_operand>(*loaded);
+					loaded->set_register_type(pt);
 					binary_insn::kind add_insn = binary_insn::kind::KIND_NONE, sub_insn = binary_insn::kind::KIND_NONE;
 					unary_insn::kind mov_insn = unary_insn::kind::KIND_NONE;
 					shared_ptr<immediate_operand> _1 = nullptr;
 					if (pt->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE)
-						add_insn = binary_insn::kind::KIND_DADD, sub_insn = binary_insn::kind::KIND_DSUB, mov_insn = unary_insn::kind::KIND_LMOV,
+						add_insn = binary_insn::kind::KIND_DADD, sub_insn = binary_insn::kind::KIND_DSUB, mov_insn = unary_insn::kind::KIND_DMOV,
 						_1 = make_shared<immediate_operand>(pt, (double)1);
 					else if (pt->primitive_type_kind() == primitive_type::kind::KIND_FLOAT)
 						add_insn = binary_insn::kind::KIND_FADD, sub_insn = binary_insn::kind::KIND_FSUB, mov_insn = unary_insn::kind::KIND_FMOV,
@@ -2714,6 +3127,12 @@ namespace spectre {
 					shared_ptr<type> res_type = ptype->postfix_type_type();
 					if (prev_vk == value_kind::VALUE_LVALUE)
 						op = load_lvalue_to_register(mi, op);
+					if (op->operand_kind() == operand::kind::KIND_REGISTER) {
+						shared_ptr<register_operand> reg_op = static_pointer_cast<register_operand>(op);
+						reg_op = make_shared<register_operand>(*reg_op);
+						reg_op->set_register_type(prev_type);
+						op = reg_op;
+					}
 					unsigned int sz = spectre_sizeof(mi, res_type)->size;
 					shared_ptr<operand> index = generate_expression_middle_ir(mi, ptype->subscript(), false);
 					shared_ptr<operand> uint_index = ir_cast(mi, index, ptype->subscript()->expression_type(), uint_type);
@@ -2765,7 +3184,7 @@ namespace spectre {
 						reg_op->set_dereference(true);
 					if (mem_off_op == nullptr)
 						mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
-					shared_ptr<register_operand> res = mi->generate_next_register(ptype->postfix_type_type());
+					shared_ptr<register_operand> res = mi->generate_next_register(add_indirection(ptype->postfix_type_type()));
 					if (mem_off_op->immediate_int() != 0)
 						mi->add_insn(make_shared<binary_insn>(binary_insn::kind::KIND_IADD, res, reg_op, mem_off_op, ptype->postfix_type_type()));
 					else
@@ -2784,16 +3203,47 @@ namespace spectre {
 					unsigned int index = 0;
 					for (shared_ptr<assignment_expression> ae : ptype->argument_list()) {
 						shared_ptr<operand> arg = generate_assignment_expression_middle_ir(mi, ae, false);
+						shared_ptr<type> type_to_set = ae->assignment_expression_type();
 						if (index < ft->parameter_list().size()) {
 							shared_ptr<type> par_type = ft->parameter_list()[index]->variable_declaration_type(),
 								arg_type = ae->assignment_expression_type();
 							arg = ir_cast(mi, arg, arg_type, par_type);
+							type_to_set = par_type;
 						}
+						if (arg->operand_kind() == operand::kind::KIND_REGISTER) {
+							shared_ptr<register_operand> arg_reg = static_pointer_cast<register_operand>(arg);
+							arg_reg = make_shared<register_operand>(*arg_reg);
+							arg_reg->set_register_type(type_to_set);
+							arg = arg_reg;
+						}
+						else if (arg->operand_kind() == operand::kind::KIND_LABEL) {
+							shared_ptr<label_operand> arg_lab = static_pointer_cast<label_operand>(arg);
+							arg_lab = make_shared<label_operand>(arg_lab->label_text(), type_to_set);
+							arg = arg_lab;
+						}
+						else if (arg->operand_kind() == operand::kind::KIND_IMMEDIATE) {
+							shared_ptr<immediate_operand> arg_imm = static_pointer_cast<immediate_operand>(arg);
+							auto imm = arg_imm->immediate();
+							arg = make_shared<immediate_operand>(type_to_set, imm);
+						}
+						else
+							mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 						args.push_back(arg);
+						index++;
 					}
 					shared_ptr<operand> res = mi->generate_next_register(ptype->postfix_type_type());
-					mi->add_insn(make_shared<call_insn>(ptype->postfix_type_type(), res, op, args));
-					op = res;
+					mi->add_insn(make_shared<call_insn>(ptype->postfix_type_type(), res, op, args, ft));
+					if (is_struct_type(mi, ptype->postfix_type_type())) {
+						shared_ptr<register_operand> local_copy = mi->generate_next_register(ptype->postfix_type_type());
+						shared_ptr<size_data> sd = spectre_sizeof(mi, ptype->postfix_type_type());
+						mi->add_insn(make_shared<align_insn>(sd->alignment));
+						mi->add_insn(make_shared<unary_insn>(unary_insn::kind::KIND_STK, local_copy,
+							make_shared<immediate_operand>(uint_type, (int) sd->size), ptype->postfix_type_type()));
+						mi->add_insn(make_shared<memcpy_insn>(local_copy, res, sd->size, ptype->postfix_type_type()));
+						op = local_copy;
+					}
+					else
+						op = res;
 					prev_vk = value_kind::VALUE_RVALUE;
 				}
 					break;
@@ -2827,6 +3277,8 @@ namespace spectre {
 					return '\'';
 				else if (char_text[1] == '\"')
 					return '\"';
+				else if (char_text[1] == '\\')
+					return '\\';
 				else if (char_text[1] == '?')
 					return '?';
 				else if (char_text[1] == 'a')
@@ -2853,9 +3305,10 @@ namespace spectre {
 					int val = stoi(num, 0, 8);
 					return val;
 				}
-				else
-					mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
-				mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+				else {
+					mi->report(error(error::kind::KIND_ERROR, "Invalid character literal.", { tok }, 0));
+					return 0;
+				}
 			}
 			else
 				return char_text[0];
@@ -2871,22 +3324,40 @@ namespace spectre {
 				token tok = pe->literal_token();
 				switch (tok.token_kind()) {
 				case token::kind::TOKEN_INTEGER: {
+					string to_use = tok.raw_text();
+					int base = 10;
+					switch (tok.prefix_kind()) {
+					case token::prefix::PREFIX_HEXADECIMAL:
+						to_use = to_use.substr(2);
+						base = 16;
+						break;
+					case token::prefix::PREFIX_BINARY:
+						to_use = to_use.substr(2);
+						base = 2;
+						break;
+					case token::prefix::PREFIX_OCTAL:
+						to_use = to_use.substr(2);
+						base = 8;
+						break;
+					}
+					to_use.erase(remove(to_use.begin(), to_use.end(), '\''), to_use.end());
+					unsigned long num = stoul(to_use, nullptr, base);
 					if (tok.suffix_kind() == token::suffix::SUFFIX_DOUBLE)
-						return make_shared<immediate_operand>(double_type, atof(tok.raw_text().c_str()));
+						return make_shared<immediate_operand>(double_type, (double) num);
 					else if (tok.suffix_kind() == token::suffix::SUFFIX_FLOAT)
-						return make_shared<immediate_operand>(float_type, (float)atof(tok.raw_text().c_str()));
+						return make_shared<immediate_operand>(float_type, (float) num);
 					else if (tok.suffix_kind() == token::suffix::SUFFIX_UNSIGNED_LONG)
-						return make_shared<immediate_operand>(ulong_type, (long) strtoul(tok.raw_text().c_str(), NULL, 0));
+						return make_shared<immediate_operand>(ulong_type, (long) num);
 					else if (tok.suffix_kind() == token::suffix::SUFFIX_SIGNED_LONG)
-						return make_shared<immediate_operand>(long_type, (long) strtol(tok.raw_text().c_str(), NULL, 0));
+						return make_shared<immediate_operand>(long_type, (long) num);
 					else if (tok.suffix_kind() == token::suffix::SUFFIX_UNSIGNED_INT)
-						return make_shared<immediate_operand>(uint_type, (int)strtoul(tok.raw_text().c_str(), NULL, 0));
+						return make_shared<immediate_operand>(uint_type, (int) num);
 					else if (tok.suffix_kind() == token::suffix::SUFFIX_NONE)
-						return make_shared<immediate_operand>(int_type, atoi(tok.raw_text().c_str()));
+						return make_shared<immediate_operand>(int_type, (int) num);
 					else if (tok.suffix_kind() == token::suffix::SUFFIX_UNSIGNED_SHORT)
-						return make_shared<immediate_operand>(ushort_type, (short)strtoul(tok.raw_text().c_str(), NULL, 0));
+						return make_shared<immediate_operand>(ushort_type, (short) num);
 					else if (tok.suffix_kind() == token::suffix::SUFFIX_SIGNED_SHORT)
-						return make_shared<immediate_operand>(short_type, (short)atoi(tok.raw_text().c_str()));
+						return make_shared<immediate_operand>(short_type, (short) num);
 					mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 					return nullptr;
 				}
@@ -2938,8 +3409,10 @@ namespace spectre {
 					if (i == bs->stmt_list().size() - 1) {
 						if (s->stmt_kind() == stmt::kind::KIND_EXPRESSION)
 							return generate_expression_middle_ir(mi, s->stmt_expression(), false);
-						else
+						else {
+							generate_stmt_middle_ir(mi, s);
 							return make_shared<immediate_operand>(void_type, (char)0);
+						}
 					}
 					else
 						generate_stmt_middle_ir(mi, s);
@@ -2955,28 +3428,41 @@ namespace spectre {
 			case primary_expression::kind::KIND_SIZEOF_EXPRESSION:
 				return make_shared<immediate_operand>(uint_type, (int)spectre_sizeof(mi, pe->parenthesized_expression()->expression_type())->size);
 				break;
+			case primary_expression::kind::KIND_ALIGNOF_TYPE:
+				return make_shared<immediate_operand>(uint_type, (int)spectre_sizeof(mi, pe->sizeof_type())->alignment);
+				break;
+			case primary_expression::kind::KIND_ALIGNOF_EXPRESSION:
+				return make_shared<immediate_operand>(uint_type, (int)spectre_sizeof(mi, pe->parenthesized_expression()->expression_type())->alignment);
+				break;
 			case primary_expression::kind::KIND_IDENTIFIER: {
 				string ident_sym = c_symbol_2_string(mi, pe->identifier_symbol());
-				shared_ptr<register_operand> res = mi->generate_next_register(pe->primary_expression_type());
-				if (pe->identifier_symbol()->symbol_kind() == symbol::kind::KIND_VARIABLE) {
-					shared_ptr<register_operand> loc = make_shared<register_operand>(*mi->lookup_variable_register(ident_sym));
-					mi->add_insn(make_shared<unary_insn>(unary_insn::kind::KIND_IMOV, res, loc, pe->primary_expression_type()));
-				}
-				else if (pe->identifier_symbol()->symbol_kind() == symbol::kind::KIND_FUNCTION)
-					mi->add_insn(make_shared<unary_insn>(unary_insn::kind::KIND_IMOV, res, make_shared<label_operand>(ident_sym, pe->primary_expression_type()),
-						pe->primary_expression_type()));
-				shared_ptr<register_operand> copy_res = make_shared<register_operand>(*res);
-				bool deref = !lvalue;
-				if (pe->identifier_symbol()->symbol_kind() == symbol::kind::KIND_VARIABLE) {
-					shared_ptr<variable_symbol> vsym = static_pointer_cast<variable_symbol>(pe->identifier_symbol());
-					if (vsym->variable_type()->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR
-						|| is_struct_type(mi, vsym->variable_type()))
+				auto constexpr_lookup = mi->lookup_constexpr_mapping(ident_sym);
+				if (constexpr_lookup.first)
+					return constexpr_value_2_operand(mi, constexpr_lookup.second, pe->primary_expression_type());
+				else {
+					shared_ptr<register_operand> res = mi->generate_next_register(pe->primary_expression_type()),
+						res_temp = make_shared<register_operand>(*res);
+					if (pe->identifier_symbol()->symbol_kind() == symbol::kind::KIND_VARIABLE) {
+						shared_ptr<register_operand> loc = make_shared<register_operand>(*mi->lookup_variable_register(ident_sym));
+						if (!is_struct_type(mi, pe->primary_expression_type()))
+							res_temp->set_register_type(add_indirection(res_temp->register_type()));
+						mi->add_insn(make_shared<unary_insn>(unary_insn::kind::KIND_IMOV, res_temp, loc, pe->primary_expression_type()));
+					}
+					else if (pe->identifier_symbol()->symbol_kind() == symbol::kind::KIND_FUNCTION)
+						mi->add_insn(make_shared<unary_insn>(unary_insn::kind::KIND_IMOV, res, make_shared<label_operand>(ident_sym, pe->primary_expression_type()),
+							pe->primary_expression_type()));
+					shared_ptr<register_operand> copy_res = make_shared<register_operand>(*res);
+					bool deref = !lvalue;
+					if (pe->identifier_symbol()->symbol_kind() == symbol::kind::KIND_VARIABLE) {
+						shared_ptr<variable_symbol> vsym = static_pointer_cast<variable_symbol>(pe->identifier_symbol());
+						if (vsym->variable_type()->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR
+							|| is_struct_type(mi, vsym->variable_type()))
+							deref = false;
+					}
+					else if (pe->identifier_symbol()->symbol_kind() == symbol::kind::KIND_FUNCTION)
 						deref = false;
+					return copy_res;
 				}
-				else if (pe->identifier_symbol()->symbol_kind() == symbol::kind::KIND_FUNCTION)
-					deref = false;
-				if (deref) copy_res->set_dereference(true);
-				return copy_res;
 			}
 				break;
 			case primary_expression::kind::KIND_ARRAY_INITIALIZER: {
@@ -2992,15 +3478,17 @@ namespace spectre {
 				auto[is_struct, umov] = which_mov_insn(mi, elem_type);
 				for (shared_ptr<assignment_expression> ae : pe->array_initializer()) {
 					shared_ptr<operand> elem = generate_assignment_expression_middle_ir(mi, ae, false);
-					shared_ptr<register_operand> temp_res_base = mi->generate_next_register(elem_type);
+					shared_ptr<register_operand> temp_res_base = mi->generate_next_register(pe->primary_expression_type());
 					mi->add_insn(make_shared<binary_insn>(binary_insn::kind::KIND_IADD, temp_res_base, res,
 						make_shared<immediate_operand>(uint_type, (int)(index * elem_size_data->size)), pe->primary_expression_type()));
 					shared_ptr<register_operand> temp_res = make_shared<register_operand>(*temp_res_base);
-					temp_res->set_dereference(true);
+					temp_res->set_register_type(elem_type);
 					if (is_struct)
 						mi->add_insn(make_shared<memcpy_insn>(temp_res, elem, elem_size_data->size, elem_type));
-					else
+					else {
+						temp_res->set_dereference(true);
 						mi->add_insn(make_shared<unary_insn>(umov, temp_res, elem, elem_type));
+					}
 					index++;
 				}
 				return res;
@@ -3012,15 +3500,43 @@ namespace spectre {
 				unary_insn::kind uk = unary_insn::kind::KIND_NONE;
 				if (pe->primary_expression_kind() == primary_expression::kind::KIND_RESV)
 					uk = unary_insn::kind::KIND_RESV;
-				else if (pe->primary_expression_kind() == primary_expression::kind::KIND_NEW)
-					uk = unary_insn::kind::KIND_NEW;
+				else if (pe->primary_expression_kind() == primary_expression::kind::KIND_NEW);
 				else if (pe->primary_expression_kind() == primary_expression::kind::KIND_STK)
 					uk = unary_insn::kind::KIND_STK;
 				else
 					mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 				shared_ptr<size_data> sd = spectre_sizeof(mi, pe->mem_type());
 				shared_ptr<register_operand> res = mi->generate_next_register(pe->mem_type());
-				mi->add_insn(make_shared<unary_insn>(uk, res, make_shared<immediate_operand>(uint_type, (int)sd->size), pe->mem_type()));
+				if (pe->primary_expression_kind() == primary_expression::kind::KIND_NEW) {
+					shared_ptr<register_operand> sz = mi->generate_next_register(uint_type);
+					shared_ptr<operand> num = generate_expression_middle_ir(mi, pe->parenthesized_expression(), false);
+					mi->add_insn(make_shared<binary_insn>(binary_insn::kind::KIND_UIMUL, sz, make_shared<immediate_operand>(uint_type, (int) sd->size), num, uint_type));
+					mi->add_insn(make_shared<call_insn>(malloc_type->return_type(), res,
+						make_shared<label_operand>(malloc_symbol_name, malloc_type), vector<shared_ptr<operand>>{ sz }, malloc_type));
+				}
+				else {
+					variant<bool, int, unsigned int, float, double, string> num;
+					for (shared_ptr<assignment_expression> ae : pe->parenthesized_expression()->assignment_expression_list())
+						num = evaluate_constant_expression(mi, ae);
+					unsigned int sz = 0;
+					if (holds_alternative<bool>(num))
+						sz = get<bool>(num);
+					else if(holds_alternative<int>(num))
+						sz = get<int>(num);
+					else if(holds_alternative<unsigned int>(num))
+						sz = get<unsigned int>(num);
+					else if(holds_alternative<float>(num))
+						sz = get<float>(num);
+					else if(holds_alternative<double>(num))
+						sz = get<double>(num);
+					else
+						mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+					if (sz == 0)
+						mi->report(error(error::kind::KIND_ERROR, "Cannot 'stk' or 'resv' 0 space.", pe->stream(), 0));
+					sz *= sd->size;
+					mi->add_insn(make_shared<align_insn>(sd->alignment));
+					mi->add_insn(make_shared<unary_insn>(uk, res, make_shared<immediate_operand>(uint_type, (int) sz), pe->mem_type()));
+				}
 				return res;
 			}
 				break;
@@ -3038,15 +3554,20 @@ namespace spectre {
 			if (fs->function_stmt_defined_kind() != function_stmt::defined_kind::KIND_DEFINITION)
 				return;
 			shared_ptr<function_insn> fi = make_shared<function_insn>(fs->function_stmt_type(), fs->function_stmt_symbol(), fs->function_stmt_scope(),
-				mi->generate_next_register(fs->function_stmt_type()));
+				mi->generate_next_register(fs->function_stmt_type()->return_type()));
 			mi->set_function_ctx(fi);
 			mi->set_return_label(mi->generate_next_label_operand());
 			mi->set_return_register(fi->return_register());
 			string func_str = c_symbol_2_string(mi, fi->func_symbol());
-			mi->add_insn(make_shared<label_insn>(make_shared<label_operand>(func_str, fi->func_type())));
+			shared_ptr<label_insn> func_header_insn = make_shared<label_insn>(make_shared<label_operand>(func_str, fi->func_type()));
+			func_header_insn->set_func_return_reg(fi->return_register()->virtual_register_number());
+			func_header_insn->set_orig_func_insn(fi);
+			mi->add_insn(func_header_insn);
+			vector<int> func_param_regs;
 			for (shared_ptr<variable_declaration> param : fs->function_stmt_type()->parameter_list()) {
 				string param_sym = c_symbol_2_string(mi, param->variable_declaration_symbol());
 				shared_ptr<register_operand> var = mi->generate_next_register(param->variable_declaration_type());
+				func_param_regs.push_back(var->virtual_register_number());
 				shared_ptr<size_data> sd = spectre_sizeof(mi, param->variable_declaration_type());
 				mi->add_insn(make_shared<align_insn>(sd->alignment));
 				mi->add_insn(make_shared<unary_insn>(unary_insn::kind::KIND_STK, var, make_shared<immediate_operand>(uint_type, (int)sd->size),
@@ -3054,13 +3575,27 @@ namespace spectre {
 				mi->add_variable(param_sym, param);
 				mi->map_variable_register(param_sym, var);
 			}
+			func_header_insn->set_func_param_regs(func_param_regs);
 			shared_ptr<size_data> ret_sd = spectre_sizeof(mi, fi->func_type()->return_type());
 			mi->add_insn(make_shared<align_insn>(ret_sd->alignment));
 			mi->add_insn(make_shared<unary_insn>(unary_insn::kind::KIND_STK, fi->return_register(), make_shared<immediate_operand>(uint_type, (int)ret_sd->size),
 				fi->func_type()->return_type()));
 			for (shared_ptr<stmt> s : fs->function_body())
 				generate_stmt_middle_ir(mi, s);
+			shared_ptr<register_operand> ret_value = make_shared<register_operand>(*fi->return_register());
+			if (is_struct_type(mi, fi->func_type()->return_type()))
+				ret_value->set_dereference(false);
+			else
+				ret_value->set_dereference(true);
+
+			main_function_kind mfk = main_function_defined(fs->function_stmt_symbol());
+			if (mfk != main_function_kind::NONE) {
+				shared_ptr<register_operand> cpy = make_shared<register_operand>(*ret_value);
+				mi->add_insn(make_shared<unary_insn>(unary_insn::kind::KIND_IMOV, cpy, make_shared<immediate_operand>(int_type, 0), int_type));
+			}
 			mi->add_insn(make_shared<label_insn>(mi->get_return_label()));
+
+			mi->add_insn(make_shared<return_insn>(ret_value));
 			mi->set_return_label(nullptr);
 			mi->set_return_register(nullptr);
 			mi->unset_function_ctx();
@@ -3068,11 +3603,609 @@ namespace spectre {
 			mi->add_function_insn(fi);
 		}
 
-		shared_ptr<operand> evaluate_constant_expression(shared_ptr<middle_ir> mi, shared_ptr<assignment_expression> ae) {
+		shared_ptr<operand> constexpr_value_2_operand(shared_ptr<middle_ir> mi, variant<bool, int, unsigned int, float, double, string> c, shared_ptr<type> t) {
+			shared_ptr<operand> op = nullptr;
+			if (holds_alternative<bool>(c)) op = make_shared<immediate_operand>(t, (char) get<bool>(c));
+			else if (holds_alternative<int>(c)) op = make_shared<immediate_operand>(t, get<int>(c));
+			else if (holds_alternative<unsigned int>(c)) op = make_shared<immediate_operand>(t, (int)get<unsigned int>(c));
+			else if (holds_alternative<float>(c)) op = make_shared<immediate_operand>(t, get<float>(c));
+			else if (holds_alternative<double>(c)) op = make_shared<immediate_operand>(t, get<double>(c));
+			else if (holds_alternative<string>(c)) op = make_shared<label_operand>(get<string>(c), t);
+			else mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+			return op;
+		}
+
+		template<typename C, typename TL, typename TR> auto raw_arithmetic_binary_expression_evaluator(shared_ptr<middle_ir> mi, TL lhs, TR rhs, binary_expression::operator_kind ok) {
+			switch (ok) {
+			case binary_expression::operator_kind::KIND_ADD:
+				return (C)lhs + (C)rhs;
+				break;
+			case binary_expression::operator_kind::KIND_BITWISE_AND:
+				return (C)((int)lhs & (int)rhs);
+				break;
+			case binary_expression::operator_kind::KIND_BITWISE_OR:
+				return (C)((int)lhs | (int)rhs);
+				break;
+			case binary_expression::operator_kind::KIND_BITWISE_XOR:
+				return (C)((int)lhs ^ (int)rhs);
+				break;
+			case binary_expression::operator_kind::KIND_DIVIDE:
+				return (C)lhs / (C)rhs;
+				break;
+			case binary_expression::operator_kind::KIND_MODULUS:
+				return (C)((int)lhs % (int)rhs);
+				break;
+			case binary_expression::operator_kind::KIND_MULTIPLY:
+				return (C)lhs * (C)rhs;
+				break;
+			case binary_expression::operator_kind::KIND_SHIFT_LEFT:
+				return (C)((int)lhs << (unsigned int)rhs);
+				break;
+			case binary_expression::operator_kind::KIND_SHIFT_RIGHT:
+				return (C)((int)lhs >> (unsigned int)rhs);
+				break;
+			case binary_expression::operator_kind::KIND_SUBTRACT:
+				return (C)lhs - (C)rhs;
+				break;
+			default:
+				mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+				return (C)0;
+				break;
+			}
+		}
+
+		template<typename C, typename TL, typename TR> bool raw_logical_binary_expression_evaluator(shared_ptr<middle_ir> mi, TL lhs, TR rhs, binary_expression::operator_kind ok) {
+			switch (ok) {
+			case binary_expression::operator_kind::KIND_EQUALS_EQUALS:
+				return (C)lhs == (C)rhs;
+				break;
+			case binary_expression::operator_kind::KIND_GREATER_THAN:
+				return (C)lhs > (C)rhs;
+				break;
+			case binary_expression::operator_kind::KIND_GREATER_THAN_OR_EQUAL_TO:
+				return (C)lhs >= (C)rhs;
+				break;
+			case binary_expression::operator_kind::KIND_LESS_THAN:
+				return (C)lhs < (C)rhs;
+				break;
+			case binary_expression::operator_kind::KIND_LESS_THAN_OR_EQUAL_TO:
+				return (C)lhs <= (C)rhs;
+				break;
+			case binary_expression::operator_kind::KIND_LOGICAL_AND:
+				return (C)lhs && (C)rhs;
+				break;
+			case binary_expression::operator_kind::KIND_LOGICAL_OR:
+				return (C)lhs || (C)rhs;
+				break;
+			case binary_expression::operator_kind::KIND_NOT_EQUALS:
+				return (C)lhs != (C)rhs;
+				break;
+			default:
+				mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+				return false;
+				break;
+			}
+		}
+
+		variant<bool, int, unsigned int, float, double, string> evaluate_constant_expression(shared_ptr<middle_ir> mi, shared_ptr<assignment_expression> ae) {
+			function<variant<bool, int, unsigned int, float, double, string>(shared_ptr<expression>)> evaluate_expression;
+			function<variant<bool, int, unsigned int, float, double, string>(shared_ptr<assignment_expression>)> evaluate_assignment_expression;
+			function<variant<bool, int, unsigned int, float, double, string>(shared_ptr<ternary_expression>)> evaluate_ternary_expression;
+			function<variant<bool, int, unsigned int, float, double, string>(shared_ptr<binary_expression>)> evaluate_binary_expression;
 			mi->set_global_ctx_set(true);
-			shared_ptr<operand> res = generate_assignment_expression_middle_ir(mi, ae, false);
+			auto evaluate_primary_expression = [&](shared_ptr<primary_expression> pexpr) {
+				variant<bool, int, unsigned int, float, double, string> dummy, result;
+				if (pexpr->primary_expression_kind() == primary_expression::kind::KIND_SIZEOF_TYPE) {
+					result = (unsigned int)spectre_sizeof(mi, pexpr->sizeof_type())->size;
+					return result;
+				}
+				else if (pexpr->primary_expression_kind() == primary_expression::kind::KIND_SIZEOF_EXPRESSION) {
+					evaluate_expression(pexpr->parenthesized_expression());
+					result = (unsigned int)spectre_sizeof(mi, pexpr->parenthesized_expression()->expression_type())->size;
+					return result;
+				}
+				else if (pexpr->primary_expression_kind() == primary_expression::kind::KIND_PARENTHESIZED_EXPRESSION) {
+					result = evaluate_expression(pexpr->parenthesized_expression());
+					return result;
+				}
+				else if (pexpr->primary_expression_kind() == primary_expression::kind::KIND_RESV) {
+					variant<bool, int, unsigned int, float, double, string> par = evaluate_expression(pexpr->parenthesized_expression());
+					shared_ptr<size_data> sd = spectre_sizeof(mi, pexpr->mem_type());
+					int sz = sd->size;
+					if (holds_alternative<bool>(par)) sz *= (int)get<bool>(par);
+					else if (holds_alternative<int>(par)) sz *= get<int>(par);
+					else if (holds_alternative<unsigned int>(par)) sz *= (int)get<unsigned int>(par);
+					else if (holds_alternative<float>(par)) sz *= (int)get<float>(par);
+					else if (holds_alternative<double>(par)) sz *= (int)get<double>(par);
+					else {
+						mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+						return dummy;
+					}
+					string lab = "__resv_const_" + to_string(mi->next_misc_counter());
+					shared_ptr<label_operand> lab_op = make_shared<label_operand>(lab, pexpr->primary_expression_type());
+					mi->add_insn(make_shared<align_insn>(sd->alignment));
+					mi->add_insn(make_shared<unary_insn>(unary_insn::kind::KIND_RESV, lab_op, make_shared<immediate_operand>(uint_type, (int) sz), pexpr->primary_expression_type()));
+					result = lab;
+					return result;
+				}
+				else if (pexpr->primary_expression_kind() == primary_expression::kind::KIND_ARRAY_INITIALIZER) {
+					vector<shared_ptr<operand>> vec;
+					global_array_insn::directive_kind dk;
+					shared_ptr<type> arr_type = pexpr->primary_expression_type();
+					string lab = "__temp_const_array_" + to_string(mi->next_misc_counter());
+					if (arr_type->type_array_kind() == type::array_kind::KIND_ARRAY && arr_type->array_dimensions() > 1) dk = global_array_insn::directive_kind::KIND_WORD;
+					else {
+						if (arr_type->type_kind() != type::kind::KIND_PRIMITIVE) {
+							mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+							return dummy;
+						}
+						shared_ptr<primitive_type> arr_ptype = static_pointer_cast<primitive_type>(arr_type);
+						if (arr_ptype->primitive_type_kind() == primitive_type::kind::KIND_BOOL || arr_ptype->primitive_type_kind() == primitive_type::kind::KIND_BYTE ||
+							arr_ptype->primitive_type_kind() == primitive_type::kind::KIND_CHAR)
+							dk = global_array_insn::directive_kind::KIND_BYTE;
+						else if (arr_ptype->primitive_type_kind() == primitive_type::kind::KIND_SHORT)
+							dk = global_array_insn::directive_kind::KIND_HALF;
+						else if (arr_ptype->primitive_type_kind() == primitive_type::kind::KIND_LONG || arr_ptype->primitive_type_kind() == primitive_type::kind::KIND_INT)
+							dk = global_array_insn::directive_kind::KIND_WORD;
+						else if (arr_ptype->primitive_type_kind() == primitive_type::kind::KIND_FLOAT)
+							dk = global_array_insn::directive_kind::KIND_FLOAT;
+						else if (arr_ptype->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE)
+							dk = global_array_insn::directive_kind::KIND_DOUBLE;
+						else {
+							mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+							return dummy;
+						}
+					}
+					shared_ptr<type> aetype = nullptr;
+					for (shared_ptr<assignment_expression> ae : pexpr->array_initializer()) {
+						variant<bool, int, unsigned int, float, double, string> el = evaluate_assignment_expression(ae);
+						aetype = ae->assignment_expression_type();
+						if (dk == global_array_insn::directive_kind::KIND_DOUBLE) {
+							if (holds_alternative<string>(el)) vec.push_back(make_shared<label_operand>(get<string>(el), aetype));
+							else if (holds_alternative<bool>(el)) vec.push_back(make_shared<immediate_operand>(aetype, (double)get<bool>(el)));
+							else if (holds_alternative<int>(el)) vec.push_back(make_shared<immediate_operand>(aetype, (double)get<int>(el)));
+							else if (holds_alternative<unsigned int>(el)) vec.push_back(make_shared<immediate_operand>(aetype, (double)get<unsigned int>(el)));
+							else if (holds_alternative<float>(el)) vec.push_back(make_shared<immediate_operand>(aetype, (double)get<float>(el)));
+							else if (holds_alternative<double>(el)) vec.push_back(make_shared<immediate_operand>(aetype, get<double>(el)));
+							else {
+								mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+								return dummy;
+							}
+						}
+						else if (dk == global_array_insn::directive_kind::KIND_FLOAT) {
+							if (holds_alternative<string>(el)) vec.push_back(make_shared<label_operand>(get<string>(el), aetype));
+							else if (holds_alternative<bool>(el)) vec.push_back(make_shared<immediate_operand>(aetype, (float)get<bool>(el)));
+							else if (holds_alternative<int>(el)) vec.push_back(make_shared<immediate_operand>(aetype, (float)get<int>(el)));
+							else if (holds_alternative<unsigned int>(el)) vec.push_back(make_shared<immediate_operand>(aetype, (float)get<unsigned int>(el)));
+							else if (holds_alternative<float>(el)) vec.push_back(make_shared<immediate_operand>(aetype, get<float>(el)));
+							else if (holds_alternative<double>(el)) vec.push_back(make_shared<immediate_operand>(aetype, (float)get<double>(el)));
+							else {
+								mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+								return dummy;
+							}
+						}
+						else if (dk == global_array_insn::directive_kind::KIND_WORD) {
+							if (holds_alternative<string>(el)) vec.push_back(make_shared<label_operand>(get<string>(el), aetype));
+							else if (holds_alternative<bool>(el)) vec.push_back(make_shared<immediate_operand>(aetype, (int)get<bool>(el)));
+							else if (holds_alternative<int>(el)) vec.push_back(make_shared<immediate_operand>(aetype, get<int>(el)));
+							else if (holds_alternative<unsigned int>(el)) vec.push_back(make_shared<immediate_operand>(aetype, (int)get<unsigned int>(el)));
+							else if (holds_alternative<float>(el)) vec.push_back(make_shared<immediate_operand>(aetype, (int)get<float>(el)));
+							else if (holds_alternative<double>(el)) vec.push_back(make_shared<immediate_operand>(aetype, (int)get<double>(el)));
+							else {
+								mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+								return dummy;
+							}
+						}
+						else if (dk == global_array_insn::directive_kind::KIND_HALF) {
+							if (holds_alternative<string>(el)) vec.push_back(make_shared<label_operand>(get<string>(el), aetype));
+							else if (holds_alternative<bool>(el)) vec.push_back(make_shared<immediate_operand>(aetype, (short)get<bool>(el)));
+							else if (holds_alternative<int>(el)) vec.push_back(make_shared<immediate_operand>(aetype, (short)get<int>(el)));
+							else if (holds_alternative<unsigned int>(el)) vec.push_back(make_shared<immediate_operand>(aetype, (short)get<unsigned int>(el)));
+							else if (holds_alternative<float>(el)) vec.push_back(make_shared<immediate_operand>(aetype, (short)get<float>(el)));
+							else if (holds_alternative<double>(el)) vec.push_back(make_shared<immediate_operand>(aetype, (short)get<double>(el)));
+							else {
+								mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+								return dummy;
+							}
+						}
+						else if (dk == global_array_insn::directive_kind::KIND_BYTE) {
+							if (holds_alternative<string>(el)) vec.push_back(make_shared<label_operand>(get<string>(el), aetype));
+							else if (holds_alternative<bool>(el)) vec.push_back(make_shared<immediate_operand>(aetype, (char)get<bool>(el)));
+							else if (holds_alternative<int>(el)) vec.push_back(make_shared<immediate_operand>(aetype, (char) get<int>(el)));
+							else if (holds_alternative<unsigned int>(el)) vec.push_back(make_shared<immediate_operand>(aetype, (char)get<unsigned int>(el)));
+							else if (holds_alternative<float>(el)) vec.push_back(make_shared<immediate_operand>(aetype, (char)get<float>(el)));
+							else if (holds_alternative<double>(el)) vec.push_back(make_shared<immediate_operand>(aetype, (char)get<double>(el)));
+							else {
+								mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+								return dummy;
+							}
+						}
+					}
+					if (aetype == nullptr)
+						mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+					shared_ptr<size_data> sd = spectre_sizeof(mi, aetype);
+					shared_ptr<label_operand> lab_op = make_shared<label_operand>(lab, pexpr->primary_expression_type());
+					mi->add_insn(make_shared<align_insn>(sd->alignment));
+					mi->add_insn(make_shared<global_array_insn>(dk, lab_op, vec, pexpr->primary_expression_type()));
+					result = lab;
+					return result;
+				}
+				else if (pexpr->primary_expression_kind() == primary_expression::kind::KIND_LITERAL) {
+					token lit = pexpr->literal_token();
+					string raw_lit = lit.raw_text();
+					switch (lit.token_kind()) {
+					case token::kind::TOKEN_INTEGER: {
+						raw_lit.erase(remove(raw_lit.begin(), raw_lit.end(), '\''), raw_lit.end());
+						int base = 10;
+						switch (lit.prefix_kind()) {
+						case token::prefix::PREFIX_BINARY:
+							base = 2;
+							raw_lit = raw_lit.substr(2);
+							break;
+						case token::prefix::PREFIX_HEXADECIMAL:
+							base = 16;
+							raw_lit = raw_lit.substr(2);
+							break;
+						case token::prefix::PREFIX_OCTAL:
+							base = 8;
+							raw_lit = raw_lit.substr(2);
+							break;
+						}
+						int val = stoul(raw_lit.c_str(), nullptr, base);
+						if (lit.suffix_kind() == token::suffix::SUFFIX_DOUBLE)
+							result = (double)val;
+						else if (lit.suffix_kind() == token::suffix::SUFFIX_FLOAT)
+							result = (float)val;
+						else if (lit.suffix_kind() == token::suffix::SUFFIX_SIGNED_LONG || lit.suffix_kind() == token::suffix::SUFFIX_SIGNED_SHORT)
+							result = (int)val;
+						else if (lit.suffix_kind() == token::suffix::SUFFIX_UNSIGNED_INT || lit.suffix_kind() == token::suffix::SUFFIX_UNSIGNED_LONG ||
+							lit.suffix_kind() == token::suffix::SUFFIX_UNSIGNED_SHORT)
+							result = (unsigned int)val;
+						else {
+							result = (int)val;
+						}
+					}
+						break;
+					case token::kind::TOKEN_DECIMAL: {
+						raw_lit.erase(remove(raw_lit.begin(), raw_lit.end(), '\''), raw_lit.end());
+						if (lit.suffix_kind() == token::suffix::SUFFIX_DOUBLE)
+							result = (double)atof(raw_lit.c_str());
+						else if (lit.suffix_kind() == token::suffix::SUFFIX_FLOAT)
+							result = (float)atof(raw_lit.c_str());
+						else
+							result = (double)atof(raw_lit.c_str());
+					}
+						break;
+					case token::kind::TOKEN_CHARACTER: {
+						raw_lit = raw_lit.substr(1, raw_lit.size() - 2);
+						if (raw_lit[0] != '\\')
+							result = (unsigned int)raw_lit[0];
+						else {
+							if (raw_lit.size() == 1) {
+								mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+								return dummy;
+							}
+							switch (raw_lit[1]) {
+							case 'a':
+								result = (unsigned int) '\a';
+								break;
+							case 'b':
+								result = (unsigned int) '\b';
+								break;
+							case 'f':
+								result = (unsigned int) '\f';
+								break;
+							case 'n':
+								result = (unsigned int) '\n';
+								break;
+							case 'r':
+								result = (unsigned int) '\r';
+								break;
+							case 't':
+								result = (unsigned int) '\t';
+								break;
+							case 'v':
+								result = (unsigned int) '\v';
+								break;
+							case '\\':
+								result = (unsigned int) '\\';
+								break;
+							case '\'':
+								result = (unsigned int) '\'';
+								break;
+							case '\"':
+								result = (unsigned int) '\"';
+								break;
+							case '\?':
+								result = (unsigned int) '\?';
+								break;
+							default:
+								result = (unsigned int) '\0';
+								break;
+							}
+						}
+					}
+						break;
+					case token::kind::TOKEN_TRUE:
+					case token::kind::TOKEN_FALSE: {
+						result = (bool)(lit.token_kind() == token::kind::TOKEN_TRUE);
+					}
+						break;
+					case token::kind::TOKEN_STRING: {
+						int counter = mi->next_misc_counter();
+						string s_lit = "__sp_lit_" + to_string(counter);
+						mi->add_insn(make_shared<align_insn>(1));
+						string concated_raw_lit;
+						for (token t : pexpr->stream())
+							concated_raw_lit += t.raw_text().substr(1, t.raw_text().length() - 2);
+						shared_ptr<immediate_operand> str_imm = make_shared<immediate_operand>(pexpr->primary_expression_type(), concated_raw_lit);
+						shared_ptr<label_operand> str_lab = make_shared<label_operand>(s_lit, pexpr->primary_expression_type());
+						mi->add_insn(make_shared<unary_insn>(unary_insn::kind::KIND_IMOV, str_lab, str_imm, pexpr->primary_expression_type()));
+						result = s_lit;
+					}
+						break;
+					}
+					return result;
+				}
+				else if (pexpr->primary_expression_kind() == primary_expression::kind::KIND_IDENTIFIER) {
+					shared_ptr<symbol> sym = pexpr->identifier_symbol();
+					string sym_string = c_symbol_2_string(mi, sym);
+					pair<bool, variant<bool, int, unsigned int, float, double, string>> check = mi->lookup_constexpr_mapping(sym_string);
+					if (!check.first) {
+						mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+						return dummy;
+					}
+					result = check.second;
+					return result;
+				}
+				mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+				return dummy;
+			};
+			auto evaluate_postfix_expression = [&](shared_ptr<postfix_expression> pexpr) {
+				variant<bool, int, unsigned int, float, double, string> dummy, result = evaluate_primary_expression(pexpr->contained_primary_expression());
+				shared_ptr<type> prev_type = pexpr->contained_primary_expression()->primary_expression_type();
+				for (shared_ptr<postfix_expression::postfix_type> pt : pexpr->postfix_type_list()) {
+					if (pt->postfix_type_kind() != postfix_expression::kind::KIND_AS) {
+						mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+						return dummy;
+					}
+					shared_ptr<type> to_type = pt->postfix_type_type();
+					if (to_type->type_array_kind() != type::array_kind::KIND_ARRAY) {
+						if (prev_type->type_array_kind() == type::array_kind::KIND_ARRAY || holds_alternative<string>(result) || to_type->type_kind() != type::kind::KIND_PRIMITIVE) {
+							mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+							return dummy;
+						}
+						shared_ptr<primitive_type> to_prim = static_pointer_cast<primitive_type>(to_type);
+
+#define SPECTRE_CAST_BODY(T) \
+	if(to_prim->primitive_type_kind() == primitive_type::kind::KIND_DOUBLE) \
+		result = (double) get<T>(result); \
+	else if(to_prim->primitive_type_kind() == primitive_type::kind::KIND_FLOAT) \
+		result = (float) get<T>(result); \
+	else if(to_prim->primitive_type_kind() == primitive_type::kind::KIND_BOOL) \
+		result = (bool) get<T>(result); \
+	else if(to_prim->primitive_type_sign_kind() == primitive_type::sign_kind::KIND_UNSIGNED) \
+		result = (unsigned int) get<T>(result); \
+	else \
+		result = (int) get<T>(result)
+
+						if (holds_alternative<bool>(result)) { SPECTRE_CAST_BODY(bool); }
+						else if (holds_alternative<int>(result)) { SPECTRE_CAST_BODY(int); }
+						else if (holds_alternative<unsigned int>(result)) { SPECTRE_CAST_BODY(unsigned int); }
+						else if (holds_alternative<float>(result)) { SPECTRE_CAST_BODY(float); }
+						else if (holds_alternative<double>(result)) { SPECTRE_CAST_BODY(double); }
+						else {
+							mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+							return dummy;
+						}
+
+#undef SPECTRE_CAST_BODY
+					}
+					else {
+						if (holds_alternative<bool>(result))
+							result = (unsigned int)get<bool>(result);
+						else if (holds_alternative<int>(result))
+							result = (unsigned int)get<int>(result);
+						else if (holds_alternative<unsigned int>(result));
+						else if (holds_alternative<float>(result))
+							result = (unsigned int)get<float>(result);
+						else if (holds_alternative<double>(result))
+							result = (unsigned int)get<double>(result);
+						else;
+					}
+
+					prev_type = to_type;
+				}
+				return result;
+			};
+			auto evaluate_unary_expression = [&](shared_ptr<unary_expression> uexpr) {
+				variant<bool, int, unsigned int, float, double, string> dummy, result = evaluate_postfix_expression(uexpr->contained_postfix_expression());
+				for (unary_expression::kind uek : uexpr->unary_expression_kind_list()) {
+					switch (uek) {
+					case unary_expression::kind::KIND_INCREMENT:
+					case unary_expression::kind::KIND_DECREMENT:
+						mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+						return dummy;
+						break;
+					case unary_expression::kind::KIND_BITWISE_NOT: {
+						if (holds_alternative<bool>(result))
+							result = (unsigned int)(~(unsigned int)get<bool>(result));
+						else if (holds_alternative<int>(result))
+							result = (int)~get<int>(result);
+						else if (holds_alternative<unsigned int>(result))
+							result = (unsigned int)~get<unsigned int>(result);
+						else {
+							mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+							return dummy;
+						}
+					}
+						break;
+					case unary_expression::kind::KIND_LOGICAL_NOT: {
+						if (holds_alternative<bool>(result))
+							result = (bool)!get<bool>(result);
+						else if (holds_alternative<int>(result))
+							result = (bool)!get<int>(result);
+						else if (holds_alternative<unsigned int>(result))
+							result = (bool)!get<unsigned int>(result);
+						else if (holds_alternative<float>(result))
+							result = (bool)!get<float>(result);
+						else if (holds_alternative<double>(result))
+							result = (bool)!get<double>(result);
+						else {
+							mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+							return dummy;
+						}
+					}
+						break;
+					case unary_expression::kind::KIND_PLUS:
+					case unary_expression::kind::KIND_MINUS: {
+						bool plus = uek == unary_expression::kind::KIND_PLUS;
+						if (holds_alternative<bool>(result)) {
+							int temp = plus ? (unsigned int)+(unsigned int)get<bool>(result) : -(int)get<bool>(result);
+							result = (unsigned int)temp;
+						}
+						else if (holds_alternative<int>(result))
+							result = plus ? (int)+get<int>(result) : (int)-get<int>(result);
+						else if (holds_alternative<unsigned int>(result)) {
+							int temp = plus ? (unsigned int)+get<unsigned int>(result) : (int)- (int) get<unsigned int>(result);
+							result = (unsigned int)temp;
+						}
+						else if (holds_alternative<float>(result))
+							result = plus ? (float)+get<float>(result) : (float)-get<float>(result);
+						else if (holds_alternative<double>(result))
+							result = plus ? (double)+get<double>(result) : (double)-get<double>(result);
+						else {
+							mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+							return dummy;
+						}
+					}
+						break;
+					default: {
+						mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+						return dummy;
+					}
+						break;
+					}
+				}
+				return result;
+			};
+			evaluate_binary_expression = [&](shared_ptr<binary_expression> bexpr) {
+				if (bexpr->binary_expression_kind() == binary_expression::kind::KIND_UNARY_EXPRESSION)
+					return evaluate_unary_expression(bexpr->single_lhs());
+				variant<bool, int, unsigned int, float, double, string> dummy, result;
+				variant<bool, int, unsigned int, float, double, string> lhs_result = evaluate_binary_expression(bexpr->lhs()),
+					rhs_result = evaluate_binary_expression(bexpr->rhs());
+				if (holds_alternative<string>(lhs_result) || holds_alternative<string>(rhs_result)) return dummy;
+
+				// sigh...
+				using result_variant_type = variant<bool, int, unsigned int, float, double>;
+				result_variant_type temp_lhs_result, temp_rhs_result;
+				struct collapsing_variant_assignment_visitor {
+				private:
+					shared_ptr<middle_ir> _mi;
+					result_variant_type& _res;
+				public:
+					collapsing_variant_assignment_visitor(shared_ptr<middle_ir> mi, result_variant_type& r) : _mi(mi), _res(r) {}
+
+					void operator()(bool b) { _res = b; }
+					void operator()(int i) { _res = i; }
+					void operator()(unsigned int u) { _res = u; }
+					void operator()(float f) { _res = f; }
+					void operator()(double d) { _res = d; }
+					void operator()(string s) { _mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__); }
+				};
+				visit(collapsing_variant_assignment_visitor{ mi, temp_lhs_result }, lhs_result);
+				visit(collapsing_variant_assignment_visitor{ mi, temp_rhs_result }, rhs_result);
+
+				// SIGH...
+#define SPECTRE_OPERATOR_BODY(T) \
+	result_variant_type result; \
+	if(_logical) \
+		result = raw_logical_binary_expression_evaluator<T>(_mi, lhs, rhs, _operator_kind); \
+	else \
+		result = raw_arithmetic_binary_expression_evaluator<T>(_mi, lhs, rhs, _operator_kind); \
+	return result
+
+				struct custom_variant_visitor {
+				private:
+					binary_expression::operator_kind _operator_kind;
+					shared_ptr<middle_ir> _mi;
+					bool _logical;
+				public:
+					custom_variant_visitor(shared_ptr<middle_ir> mi, binary_expression::operator_kind ok) : _mi(mi), _operator_kind(ok),
+						_logical(ok == binary_expression::operator_kind::KIND_EQUALS_EQUALS || ok == binary_expression::operator_kind::KIND_GREATER_THAN ||
+							ok == binary_expression::operator_kind::KIND_GREATER_THAN_OR_EQUAL_TO || ok == binary_expression::operator_kind::KIND_LESS_THAN ||
+							ok == binary_expression::operator_kind::KIND_LESS_THAN_OR_EQUAL_TO || ok == binary_expression::operator_kind::KIND_LOGICAL_AND ||
+							ok == binary_expression::operator_kind::KIND_LOGICAL_OR || ok == binary_expression::operator_kind::KIND_NOT_EQUALS) {}
+					result_variant_type operator()(bool lhs, bool rhs) { SPECTRE_OPERATOR_BODY(unsigned int); }
+					result_variant_type operator()(bool lhs, int rhs) { SPECTRE_OPERATOR_BODY(int); }
+					result_variant_type operator()(bool lhs, unsigned int rhs) { SPECTRE_OPERATOR_BODY(unsigned int); }
+					result_variant_type operator()(bool lhs, float rhs) { SPECTRE_OPERATOR_BODY(float); }
+					result_variant_type operator()(bool lhs, double rhs) { SPECTRE_OPERATOR_BODY(double); }
+
+					result_variant_type operator()(int lhs, bool rhs) { SPECTRE_OPERATOR_BODY(int); }
+					result_variant_type operator()(int lhs, int rhs) { SPECTRE_OPERATOR_BODY(int); }
+					result_variant_type operator()(int lhs, unsigned int rhs) { SPECTRE_OPERATOR_BODY(unsigned int); }
+					result_variant_type operator()(int lhs, float rhs) { SPECTRE_OPERATOR_BODY(float); }
+					result_variant_type operator()(int lhs, double rhs) { SPECTRE_OPERATOR_BODY(double); }
+
+					result_variant_type operator()(unsigned int lhs, bool rhs) { SPECTRE_OPERATOR_BODY(unsigned int); }
+					result_variant_type operator()(unsigned int lhs, int rhs) { SPECTRE_OPERATOR_BODY(unsigned int); }
+					result_variant_type operator()(unsigned int lhs, unsigned int rhs) { SPECTRE_OPERATOR_BODY(unsigned int); }
+					result_variant_type operator()(unsigned int lhs, float rhs) { SPECTRE_OPERATOR_BODY(float); }
+					result_variant_type operator()(unsigned int lhs, double rhs) { SPECTRE_OPERATOR_BODY(double); }
+
+					result_variant_type operator()(float lhs, bool rhs) { SPECTRE_OPERATOR_BODY(float); }
+					result_variant_type operator()(float lhs, int rhs) { SPECTRE_OPERATOR_BODY(float); }
+					result_variant_type operator()(float lhs, unsigned int rhs) { SPECTRE_OPERATOR_BODY(float); }
+					result_variant_type operator()(float lhs, float rhs) { SPECTRE_OPERATOR_BODY(float); }
+					result_variant_type operator()(float lhs, double rhs) { SPECTRE_OPERATOR_BODY(double); }
+
+					result_variant_type operator()(double lhs, bool rhs) { SPECTRE_OPERATOR_BODY(double); }
+					result_variant_type operator()(double lhs, int rhs) { SPECTRE_OPERATOR_BODY(double); }
+					result_variant_type operator()(double lhs, unsigned int rhs) { SPECTRE_OPERATOR_BODY(double); }
+					result_variant_type operator()(double lhs, float rhs) { SPECTRE_OPERATOR_BODY(double); }
+					result_variant_type operator()(double lhs, double rhs) { SPECTRE_OPERATOR_BODY(double); }
+				};
+#undef SPECTRE_OPERATOR_BODY
+
+				result_variant_type temp_result = visit(custom_variant_visitor{ mi, bexpr->binary_expression_operator_kind() }, temp_lhs_result, temp_rhs_result);
+				visit([&result](auto t) { result = t; }, temp_result);
+				return result;
+			};
+			evaluate_ternary_expression = [&](shared_ptr<ternary_expression> texpr) {
+				variant<bool, int, unsigned int, float, double, string> dummy;
+				variant<bool, int, unsigned int, float, double, string> cond_result = evaluate_binary_expression(texpr->condition());
+				if (texpr->ternary_expression_kind() == ternary_expression::kind::KIND_BINARY)
+					return cond_result;
+				if (!holds_alternative<bool>(cond_result)) {
+					mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+					return dummy;
+				}
+				if (get<bool>(cond_result))
+					return evaluate_expression(texpr->true_path());
+				else
+					return evaluate_ternary_expression(texpr->false_path());
+				return dummy;
+			};
+			evaluate_assignment_expression = [&](shared_ptr<assignment_expression> aexpr) {
+				variant<bool, int, unsigned int, float, double, string> result;
+				if (aexpr->assignment_expression_kind() == assignment_expression::kind::KIND_TERNARY)
+					return evaluate_ternary_expression(aexpr->conditional_expression());
+				else {
+					mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+					return result;
+				}
+			};
+			evaluate_expression = [&](shared_ptr<expression> expr) {
+				variant<bool, int, unsigned int, float, double, string> result;
+				for (int i = 0; i < expr->assignment_expression_list().size(); i++) {
+					result = evaluate_assignment_expression(expr->assignment_expression_list()[i]);
+				}
+				return result;
+			};
 			mi->set_global_ctx_set(false);
-			return res;
+			return evaluate_assignment_expression(ae);
 		}
 
 		void generate_variable_declaration_middle_ir(shared_ptr<middle_ir> mi, shared_ptr<variable_declaration> vd) {
@@ -3085,17 +4218,18 @@ namespace spectre {
 			if (vd_type->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR) {
 				if (vd->variable_declaration_initialization_kind() != variable_declaration::initialization_kind::KIND_PRESENT)
 					mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
-				shared_ptr<operand> temp_res = evaluate_constant_expression(mi, vd->initialization());
-				shared_ptr<register_operand> res = to_register_operand(mi, ir_cast(mi, res, vd->initialization()->assignment_expression_type(), vd_type));
-				mi->add_constexpr_mapping(vd_sym_string, res);
+				auto cv = evaluate_constant_expression(mi, vd->initialization());
+				shared_ptr<operand> temp_res = constexpr_value_2_operand(mi, cv, vd_type);
+				shared_ptr<register_operand> res = to_register_operand(mi, ir_cast(mi, temp_res, vd->initialization()->assignment_expression_type(), vd_type));
+				mi->add_constexpr_mapping(vd_sym_string, cv);
 				mi->add_variable(vd_sym_string, vd);
-				mi->map_variable_register(vd_sym_string, res);
 				return;
 			}
 			bool on_stack = !(vd_sym->parent_scope()->scope_kind() == scope::kind::KIND_NAMESPACE || vd_sym->parent_scope()->scope_kind() == scope::kind::KIND_GLOBAL
 				|| vd_type->type_static_kind() == type::static_kind::KIND_STATIC),
 				is_static = vd_type->type_static_kind() == type::static_kind::KIND_STATIC,
-				local_var = !(vd_sym->parent_scope()->scope_kind() == scope::kind::KIND_NAMESPACE || vd_sym->parent_scope()->scope_kind() == scope::kind::KIND_GLOBAL);
+				global_var = vd_sym->parent_scope()->scope_kind() == scope::kind::KIND_NAMESPACE || vd_sym->parent_scope()->scope_kind() == scope::kind::KIND_GLOBAL,
+				local_var = !global_var;
 			mi->set_global_ctx_set(vd_sym->parent_scope()->scope_kind() == scope::kind::KIND_GLOBAL
 			|| vd_sym->parent_scope()->scope_kind() == scope::kind::KIND_NAMESPACE);
 			shared_ptr<register_operand> base_loc = mi->generate_next_register(vd_type);
@@ -3123,8 +4257,12 @@ namespace spectre {
 				}
 				shared_ptr<register_operand> loc = make_shared<register_operand>(*base_loc);
 				loc->set_dereference(true);
-				shared_ptr<operand> init = generate_assignment_expression_middle_ir(mi, vd->initialization(), false),
-					casted_init = ir_cast(mi, init, vd->initialization()->assignment_expression_type(), vd_type);
+				shared_ptr<operand> init = nullptr;
+				if (!global_var)
+					init = generate_assignment_expression_middle_ir(mi, vd->initialization(), false);
+				else
+					init = constexpr_value_2_operand(mi, evaluate_constant_expression(mi, vd->initialization()), vd_type);
+				shared_ptr<operand> casted_init = ir_cast(mi, init, vd->initialization()->assignment_expression_type(), vd_type);
 				auto[is_struct, umov] = which_mov_insn(mi, vd_type);
 				if (is_struct)
 					mi->add_insn(make_shared<memcpy_insn>(base_loc, casted_init, variable_size->size, vd_type));
@@ -3352,8 +4490,27 @@ namespace spectre {
 			if (ds == nullptr)
 				mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 			shared_ptr<operand> res = generate_expression_middle_ir(mi, ds->expr(), false);
+			if (res->operand_kind() == operand::kind::KIND_REGISTER) {
+				shared_ptr<register_operand> reg_op = static_pointer_cast<register_operand>(res);
+				reg_op = make_shared<register_operand>(*reg_op);
+				reg_op->set_register_type(raw_pointer_type);
+				res = reg_op;
+			}
+			else if (res->operand_kind() == operand::kind::KIND_LABEL) {
+				shared_ptr<label_operand> lab_op = static_pointer_cast<label_operand>(res);
+				lab_op = make_shared<label_operand>(lab_op->label_text(), raw_pointer_type);
+				res = lab_op;
+			}
+			else if (res->operand_kind() == operand::kind::KIND_IMMEDIATE) {
+				shared_ptr<immediate_operand> imm_op = static_pointer_cast<immediate_operand>(res);
+				imm_op = make_shared<immediate_operand>(raw_pointer_type, imm_op->immediate());
+				res = imm_op;
+			}
+			else
+				mi->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 			shared_ptr<register_operand> dummy = mi->generate_next_register(void_type);
-			mi->add_insn(make_shared<unary_insn>(unary_insn::kind::KIND_DELETE, dummy, res, void_type));
+			mi->add_insn(make_shared<call_insn>(void_type, dummy, make_shared<label_operand>(free_symbol_name, free_type),
+				vector<shared_ptr<operand>>{ res }, free_type));
 		}
 
 		void generate_asm_stmt_middle_ir(shared_ptr<middle_ir> mi, shared_ptr<asm_stmt> as) {
@@ -3377,6 +4534,12 @@ namespace spectre {
 					}
 						break;
 					case symbol::kind::KIND_VARIABLE: {
+						shared_ptr<variable_symbol> vsym = static_pointer_cast<variable_symbol>(at->identifier_symbol());
+						if (vsym->variable_type()->type_constexpr_kind() == type::constexpr_kind::KIND_CONSTEXPR) {
+							mi->report(error(error::kind::KIND_ERROR, "Cannot take the address of a 'constexpr' symbol.",
+								{ as->stream() }, 0));
+							return;
+						}
 						shared_ptr<register_operand> loc = make_shared<register_operand>(
 							*mi->lookup_variable_register(c_symbol_2_string(mi, at->identifier_symbol())));
 						mi->add_insn(make_shared<asm_insn>(make_pair(full, loc)));
@@ -3421,6 +4584,64 @@ namespace spectre {
 				shared_ptr<variable_declaration> dummy = make_shared<variable_declaration>(vsym->variable_type(), vsym->variable_name(), true, as->stream());
 				mi->add_variable(sym, dummy);
 			}
+		}
+
+		main_function_kind main_function_defined(shared_ptr<function_symbol> fsym) {
+			if (fsym->function_symbol_defined_kind() != function_stmt::defined_kind::KIND_DEFINITION)
+				return main_function_kind::NONE;
+			if (fsym->function_name().raw_text() != "main")
+				return main_function_kind::NONE;
+			shared_ptr<function_type> ft = fsym->function_symbol_type();
+			if (ft->type_static_kind() != type::static_kind::KIND_NON_STATIC
+				|| ft->type_const_kind() != type::const_kind::KIND_NON_CONST
+				|| ft->type_constexpr_kind() != type::constexpr_kind::KIND_NON_CONSTEXPR
+				|| ft->variadic())
+				return main_function_kind::NONE;
+			if (ft->parameter_list().empty())
+				return main_function_kind::MAIN_NO_ARGS;
+			else if (ft->parameter_list().size() == 2
+				|| ft->parameter_list().size() == 3) {
+				shared_ptr<variable_declaration> arg1 = ft->parameter_list()[0],
+					arg2 = ft->parameter_list()[1];
+				shared_ptr<type> arg1_type = arg1->variable_declaration_type(),
+					arg2_type = arg2->variable_declaration_type();
+
+				// int argc
+				if (arg1_type->type_kind() != type::kind::KIND_PRIMITIVE)
+					return main_function_kind::NONE;
+				shared_ptr<primitive_type> arg1_prim_type = static_pointer_cast<primitive_type>(arg1_type);
+				if (arg1_prim_type->primitive_type_kind() != primitive_type::kind::KIND_INT
+					|| arg1_prim_type->type_array_kind() != type::array_kind::KIND_NON_ARRAY
+					|| arg1_prim_type->array_dimensions() != 0)
+					return main_function_kind::NONE;
+
+				// char** argv
+				if (arg2_type->type_kind() != type::kind::KIND_PRIMITIVE)
+					return main_function_kind::NONE;
+				shared_ptr<primitive_type> arg2_prim_type = static_pointer_cast<primitive_type>(arg2_type);
+				if (arg2_prim_type->primitive_type_kind() != primitive_type::kind::KIND_CHAR
+					|| arg2_prim_type->type_array_kind() != type::array_kind::KIND_ARRAY
+					|| arg2_prim_type->array_dimensions() != 2)
+					return main_function_kind::NONE;
+				
+				if (ft->parameter_list().size() == 3) {
+					shared_ptr<variable_declaration> arg3 = ft->parameter_list()[2];
+					shared_ptr<type> arg3_type = arg3->variable_declaration_type();
+
+					// char** envp
+					if (arg3_type->type_kind() != type::kind::KIND_PRIMITIVE)
+						return main_function_kind::NONE;
+					shared_ptr<primitive_type> arg3_prim_type = static_pointer_cast<primitive_type>(arg3_type);
+					if (arg3_prim_type->primitive_type_kind() != primitive_type::kind::KIND_CHAR
+						|| arg3_prim_type->type_array_kind() != type::array_kind::KIND_ARRAY
+						|| arg3_prim_type->array_dimensions() != 2)
+						return main_function_kind::NONE;
+
+					return main_function_kind::MAIN_ARGC_ARGV_ENVP;
+				}
+				return main_function_kind::MAIN_ARGC_ARGV;
+			}
+			return main_function_kind::NONE;
 		}
 	}
 }

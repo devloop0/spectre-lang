@@ -1,5 +1,5 @@
-#ifndef SPECTRE_MEM2REG_HPP
-#define SPECTRE_MEM2REG_HPP
+#ifndef SPECTRE_OPT_MEM2REG_HPP
+#define SPECTRE_OPT_MEM2REG_HPP
 
 #include <memory>
 #include <unordered_set>

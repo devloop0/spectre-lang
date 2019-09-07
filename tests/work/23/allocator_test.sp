@@ -10,7 +10,7 @@ func int main() {
 	byte* b = xalloc::allocate(a, 1);
 	b@ = 1;
 	if(b@ != 1) fail();
-	xalloc::reallocate(a, b, 2);
+	b = xalloc::reallocate(a, b, 2);
 	if(b@ != 1) fail();
 	xalloc::deallocate(a, b);
 	

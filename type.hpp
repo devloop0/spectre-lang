@@ -58,6 +58,8 @@ namespace spectre {
 			const_kind type_const_kind();
 			static_kind type_static_kind();
 			int array_dimensions();
+			void set_array_dimensions(int ad);
+			void set_type_array_kind(array_kind ak);
 			bool valid();
 			array_kind type_array_kind();
 			constexpr_kind type_constexpr_kind();

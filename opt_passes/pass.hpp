@@ -1,5 +1,5 @@
-#ifndef SPECTRE_PASS_HPP
-#define SPECTRE_PASS_HPP
+#ifndef SPECTRE_OPT_PASS_HPP
+#define SPECTRE_OPT_PASS_HPP
 
 #include <unordered_set>
 #include "basic_block.hpp"

@@ -12,16 +12,19 @@ namespace std {
 		}
 
 		struct mem_block_t {
-			type mem_block_t* prev, next;
-			bool free;
+			type mem_block_t* next;
 			unsigned int size;
 			byte* block;
+			unsigned int magic;
+			bool free;
+			unsigned int __reserved;
 		}
 
 		static constexpr int EXIT_SUCCESS = 0;
 		static constexpr int EXIT_FAILURE = 1;
 		static constexpr byte* NULL = 0 as byte*;
-		static constexpr unsigned int MALLOC_ALIGNMENT = sizeof{double};
+		static constexpr unsigned int MALLOC_ALIGNMENT = 8;
+		static constexpr unsigned int MALLOC_MAGIC = 0xab'cd'ef'01;
 
 		func void qsort(byte* arr, unsigned int len, unsigned int sz, fn int(const byte*,const byte*) cmp);
 
@@ -59,8 +62,8 @@ namespace std {
 
 		func long atol(const char* str);
 
-		func double atof(const char* str);
-
 		func byte* bsearch(const byte* key, const byte* arr, unsigned int len, unsigned int sz, fn int(const byte*,const byte*) cmp);
+
+		func double atof(const char* str);
 	}
 }

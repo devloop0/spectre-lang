@@ -1,3 +1,6 @@
+#ifndef SPECTRE_OPT_CVT2SSA_HPP
+#define SPECTRE_OPT_CVT2SSA_HPP
+
 #include <unordered_map>
 #include <unordered_set>
 #include <stack>
@@ -42,10 +45,11 @@ namespace spectre {
 
 	namespace opt {
 
-		unordered_map<int, unordered_set<int>> compute_dominators(shared_ptr<basic_blocks> bbs);
+		unordered_map<int, unordered_set<int>> compute_dominators(shared_ptr<basic_blocks> bbs, const directed_graph<int>& d);
 		unordered_map<int, unordered_set<int>> compute_strict_dominators(shared_ptr<basic_blocks> bbs, const unordered_map<int, unordered_set<int>>& doms);
 		unordered_map<int, int> compute_immediate_dominators(shared_ptr<basic_blocks> bbs, const unordered_map<int, unordered_set<int>>& doms);
-		unordered_map<int, unordered_set<int>> compute_dominance_frontier(shared_ptr<basic_blocks> bbs, const unordered_map<int, unordered_set<int>>& doms);
+		unordered_map<int, unordered_set<int>> compute_dominance_frontier(shared_ptr<basic_blocks> bbs, const directed_graph<int>& d,
+			const unordered_map<int, unordered_set<int>>& doms);
 
 		unordered_map<int, pair<shared_ptr<register_operand>, vector<int>>> all_register_assignment_indices(shared_ptr<basic_blocks> bbs);
 		void insert_phi_insns(shared_ptr<basic_blocks> bbs);
@@ -55,10 +59,12 @@ namespace spectre {
 			unordered_set<int> visited;
 		};
 
-		void bb_rename_variables(shared_ptr<basic_blocks> bbs, int j, shared_ptr<rename_data> rd);
+		pair<unordered_set<int>, unordered_set<int>> function_and_global_headers(shared_ptr<basic_blocks> bbs);
+
+		void bb_rename_variables(shared_ptr<basic_blocks> bbs, int j, shared_ptr<rename_data> rd, bool global);
 		void rename_variables(shared_ptr<basic_blocks> bbs);
 		void clean_up_phi_insns(shared_ptr<basic_blocks> bbs);
-		void ssa_sanity_check(shared_ptr<basic_block> bbs);
+		void ssa_sanity_check(shared_ptr<basic_blocks> bbs);
 
 		void print_bbs_dominance_data(shared_ptr<basic_blocks> bbs);
 
@@ -72,3 +78,5 @@ namespace spectre {
 		};
 	}
 }
+
+#endif

@@ -1,0 +1,6 @@
+namespace std {
+	namespace assert {
+
+		func void assert(bool b, char* msg);
+	}
+}

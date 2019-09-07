@@ -1,53 +1,53 @@
-------------Building ./direct_getdents_test_one.sp-------------
-------------Running ./direct_getdents_test_one.sp-------------
-direct_getdents_test_one.sp: regular
-----------
-test_outputs: regular
-----------
-vector_rev_sort.sp: regular
-----------
-direct_getdents_test_multiple.sp: regular
-----------
-string_ch_test_2.sp: regular
-----------
-st_mode_test.sp: regular
-----------
-direct_getdents_test_one: regular
-----------
-..: directory
-----------
-.: directory
-----------
+------------Building ./string_ch_test.sp-------------
+------------Running ./string_ch_test.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./direct_getdents_test_multiple.sp-------------
+------------Running ./direct_getdents_test_multiple.sp-------------
 string_ch_test.sp: regular
+.: directory
+direct_getdents_test_multiple.sp: regular
+direct_getdents_test_multiple: regular
+vector_rev_sort.sp: regular
+test_outputs: regular
+st_mode_test.sp: regular
+..: directory
+string_ch_test_2.sp: regular
+direct_getdents_test_one.sp: regular
 ----------
 ------------Return code: 0-------------
 ------------Building ./vector_rev_sort.sp-------------
 ------------Running ./vector_rev_sort.sp-------------
 Y
 ------------Return code: 0-------------
-------------Building ./direct_getdents_test_multiple.sp-------------
-------------Running ./direct_getdents_test_multiple.sp-------------
-direct_getdents_test_one.sp: regular
-test_outputs: regular
-vector_rev_sort.sp: regular
-direct_getdents_test_multiple.sp: regular
-string_ch_test_2.sp: regular
-st_mode_test.sp: regular
-..: directory
-.: directory
-string_ch_test.sp: regular
-direct_getdents_test_multiple: regular
-----------
+------------Building ./st_mode_test.sp-------------
+------------Running ./st_mode_test.sp-------------
+Y
 ------------Return code: 0-------------
 ------------Building ./string_ch_test_2.sp-------------
 ------------Running ./string_ch_test_2.sp-------------
 Y
 ------------Return code: 0-------------
-------------Building ./st_mode_test.sp-------------
-------------Running ./st_mode_test.sp-------------
-Y
-------------Return code: 0-------------
-------------Building ./string_ch_test.sp-------------
-------------Running ./string_ch_test.sp-------------
-Y
+------------Building ./direct_getdents_test_one.sp-------------
+------------Running ./direct_getdents_test_one.sp-------------
+direct_getdents_test_one: regular
+----------
+string_ch_test.sp: regular
+----------
+.: directory
+----------
+direct_getdents_test_multiple.sp: regular
+----------
+vector_rev_sort.sp: regular
+----------
+test_outputs: regular
+----------
+st_mode_test.sp: regular
+----------
+..: directory
+----------
+string_ch_test_2.sp: regular
+----------
+direct_getdents_test_one.sp: regular
+----------
 ------------Return code: 0-------------

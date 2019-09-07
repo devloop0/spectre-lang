@@ -87,8 +87,7 @@ namespace spectre {
 	}
 
 	namespace opt {
-		unordered_map<int, unordered_set<int>> compute_dominators(shared_ptr<basic_blocks> bbs) {
-			directed_graph<int> d = bbs->cfg();
+		unordered_map<int, unordered_set<int>> compute_dominators(shared_ptr<basic_blocks> bbs, const directed_graph<int>& d) {
 			unordered_map<int, unordered_set<int>> preds = get_predecessors(d);
 			unordered_set<int> vertices = d.vertices(), vertices_without_starts = vertices;
 			unordered_map<int, unordered_set<int>> ret, temp;
@@ -169,9 +168,10 @@ namespace spectre {
 			return idoms;
 		}
 
-		unordered_map<int, unordered_set<int>> compute_dominance_frontier(shared_ptr<basic_blocks> bbs, const unordered_map<int, unordered_set<int>>& doms) {
-			unordered_set<int> verts = bbs->cfg().vertices();
-			unordered_map<int, unordered_set<int>> preds = get_predecessors(bbs->cfg());
+		unordered_map<int, unordered_set<int>> compute_dominance_frontier(shared_ptr<basic_blocks> bbs, const directed_graph<int>& d,
+			const unordered_map<int, unordered_set<int>>& doms) {
+			unordered_set<int> verts = d.vertices();
+			unordered_map<int, unordered_set<int>> preds = get_predecessors(d);
 			unordered_map<int, int> idoms = compute_immediate_dominators(bbs, doms);
 			unordered_map<int, unordered_set<int>> ret;
 			for (const auto& b : verts)
@@ -208,6 +208,7 @@ namespace spectre {
 				switch (i->insn_kind()) {
 				case insn::kind::KIND_ACCESS:
 				case insn::kind::KIND_ALIGN:
+					break;
 				case insn::kind::KIND_ASM:
 					break;
 				case insn::kind::KIND_BINARY:
@@ -228,7 +229,6 @@ namespace spectre {
 				case insn::kind::KIND_LABEL:
 					break;
 				case insn::kind::KIND_MEMCPY:
-					CHECK_ASSIGNMENT(memcpy_insn, destination);
 					break;
 				case insn::kind::KIND_PHI:
 					CHECK_ASSIGNMENT(phi_insn, dst);
@@ -253,9 +253,9 @@ namespace spectre {
 		}
 
 		void insert_phi_insns(shared_ptr<basic_blocks> bbs) {
-			unordered_map<int, unordered_set<int>> doms = compute_dominators(bbs);
-			unordered_map<int, unordered_set<int>> dom_frons = compute_dominance_frontier(bbs, doms);
 			unordered_map<int, unordered_set<int>> preds = get_predecessors(bbs->cfg());
+			unordered_map<int, unordered_set<int>> doms = compute_dominators(bbs, bbs->cfg());
+			unordered_map<int, unordered_set<int>> dom_frons = compute_dominance_frontier(bbs, bbs->cfg(), doms);
 			
 			for (int reg = 0; reg < bbs->original_num_allocated_registers(); reg++) {
 				unordered_set<int> work_list, ever_on_work_list, already_has_phi_func;
@@ -305,8 +305,7 @@ namespace spectre {
 						pd->bb_pred = v;
 						pred_list.push_back(pd);
 					}
-					shared_ptr<register_operand> copy_reg_op = make_shared<register_operand>(reg_op->dereference(),
-						reg_op->virtual_register_number(), reg_op->register_type());
+					shared_ptr<register_operand> copy_reg_op = make_shared<register_operand>(*reg_op);
 					shared_ptr<phi_insn> p = make_shared<phi_insn>(copy_reg_op, pred_list);
 					int insert_pos = bbs->get_basic_block(k)->start();
 					bbs->get_basic_block(k)->set_end(bbs->get_basic_block(k)->end() + 1);
@@ -319,7 +318,7 @@ namespace spectre {
 			}
 		}
 
-		void bb_rename_variables(shared_ptr<basic_blocks> bbs, int j, shared_ptr<rename_data> rd) {
+		void bb_rename_variables(shared_ptr<basic_blocks> bbs, int j, shared_ptr<rename_data> rd, bool global) {
 			if (rd->visited.find(j) != rd->visited.end())
 				return;
 			rd->visited.insert(j);
@@ -384,7 +383,12 @@ namespace spectre {
 				}
 					break;
 				case insn::kind::KIND_ALIGN:
-				case insn::kind::KIND_ASM:
+					break;
+				case insn::kind::KIND_ASM: {
+					shared_ptr<asm_insn> ai = static_pointer_cast<asm_insn>(i);
+					if (ai->asm_insn_kind() == asm_insn::kind::KIND_LA)
+						wrapped_handle_rhs(ai->la().second);
+				}
 					break;
 				case insn::kind::KIND_BINARY: {
 					shared_ptr<binary_insn> bi = static_pointer_cast<binary_insn>(i);
@@ -421,7 +425,7 @@ namespace spectre {
 				case insn::kind::KIND_MEMCPY: {
 					shared_ptr<memcpy_insn> mi = static_pointer_cast<memcpy_insn>(i);
 					wrapped_handle_rhs(mi->source());
-					wrapped_handle_lhs(mi->destination());
+					wrapped_handle_rhs(mi->destination());
 				}
 					break;
 				case insn::kind::KIND_PHI:
@@ -439,8 +443,7 @@ namespace spectre {
 					break;
 				case insn::kind::KIND_UNARY: {
 					shared_ptr<unary_insn> ui = static_pointer_cast<unary_insn>(i);
-					if (ui->unary_expr_kind() == unary_insn::kind::KIND_NEW ||
-						ui->unary_expr_kind() == unary_insn::kind::KIND_STK ||
+					if (ui->unary_expr_kind() == unary_insn::kind::KIND_STK ||
 						ui->unary_expr_kind() == unary_insn::kind::KIND_RESV) {
 						shared_ptr<operand> d = ui->dst_operand();
 						if (d->operand_kind() == operand::kind::KIND_REGISTER) {
@@ -494,7 +497,10 @@ namespace spectre {
 			}
 
 			for (const auto& a : adj)
-				bb_rename_variables(bbs, a, rd);
+				bb_rename_variables(bbs, a, rd, global);
+
+			if (global)
+				return;
 
 			auto checked_reg_pop = [&bbs, &rd](shared_ptr<operand> o) {
 				if (o->operand_kind() == operand::kind::KIND_REGISTER) {
@@ -538,10 +544,7 @@ namespace spectre {
 				case insn::kind::KIND_JUMP:
 				case insn::kind::KIND_LABEL:
 					break;
-				case insn::kind::KIND_MEMCPY: {
-					shared_ptr<memcpy_insn> mi = static_pointer_cast<memcpy_insn>(i);
-					checked_reg_pop(mi->destination());
-				}
+				case insn::kind::KIND_MEMCPY:
 					break;
 				case insn::kind::KIND_PHI: {
 					shared_ptr<phi_insn> pi = static_pointer_cast<phi_insn>(i);
@@ -579,8 +582,25 @@ namespace spectre {
 					start_nodes.insert(k);
 			}
 			shared_ptr<rename_data> rd = make_shared<rename_data>();
+			int global_index = -1;
+			for (const auto& n : start_nodes) {
+				shared_ptr<basic_block> bb = bbs->get_basic_block(n);
+				if (!bb->get_insns(bbs).empty()) {
+					shared_ptr<insn> first = bb->get_insns(bbs)[0];
+					if (first->insn_kind() == insn::kind::KIND_LABEL) {
+						shared_ptr<label_insn> li = static_pointer_cast<label_insn>(first);
+						if (li->label()->label_text() == global_header) {
+							global_index = n;
+							break;
+						}
+					}
+				}
+			}
+			if (global_index == -1)
+				bbs->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+			bb_rename_variables(bbs, global_index, rd, true);
 			for (const auto& n : start_nodes)
-				bb_rename_variables(bbs, n, rd);
+				bb_rename_variables(bbs, n, rd, false);
 		}
 
 		void clean_up_phi_insns(shared_ptr<basic_blocks> bbs) {
@@ -662,7 +682,12 @@ namespace spectre {
 					}
 						break;
 					case insn::kind::KIND_ALIGN:
-					case insn::kind::KIND_ASM:
+						break;
+					case insn::kind::KIND_ASM: {
+						shared_ptr<asm_insn> ai = static_pointer_cast<asm_insn>(i);
+						if (ai->asm_insn_kind() == asm_insn::kind::KIND_LA)
+							wrapped_handle(ai->la().second);
+					}
 						break;
 					case insn::kind::KIND_BINARY: {
 						shared_ptr<binary_insn> bi = static_pointer_cast<binary_insn>(i);
@@ -822,7 +847,12 @@ namespace spectre {
 				}
 					break;
 				case insn::kind::KIND_ALIGN:
-				case insn::kind::KIND_ASM:
+					break;
+				case insn::kind::KIND_ASM: {
+					shared_ptr<asm_insn> ai = static_pointer_cast<asm_insn>(i);
+					if (ai->asm_insn_kind() == asm_insn::kind::KIND_LA)
+						res = check_rhs(i, ai->la().second);
+				}
 					break;
 				case insn::kind::KIND_BINARY: {
 					shared_ptr<binary_insn> bi = static_pointer_cast<binary_insn>(i);
@@ -859,7 +889,7 @@ namespace spectre {
 				case insn::kind::KIND_MEMCPY: {
 					shared_ptr<memcpy_insn> mi = static_pointer_cast<memcpy_insn>(i);
 					res = check_rhs(i, mi->source())
-						&& check_lhs(i, mi->destination());
+						&& check_rhs(i, mi->destination());
 				}
 					break;
 				case insn::kind::KIND_PHI: {
@@ -882,8 +912,7 @@ namespace spectre {
 					shared_ptr<unary_insn> ui = static_pointer_cast<unary_insn>(i);
 					res = check_rhs(i, ui->src_operand())
 						&& check_lhs(i, ui->dst_operand());
-					if (ui->unary_expr_kind() == unary_insn::kind::KIND_STK || ui->unary_expr_kind() == unary_insn::kind::KIND_RESV
-						|| ui->unary_expr_kind() == unary_insn::kind::KIND_NEW) {
+					if (ui->unary_expr_kind() == unary_insn::kind::KIND_STK || ui->unary_expr_kind() == unary_insn::kind::KIND_RESV) {
 						if (ui->dst_operand()->operand_kind() == operand::kind::KIND_REGISTER) {
 							shared_ptr<register_operand> ro = static_pointer_cast<register_operand>(ui->dst_operand());
 							if (!ro->dereference())
@@ -922,6 +951,10 @@ namespace spectre {
 					for (const auto& p : p->pred_data_list()) {
 						if (p->reg_pred != nullptr)
 							reg_nums.insert(p->reg_pred->virtual_register_number());
+						if (p->bb_pred < 0 || p->bb_pred >= bbs->get_basic_blocks().size()) {
+							print_bbs_cfg(bbs);
+							bbs->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
+						}
 					}
 					if (reg_nums.size() <= 1) {
 						print_bbs_cfg(bbs);
@@ -939,7 +972,7 @@ namespace spectre {
 
 		void print_bbs_dominance_data(shared_ptr<basic_blocks> bbs) {
 			cout << endl << "Dominators" << endl;
-			auto doms = compute_dominators(bbs);
+			auto doms = compute_dominators(bbs, bbs->cfg());
 			for (const auto&[k, v] : doms) {
 				cout << k << ": ";
 				for (auto it = v.begin(); it != v.end(); it++) {
@@ -972,7 +1005,7 @@ namespace spectre {
 			cout << "}" << endl;
 
 			cout << endl << "Dominance Frontier" << endl;
-			auto dom_fron = compute_dominance_frontier(bbs, doms);
+			auto dom_fron = compute_dominance_frontier(bbs, bbs->cfg(), doms);
 			for (const auto&[k, v] : dom_fron) {
 				cout << k << ": ";
 				for (auto it = v.begin(); it != v.end(); it++) {

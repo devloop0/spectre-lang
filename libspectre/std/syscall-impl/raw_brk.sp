@@ -4,16 +4,7 @@ namespace std {
 	namespace syscall {
 
 		func byte* raw_brk(const byte* data) {
-			byte* ret;
-			__asm__ (
-				LINUX_MIPS_BRK "$2" :
-				data "$4" :
-				"lw $4, 0($4)" :
-				"syscall" :
-				ret "$8" :
-				"sw $2, 0($8)"
-			);
-			return ret;
+			return do_syscall1(LINUX_ARM_BRK, data as int) as byte*;
 		}
 	}
 }

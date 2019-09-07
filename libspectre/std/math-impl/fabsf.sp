@@ -6,16 +6,15 @@ namespace std {
 	namespace math {
 
 		func float fabsf(float arg) {
-			using std::lib::abort;
-			using std::machine::big_endian;
-			using std::machine::little_endian;
+			union uu {
+				int x;
+				float f;
+			}
+			type uu u;
 
-			byte* b = arg$ as byte*;
-			if(big_endian()) b@ &= 0x7f;
-			else if(little_endian()) b[sizeof{float} - 1] &= 0x7f;
-			else abort();
-
-			return arg;
+			u.f = arg;
+			u.x &= 0x7f'ff'ff'ff;
+			return u.f;
 		}
 	}
 }

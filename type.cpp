@@ -34,6 +34,14 @@ namespace spectre {
 
 		}
 
+		void type::set_array_dimensions(int ad) {
+			_array_dimensions = ad;
+		}
+
+		void type::set_type_array_kind(array_kind ak) {
+			_type_array_kind = ak;
+		}
+
 		type::kind type::type_kind() {
 			return _type_kind;
 		}
@@ -105,27 +113,27 @@ namespace spectre {
 		}
 
 		function_type::function_type(type::const_kind ck, type::static_kind sk, shared_ptr<type> rt, vector<shared_ptr<variable_declaration>> pl, int r, bool v) :
-			type(type::kind::KIND_FUNCTION, ck, sk), _return_type(rt), _parameter_list(pl), _valid(rt == nullptr || rt->type_kind() == type::kind::KIND_NONE),
+			type(type::kind::KIND_FUNCTION, ck, sk), _return_type(rt), _parameter_list(pl), _valid(rt != nullptr && rt->type_kind() != type::kind::KIND_NONE),
 			_function_reference_number(r), _variadic(v) {
 
 		}
 
 		function_type::function_type(type::const_kind ck, type::static_kind sk, shared_ptr<type> rt, vector<shared_ptr<variable_declaration>> pl, int r, int ad, bool v) :
-			type(type::kind::KIND_FUNCTION, ck, sk, ad), _return_type(rt), _parameter_list(pl), _valid(rt == nullptr || rt->type_kind() == type::kind::KIND_NONE),
+			type(type::kind::KIND_FUNCTION, ck, sk, ad), _return_type(rt), _parameter_list(pl), _valid(rt != nullptr && rt->type_kind() != type::kind::KIND_NONE),
 			_function_reference_number(r), _variadic(v) {
 
 		}
 
 		function_type::function_type(type::const_kind ck, type::static_kind sk, type::constexpr_kind cek, shared_ptr<type> rt,
 			vector<shared_ptr<variable_declaration>> pl, int r, bool v) :
-			type(type::kind::KIND_FUNCTION, ck, sk, cek), _return_type(rt), _parameter_list(pl), _valid(rt == nullptr || rt->type_kind() == type::kind::KIND_NONE),
+			type(type::kind::KIND_FUNCTION, ck, sk, cek), _return_type(rt), _parameter_list(pl), _valid(rt != nullptr && rt->type_kind() != type::kind::KIND_NONE),
 			_function_reference_number(r), _variadic(v) {
 
 		}
 
 		function_type::function_type(type::const_kind ck, type::static_kind sk, type::constexpr_kind cek, shared_ptr<type> rt,
 			vector<shared_ptr<variable_declaration>> pl, int r, int ad, bool v) :
-			type(type::kind::KIND_FUNCTION, ck, sk, cek, ad), _return_type(rt), _parameter_list(pl), _valid(rt == nullptr || rt->type_kind() == type::kind::KIND_NONE),
+			type(type::kind::KIND_FUNCTION, ck, sk, cek, ad), _return_type(rt), _parameter_list(pl), _valid(rt != nullptr && rt->type_kind() != type::kind::KIND_NONE),
 			_function_reference_number(r), _variadic(v) {
 
 		}

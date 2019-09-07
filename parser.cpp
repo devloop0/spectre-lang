@@ -525,25 +525,28 @@ namespace spectre {
 				_valid = true;
 				_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_LITERAL, tok, t, _valid, vector<token>{ tok }, value_kind::VALUE_RVALUE);
 			}
-			else if (tok.token_kind() == token::kind::TOKEN_SIZEOF) {
+			else if (tok.token_kind() == token::kind::TOKEN_SIZEOF || tok.token_kind() == token::kind::TOKEN_ALIGNOF) {
 				vector<token> stream;
 				stream.push_back(tok);
 				token look_ahead = p->peek();
+				bool is_alignof = tok.token_kind() == token::kind::TOKEN_ALIGNOF;
 				shared_ptr<type> t = make_shared<primitive_type>(primitive_type::kind::KIND_INT, type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC,
 					type::constexpr_kind::KIND_CONSTEXPR, primitive_type::sign_kind::KIND_UNSIGNED);
 				if (look_ahead.token_kind() == token::kind::TOKEN_OPEN_BRACE) {
+					primary_expression::kind pek = is_alignof ? primary_expression::kind::KIND_ALIGNOF_TYPE
+						: primary_expression::kind::KIND_SIZEOF_TYPE;
 					stream.push_back(p->pop());
 					type_parser tp(p);
 					if (!tp.valid()) {
 						p->report(error(error::kind::KIND_ERROR, "Cannot take the 'sizeof' an invalid type.", stream, 0));
 						_valid = false;
-						_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_SIZEOF_TYPE, tp.contained_type(), t, _valid, stream);
+						_contained_primary_expression = make_shared<primary_expression>(pek, tp.contained_type(), t, _valid, stream);
 						return;
 					}
 					if (tp.contained_type()->type_kind() == type::kind::KIND_AUTO) {
 						p->report(error(error::kind::KIND_ERROR, "Cannot take the 'sizeof' an auto-type.", stream, 0));
 						_valid = false;
-						_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_SIZEOF_TYPE, tp.contained_type(), t, _valid, stream);
+						_contained_primary_expression = make_shared<primary_expression>(pek, tp.contained_type(), t, _valid, stream);
 						return;
 					}
 					vector<token> tstream = tp.stream();
@@ -552,21 +555,23 @@ namespace spectre {
 					if (cbrace.token_kind() != token::kind::TOKEN_CLOSE_BRACE) {
 						p->report(error(error::kind::KIND_ERROR, "Expected a close brace '}' after taking the 'sizeof' a type.", stream, 0));
 						_valid = false;
-						_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_SIZEOF_TYPE, tp.contained_type(), t, _valid, stream);
+						_contained_primary_expression = make_shared<primary_expression>(pek, tp.contained_type(), t, _valid, stream);
 						return;
 					}
 					stream.push_back(p->pop());
 					_valid = true;
-					_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_SIZEOF_TYPE, tp.contained_type(), t, _valid, stream);
+					_contained_primary_expression = make_shared<primary_expression>(pek, tp.contained_type(), t, _valid, stream);
 					return;
 				}
 				else if(look_ahead.token_kind() == token::kind::TOKEN_OPEN_PARENTHESIS) {
+					primary_expression::kind pek = is_alignof ? primary_expression::kind::KIND_ALIGNOF_EXPRESSION
+						: primary_expression::kind::KIND_SIZEOF_EXPRESSION;
 					stream.push_back(p->pop());
 					expression_parser ep(p);
 					if (!ep.valid()) {
 						p->report(error(error::kind::KIND_ERROR, "Cannot take the 'sizeof' an invalid expression.", stream, 0));
 						_valid = false;
-						_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_SIZEOF_EXPRESSION, ep.contained_expression(), t, _valid, stream);
+						_contained_primary_expression = make_shared<primary_expression>(pek, ep.contained_expression(), t, _valid, stream);
 						return;
 					}
 					vector<token> estream = ep.contained_expression()->stream();
@@ -575,12 +580,12 @@ namespace spectre {
 					if (cparen.token_kind() != token::kind::TOKEN_CLOSE_PARENTHESIS) {
 						p->report(error(error::kind::KIND_ERROR, "Expected a close parenthesis ')' after taking the 'sizeof' an expression.", stream, 0));
 						_valid = false;
-						_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_SIZEOF_EXPRESSION, ep.contained_expression(), t, _valid, stream);
+						_contained_primary_expression = make_shared<primary_expression>(pek, ep.contained_expression(), t, _valid, stream);
 						return;
 					}
 					stream.push_back(p->pop());
 					_valid = true;
-					_contained_primary_expression = make_shared<primary_expression>(primary_expression::kind::KIND_SIZEOF_EXPRESSION, ep.contained_expression(), t, _valid, stream);
+					_contained_primary_expression = make_shared<primary_expression>(pek, ep.contained_expression(), t, _valid, stream);
 					return;
 				}
 				else {

@@ -4,7 +4,7 @@
 I like C and did it for fun. I also like namespaces.
 
 ## Dependencies
-* make
+* CMake (>= 3.0)
 * g++\-9 (C++17)
 * realpath
 * GNU binutils
@@ -12,7 +12,10 @@ I like C and did it for fun. I also like namespaces.
 ## Compiler Setup
 To compile spectre for your machine:
 ```
-$ make install
+$ mkdir build
+$ cd build
+$ cmake -DCMAKE_CXX_COMPILER=g++-9 ..
+$ make
 ```
 This will setup and compile spectre for you.
 
@@ -22,7 +25,7 @@ First, you'll need to copy the `libspectre` directory into your `/usr/include` d
 `/usr/include/libspectre` path. I'd recommend giving your current user full permissions over the folder during setup (you can change this later if you want).
 Additionally, you'll need to add the spectre compiler to your `$PATH` for this build script to work.
 From here on out, I'll assume that you have full permissions to the `/usr/include/libspectre` folder and `spectre` is in your `$PATH`.
-Now, do the following:
+Now, do the following (inside the `/usr/include/libspectre` folder for example):
 ```
 $ mkdir build
 $ cd build

@@ -41,12 +41,16 @@ namespace spectre {
 			kind basic_block_kind();
 			vector<shared_ptr<insn>> get_insns(shared_ptr<basic_blocks> bbs);
 			bool insns_contained();
+			void set_insns_contained(bool b);
 			vector<shared_ptr<insn>> insn_list();
 			void set_insn(int j, shared_ptr<insn> i);
+			void add_insn(shared_ptr<insn> i);
+			void insert_insn(int j, shared_ptr<insn> i);
 			shared_ptr<insn> get_insn(int j);
 			int num_insns();
 			void remove_insn(int j);
 			void set_insn_list(vector<shared_ptr<insn>> il);
+			void clear_insn_list();
 		};
 
 		class basic_blocks {
@@ -65,6 +69,7 @@ namespace spectre {
 			void insert_insn(int j, shared_ptr<insn> i);
 			void remove_insn(int j);
 			shared_ptr<basic_block> get_basic_block(int i);
+			void remove_basic_block(int i);
 			int add_basic_block(shared_ptr<basic_block> b);
 			vector<shared_ptr<basic_block>> get_basic_blocks();
 			const unordered_set<pair<int, int>, indices_hasher>& function_indices();

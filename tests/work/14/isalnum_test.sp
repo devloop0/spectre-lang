@@ -2,11 +2,11 @@ import <"std/ctype">
 import <"std/lib">
 import <"std/syscall">
 
-using std::lib::_Exit;
-using std::syscall::direct_write;
-using std::ctype::isalnum;
 
 func int main() {
+	using std::lib::_Exit;
+	using std::syscall::direct_write;
+	using std::ctype::isalnum;
 	char* str = "c3po...", orig = str;
 	while(isalnum(str@)) str = str[1]$;
 	if(str as unsigned int - orig as unsigned int != 4) {

@@ -19,9 +19,14 @@ namespace spectre {
 	namespace opt {
 
 		pair<unordered_set<int>, unordered_set<int>> function_and_global_headers(shared_ptr<basic_blocks> bbs);
+
+		shared_ptr<basic_blocks> insns_in_bb_2_straight_line(shared_ptr<basic_blocks> bbs);
 		void remove_unused_registers(shared_ptr<basic_blocks> bbs);
+		void remove_unreachable_bbs(shared_ptr<basic_blocks> bbs);
 
 		class basic_dce_pass : public pass {
+		private:
+			pass_manager::debug_level _debug_ctx;
 		public:
 			basic_dce_pass(shared_ptr<pass_manager> pm);
 			basic_dce_pass(shared_ptr<pass_manager> pm, int counter, unordered_set<string> deps);

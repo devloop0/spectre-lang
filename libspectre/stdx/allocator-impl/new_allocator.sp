@@ -9,6 +9,7 @@ namespace stdx {
 			ret->malloc = m;
 			ret->free = f;
 			ret->realloc = r;
+			return ret;
 		}
 	}
 }

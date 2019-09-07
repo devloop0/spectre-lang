@@ -1,5 +1,5 @@
-#ifndef SPECTRE_PASS_MANAGER_HPP
-#define SPECTRE_PASS_MANAGER_HPP
+#ifndef SPECTRE_OPT_PASS_MANAGER_HPP
+#define SPECTRE_OPT_PASS_MANAGER_HPP
 
 #include <unordered_map>
 #include <unordered_set>
@@ -15,6 +15,11 @@ using namespace spectre::ir;
 
 namespace spectre {
 	namespace opt {
+
+		void simplify_cfg(shared_ptr<basic_blocks> bbs);
+		shared_ptr<basic_blocks> insns_in_bb_2_straight_line(shared_ptr<basic_blocks> bbs);
+		void place_insns_in_bb(shared_ptr<basic_blocks> bbs);
+		void remove_unreachable_bbs(shared_ptr<basic_blocks> bbs);
 
 		class pass_manager : public enable_shared_from_this<pass_manager> {
 		public:

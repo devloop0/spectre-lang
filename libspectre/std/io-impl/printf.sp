@@ -12,7 +12,7 @@ namespace std {
 			using namespace std::aliases;
 		
 			unsigned int ret = 0;
-			type arg::va_list* args = arg::va_start(arg::align(sizeof(_fmt)), _fmt$ as byte*);
+			type arg::va_list* args = arg::va_start(_fmt$ as byte*, sizeof{const char*});
 			const char* int_min = "-2147483648";
 			unsigned int int_min_len = str::strlen(int_min);
 			char minus = '-', zero = '0';
@@ -28,7 +28,7 @@ namespace std {
 						case 'i':
 						case 'd': {
 							int i;
-							arg::va_arg(args, i$ as byte*, sizeof{int});
+							arg::va_arg(args, i$ as byte*, sizeof{int}, alignof{int});
 							if (i == lims::INT_MIN)
 								sys::direct_write(1, int_min, int_min_len), ret += int_min_len;
 							else {
@@ -47,7 +47,7 @@ namespace std {
 							break;
 						case 's': {
 							char* string;
-							arg::va_arg(args, string$ as byte*, sizeof{char*});
+							arg::va_arg(args, string$ as byte*, sizeof{char*}, alignof{char*});
 							unsigned int l = str::strlen(string);
 							sys::direct_write(1, string, str::strlen(string));
 							ret += l;
@@ -55,7 +55,7 @@ namespace std {
 							break;
 						case 'u': {
 							unsigned int u;
-							arg::va_arg(args, u$ as byte*, sizeof{unsigned int});
+							arg::va_arg(args, u$ as byte*, sizeof{unsigned int}, alignof{unsigned int});
 							char* buf = stk char(12), iter = buf;
 							while (u as bool) {
 								iter@ = u % 10 + '0';
@@ -72,7 +72,7 @@ namespace std {
 						case 'X': {
 							bool upper = fmt[1] == 'X';
 							unsigned int u;
-							arg::va_arg(args, u$ as byte*, sizeof{unsigned int});
+							arg::va_arg(args, u$ as byte*, sizeof{unsigned int}, alignof{unsigned int});
 							char* buf = stk char(12), iter = buf;
 							while (u as bool) {
 								unsigned char digit = u & 0xf;
@@ -87,7 +87,7 @@ namespace std {
 							break;
 						case 'o': {
 							unsigned int u;
-							arg::va_arg(args, u$ as byte*, sizeof{unsigned int});
+							arg::va_arg(args, u$ as byte*, sizeof{unsigned int}, alignof{unsigned int});
 							char* buf = stk char(16), iter = buf;
 							while (u as bool) {
 								unsigned int digit = u & 7;

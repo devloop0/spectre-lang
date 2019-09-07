@@ -3,6 +3,7 @@ import <"stdx/vector">
 import <"stdx/string">
 import <"std/lib">
 import <"std/string">
+import <"std/ctype">
 
 import "ltoa.sp"
 
@@ -64,13 +65,21 @@ func void display_print_info(type print_info* pi, unsigned int max_nlink_len, un
 
 func int print_info_cmp(const byte* a, const byte* b) {
 	using std::string::strcmp;
+	using std::ctype::tolower;
 
 	type print_info* p1 = a as type print_info** @;
 	type print_info* p2 = b as type print_info** @;
 	
 	char* s1 = p1->name@ == '.' ? p1->name[1]$ : p1->name;
 	char* s2 = p2->name@ == '.' ? p2->name[1]$ : p2->name;
-	return strcmp(s1, s2);
+	while (tolower(s1@) == tolower(s2@)) {
+		if (s1@ == 0) {
+			return 0;
+			break;
+		}
+		s1 = s1[1]$, s2 = s2[1]$;
+	}
+	return tolower(s1@) - tolower(s2@);
 }
 
 func void update_type(char d_type, char* krwx) {

@@ -6,12 +6,12 @@ import "../test.sp"
 using namespace std::aliases;
 
 func int sum(int count, ...) {
-	type arg::va_list* args = arg::va_start(arg::align(sizeof(count)), count$ as byte*);
+	type arg::va_list* args = arg::va_start(count$ as byte*, sizeof{int});
 
 	int s = 0;
 	for (int i = 0; i < count; i++) {
 		int j;
-		arg::va_arg(args, j$ as byte*, sizeof(j));
+		arg::va_arg(args, j$ as byte*, sizeof(j), alignof(j));
 		s += j;
 	}
 	
@@ -20,12 +20,12 @@ func int sum(int count, ...) {
 }
 
 func double favg(int count, ...) {
-	type arg::va_list* args = arg::va_start(arg::align(sizeof(count)), count$ as byte*);
+	type arg::va_list* args = arg::va_start(count$ as byte*, sizeof{int});
 
 	double a = 0;
 	for (int i = 0; i < count; i++) {
 		double d;
-		arg::va_arg(args, d$ as byte*, sizeof(d));
+		arg::va_arg(args, d$ as byte*, sizeof(d), alignof(d));
 		a += d;
 	}
 	
@@ -34,12 +34,12 @@ func double favg(int count, ...) {
 }
 
 func double fstdev(bool pop, int count, double mu, ...) {
-	type arg::va_list* args = arg::va_start(arg::align(sizeof(pop)) + arg::align(sizeof(count)) + arg::align(sizeof(mu)), mu$ as byte*);
+	type arg::va_list* args = arg::va_start(mu$ as byte*, sizeof{double});
 
 	double num = 0;
 	for (int i = 0; i < count; i++) {
 		double d;
-		arg::va_arg(args, d$ as byte*, sizeof(d));
+		arg::va_arg(args, d$ as byte*, sizeof(d), alignof(d));
 		num += (d - mu) * (d - mu);
 	}
 

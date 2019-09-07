@@ -28,7 +28,13 @@ using std::make_shared;
 namespace spectre {
 	namespace ir {
 
-		static const string global_header = "@global";
+		static const string global_header = "@global",
+			malloc_symbol_name = "_std_lib__malloc",
+			free_symbol_name = "_std_lib__free",
+			idiv_symbol_name = "_std_hooks__idiv",
+			uidiv_symbol_name = "_std_hooks__uidiv",
+			imod_symbol_name = "_std_hooks__imod",
+			uimod_symbol_name = "_std_hooks__uimod";
 
 		static constexpr unsigned int PLATFORM_CHAR_BIT = 8;
 
@@ -43,8 +49,9 @@ namespace spectre {
 		static constexpr unsigned int SIZEOF_BYTE = SIZEOF_CHAR;
 		static constexpr unsigned int SIZEOF_VOID = 1;
 
-		static const string LABEL_PREFIX = "L",
-			CASE_PREFIX = "C", DEFAULT_PREFIX = "D";
+		static const string LABEL_PREFIX = ".L",
+			CASE_PREFIX = ".C", DEFAULT_PREFIX = ".D";
+		static const string GLOBAL_SCOPE_PREFIX = "_";
 
 		static shared_ptr<primitive_type>
 			raw_pointer_type = make_shared<primitive_type>(primitive_type::kind::KIND_BYTE, primitive_type::const_kind::KIND_NON_CONST,
@@ -80,6 +87,36 @@ namespace spectre {
 			void_type = make_shared<primitive_type>(primitive_type::kind::KIND_VOID, type::const_kind::KIND_NON_CONST,
 				type::static_kind::KIND_NON_STATIC, primitive_type::sign_kind::KIND_NONE);
 
+		static shared_ptr<function_type>
+			malloc_type = make_shared<function_type>(type::const_kind::KIND_NON_CONST, type::static_kind::KIND_NON_STATIC, raw_pointer_type, 
+				vector<shared_ptr<variable_declaration>>{ make_shared<variable_declaration>(uint_type,
+					token("", "", 0, 0, 0, token::kind::TOKEN_IDENTIFIER, ""), true, vector<token>{}) }, -1),
+			free_type = make_shared<function_type>(type::const_kind::KIND_NON_CONST, type::static_kind::KIND_NON_STATIC, void_type, 
+				vector<shared_ptr<variable_declaration>>{ make_shared<variable_declaration>(raw_pointer_type,
+					token("", "", 0, 0, 0, token::kind::TOKEN_IDENTIFIER, ""), true, vector<token>{}) }, -2);
+
+		static shared_ptr<function_type>
+			idiv_type = make_shared<function_type>(type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, int_type,
+				vector<shared_ptr<variable_declaration>>{
+					make_shared<variable_declaration>(int_type, token("", "", 0, 0, 0, token::kind::TOKEN_IDENTIFIER, ""), true, vector<token>{}),
+					make_shared<variable_declaration>(int_type, token("", "", 0, 0, 0, token::kind::TOKEN_IDENTIFIER, ""), true, vector<token>{})
+				}, -3),
+			uidiv_type = make_shared<function_type>(type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, uint_type,
+				vector<shared_ptr<variable_declaration>>{
+					make_shared<variable_declaration>(uint_type, token("", "", 0, 0, 0, token::kind::TOKEN_IDENTIFIER, ""), true, vector<token>{}),
+					make_shared<variable_declaration>(uint_type, token("", "", 0, 0, 0, token::kind::TOKEN_IDENTIFIER, ""), true, vector<token>{})
+				}, -4),
+			imod_type = make_shared<function_type>(type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, int_type,
+				vector<shared_ptr<variable_declaration>>{
+					make_shared<variable_declaration>(int_type, token("", "", 0, 0, 0, token::kind::TOKEN_IDENTIFIER, ""), true, vector<token>{}),
+					make_shared<variable_declaration>(int_type, token("", "", 0, 0, 0, token::kind::TOKEN_IDENTIFIER, ""), true, vector<token>{})
+				}, -5),
+			uimod_type = make_shared<function_type>(type::const_kind::KIND_CONST, type::static_kind::KIND_NON_STATIC, uint_type,
+				vector<shared_ptr<variable_declaration>>{
+					make_shared<variable_declaration>(uint_type, token("", "", 0, 0, 0, token::kind::TOKEN_IDENTIFIER, ""), true, vector<token>{}),
+					make_shared<variable_declaration>(uint_type, token("", "", 0, 0, 0, token::kind::TOKEN_IDENTIFIER, ""), true, vector<token>{})
+				}, -6);
+
 		class operand;
 		class label_operand;
 		class register_operand;
@@ -88,7 +125,7 @@ namespace spectre {
 		public:
 			enum class kind {
 				KIND_BINARY, KIND_UNARY, KIND_CALL, KIND_CONDITIONAL, KIND_LABEL, KIND_RETURN, KIND_FUNCTION, KIND_ACCESS, KIND_ALIGN,
-				KIND_MEMCPY, KIND_EXT, KIND_TRUNC, KIND_JUMP, KIND_ASM, KIND_VAR, KIND_PHI, KIND_NONE
+				KIND_MEMCPY, KIND_EXT, KIND_TRUNC, KIND_JUMP, KIND_ASM, KIND_VAR, KIND_PHI, KIND_GLOBAL_ARRAY, KIND_AT, KIND_NONE
 			};
 		private:
 			kind _insn_kind;
@@ -98,6 +135,29 @@ namespace spectre {
 			kind insn_kind();
 			virtual string to_string() = 0;
 			virtual void deduplicate() = 0;
+		};
+
+		class label_operand;
+
+		class global_array_insn : public insn {
+		public:
+			enum class directive_kind {
+				KIND_BYTE, KIND_HALF, KIND_WORD, KIND_FLOAT, KIND_DOUBLE, KIND_NONE
+			};
+		private:
+			shared_ptr<label_operand> _label;
+			vector<shared_ptr<operand>> _data;
+			shared_ptr<type> _array_type;
+			directive_kind _directive;
+		public:
+			global_array_insn(directive_kind dk, shared_ptr<label_operand> l, vector<shared_ptr<operand>> d, shared_ptr<type> t);
+			~global_array_insn();
+			shared_ptr<label_operand> label();
+			vector<shared_ptr<operand>> data();
+			shared_ptr<type> array_type();
+			directive_kind directive();
+			string to_string() override;
+			void deduplicate() override;
 		};
 
 		class asm_insn : public insn {
@@ -126,6 +186,7 @@ namespace spectre {
 			jump_insn(shared_ptr<label_operand> l);
 			~jump_insn();
 			shared_ptr<label_operand> label();
+			void set_label(shared_ptr<label_operand> l);
 			string to_string() override;
 			void deduplicate() override;
 		};
@@ -248,13 +309,25 @@ namespace spectre {
 			void deduplicate() override;
 		};
 
+		class function_insn;
+
 		class label_insn : public insn {
 		private:
 			shared_ptr<label_operand> _label;
+			vector<int> _func_param_regs;
+			int _func_return_reg;
+			shared_ptr<function_insn> _orig_func_insn;
 		public:
 			label_insn(shared_ptr<label_operand> l);
+			label_insn(shared_ptr<label_operand> l, vector<int> fpr, int frr, shared_ptr<function_insn> ofi);
 			~label_insn();
 			shared_ptr<label_operand> label();
+			vector<int> func_param_regs();
+			void set_func_param_regs(vector<int> regs);
+			int func_return_reg();
+			void set_func_return_reg(int i);
+			void set_orig_func_insn(shared_ptr<function_insn> ofi);
+			shared_ptr<function_insn> orig_func_insn();
 			string to_string() override;
 			void deduplicate() override;
 		};
@@ -268,6 +341,7 @@ namespace spectre {
 			~conditional_insn();
 			shared_ptr<operand> src();
 			shared_ptr<label_operand> branch();
+			void set_branch(shared_ptr<label_operand> l);
 			string to_string() override;
 			void deduplicate() override;
 		};
@@ -280,9 +354,12 @@ namespace spectre {
 			shared_ptr<type> _result_type;
 			bool _is_variable;
 			shared_ptr<variable_declaration> _variable_decl;
+			shared_ptr<function_type> _called_function_type;
 		public:
-			call_insn(shared_ptr<type> rt, shared_ptr<operand> d, shared_ptr<operand> fo, vector<shared_ptr<operand>> al);
-			call_insn(shared_ptr<type> rt, shared_ptr<operand> d, shared_ptr<operand> fo, vector<shared_ptr<operand>> al, shared_ptr<variable_declaration> vd);
+			call_insn(shared_ptr<type> rt, shared_ptr<operand> d, shared_ptr<operand> fo,
+				vector<shared_ptr<operand>> al, shared_ptr<function_type> ft);
+			call_insn(shared_ptr<type> rt, shared_ptr<operand> d, shared_ptr<operand> fo, vector<shared_ptr<operand>> al,
+				shared_ptr<variable_declaration> vd, shared_ptr<function_type> ft);
 			~call_insn();
 			shared_ptr<operand> function_operand();
 			shared_ptr<type> result_type();
@@ -290,6 +367,7 @@ namespace spectre {
 			vector<shared_ptr<operand>> argument_list();
 			bool is_variable();
 			shared_ptr<variable_declaration> variable_decl();
+			shared_ptr<function_type> called_function_type();
 			string to_string() override;
 			void deduplicate() override;
 		};
@@ -304,6 +382,7 @@ namespace spectre {
 				KIND_LMOD, KIND_ULMOD, KIND_IMOD, KIND_UIMOD, KIND_SMOD, KIND_USMOD, KIND_CMOD, KIND_UCMOD,
 				KIND_LSHL, KIND_ISHL, KIND_SSHL, KIND_CSHL,
 				KIND_LSHR, KIND_ISHR, KIND_SSHR, KIND_CSHR,
+				KIND_LSHRA, KIND_ISHRA, KIND_SSHRA, KIND_CSHRA,
 				KIND_LBAND, KIND_IBAND, KIND_SBAND, KIND_CBAND,
 				KIND_LBOR, KIND_IBOR, KIND_SBOR, KIND_CBOR,
 				KIND_LBXOR, KIND_IBXOR, KIND_SBXOR, KIND_CBXOR,
@@ -344,9 +423,8 @@ namespace spectre {
 				KIND_LMINUS, KIND_IMINUS, KIND_SMINUS, KIND_CMINUS, KIND_DMINUS, KIND_FMINUS,
 				KIND_LNOT,
 				KIND_LBNOT, KIND_IBNOT, KIND_SBNOT, KIND_CBNOT,
-				KIND_LAT, KIND_IAT, KIND_SAT, KIND_CAT, KIND_DAT, KIND_FAT,
 				KIND_LMOV, KIND_IMOV, KIND_SMOV, KIND_CMOV, KIND_DMOV, KIND_FMOV,
-				KIND_RESV, KIND_STK, KIND_NEW, KIND_DELETE,
+				KIND_RESV, KIND_STK, 
 				KIND_LTOD, KIND_LTOF, KIND_ULTOD, KIND_ULTOF,
 				KIND_ITOD, KIND_ITOF, KIND_UITOD, KIND_UITOF,
 				KIND_STOD, KIND_STOF, KIND_USTOD, KIND_USTOF,
@@ -436,7 +514,7 @@ namespace spectre {
 
 		class register_operand : public operand {
 		private:
-			int _virtual_register_number, _original_virtual_register_number;
+			int _virtual_register_number, _original_virtual_register_number, _base_virtual_register_number;
 			bool _dereference;
 			shared_ptr<type> _register_type;
 		public:
@@ -444,21 +522,24 @@ namespace spectre {
 			~register_operand();
 			int virtual_register_number();
 			shared_ptr<type> register_type();
+			void set_register_type(shared_ptr<type> t);
 			bool dereference();
 			void set_dereference(bool b);
 			void set_virtual_register_number(int vrn, bool overwrite = true);
+			void set_base_virtual_register_number(int vrn);
 			string to_string() override;
 			int original_virtual_register_number();
+			int base_virtual_register_number();
 		};
 
 		class middle_ir {
 		private:
 			map<string, shared_ptr<variable_declaration>> _mangled_name_2_ast_map;
 			map<string, shared_ptr<register_operand>> _mangled_name_2_register_map;
-			map<string, shared_ptr<operand>> _mangled_name_2_constexpr_value_map;
+			map<string, variant<bool, int, unsigned int, float, double, string>> _mangled_name_2_constexpr_value_map;
 			vector<shared_ptr<insn>> _insn_list, _global_insn_list;
 			shared_ptr<spectre::parser::parser> _ast_parser;
-			int _virtual_register_counter, _label_counter;
+			int _virtual_register_counter, _label_counter, _misc_counter;
 			shared_ptr<label_operand> _return_label;
 			shared_ptr<register_operand> _return_register;
 			vector<shared_ptr<function_insn>> _function_insn_list;
@@ -482,9 +563,10 @@ namespace spectre {
 			void add_variable(string mangled_name, shared_ptr<variable_declaration> vdecl);
 			void map_variable_register(string mangled_name, shared_ptr<register_operand> op);
 			shared_ptr<register_operand> lookup_variable_register(string mangled_name);
-			void add_constexpr_mapping(string mangled_name, shared_ptr<operand> op);
-			shared_ptr<operand> lookup_constexpr_mapping(string mangled_name);
+			void add_constexpr_mapping(string mangled_name, variant<bool, int, unsigned int, float, double, string> c);
+			pair<bool, variant<bool, int, unsigned int, float, double, string>> lookup_constexpr_mapping(string mangled_name);
 			void report_internal(string msg, string fn, int ln, string fl);
+			void report(error e);
 			void push_loop_start_stack(shared_ptr<label_operand> l);
 			void push_loop_end_stack(shared_ptr<label_operand> l);
 			shared_ptr<label_operand> loop_start();
@@ -509,6 +591,7 @@ namespace spectre {
 			vector<string> variable_names();
 			vector<string> constexpr_variable_names();
 			int next_virtual_register_number();
+			int next_misc_counter();
 			int get_virtual_register_number();
 			void add_register_type(int j, shared_ptr<type> t);
 			shared_ptr<type> get_register_type(int j);
@@ -548,6 +631,14 @@ namespace spectre {
 		pair<bool, unary_insn::kind> which_mov_insn(shared_ptr<middle_ir> mi, shared_ptr<type> t);
 		tuple<vector<shared_ptr<stmt>>, vector<shared_ptr<stmt>>, vector<shared_ptr<stmt>>, vector<shared_ptr<stmt>>> reorder_stmt_list(shared_ptr<middle_ir> mi, vector<shared_ptr<stmt>> sl);
 		bool is_function_main(shared_ptr<middle_ir> mi, shared_ptr<function_symbol> fsym);
+		variant<bool, int, unsigned int, float, double, string> evaluate_constant_expression(shared_ptr<middle_ir> mi, shared_ptr<assignment_expression> ae);
+		template<typename C, typename TL, typename TR> auto raw_arithmetic_binary_expression_evaluator(shared_ptr<middle_ir> mi, TL lhs, TR rhs, binary_expression::operator_kind ok);
+		template<typename C, typename TL, typename TR> bool raw_logical_binary_expression_evaluator(shared_ptr<middle_ir> mi, TL lhs, TR rhs, binary_expression::operator_kind ok);
+		shared_ptr<operand> constexpr_value_2_operand(shared_ptr<middle_ir> mi, variant<bool, int, unsigned int, float, double, string> c, shared_ptr<type> t);
+
+		shared_ptr<type> copy_type(shared_ptr<type> t);
+		shared_ptr<type> dereference(shared_ptr<type> t);
+		shared_ptr<type> add_indirection(shared_ptr<type> t);
 
 		void generate_middle_ir(shared_ptr<middle_ir> mi, shared_ptr<spectre::parser::parser> p);
 		void generate_stmt_middle_ir(shared_ptr<middle_ir> mi, shared_ptr<stmt> s);
@@ -571,6 +662,15 @@ namespace spectre {
 		void generate_delete_stmt_middle_ir(shared_ptr<middle_ir> mi, shared_ptr<delete_stmt> ds);
 		void generate_asm_stmt_middle_ir(shared_ptr<middle_ir> mi, shared_ptr<asm_stmt> as);
 		void generate_access_stmt_middle_ir(shared_ptr<middle_ir> mi, shared_ptr<access_stmt> as);
+
+		enum class main_function_kind {
+			MAIN_NO_ARGS,
+			MAIN_ARGC_ARGV,
+			MAIN_ARGC_ARGV_ENVP,
+			NONE
+		};
+
+		main_function_kind main_function_defined(shared_ptr<function_symbol> fsym);
 	}
 }
 

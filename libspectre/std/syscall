@@ -1,37 +1,37 @@
 namespace std {
 	namespace syscall {
 
-		static constexpr unsigned int LINUX_MIPS = 4000;
-		static constexpr unsigned int LINUX_MIPS_EXIT = LINUX_MIPS + 1;
-		static constexpr unsigned int LINUX_MIPS_READ = LINUX_MIPS + 3;
-		static constexpr unsigned int LINUX_MIPS_WRITE = LINUX_MIPS + 4;
-		static constexpr unsigned int LINUX_MIPS_OPEN = LINUX_MIPS + 5;
-		static constexpr unsigned int LINUX_MIPS_CLOSE = LINUX_MIPS + 6;
-		static constexpr unsigned int LINUX_MIPS_LSEEK = LINUX_MIPS + 19;
-		static constexpr unsigned int LINUX_MIPS_SYNC = LINUX_MIPS + 36;
-		static constexpr unsigned int LINUX_MIPS_BRK = LINUX_MIPS + 45;
-		static constexpr unsigned int LINUX_MIPS_STAT = LINUX_MIPS + 106;
-		static constexpr unsigned int LINUX_MIPS_FSTAT = LINUX_MIPS + 108;
-		static constexpr unsigned int LINUX_MIPS_GETDENTS = LINUX_MIPS + 141;
-		static constexpr unsigned int LINUX_MIPS_OPENAT = LINUX_MIPS + 288;
-		static constexpr unsigned int LINUX_MIPS_SYNCFS = LINUX_MIPS + 342;
+		static constexpr unsigned int LINUX_ARM = 0;
+		static constexpr unsigned int LINUX_ARM_EXIT = LINUX_ARM + 1;
+		static constexpr unsigned int LINUX_ARM_READ = LINUX_ARM + 3;
+		static constexpr unsigned int LINUX_ARM_WRITE = LINUX_ARM + 4;
+		static constexpr unsigned int LINUX_ARM_OPEN = LINUX_ARM + 5;
+		static constexpr unsigned int LINUX_ARM_CLOSE = LINUX_ARM + 6;
+		static constexpr unsigned int LINUX_ARM_LSEEK = LINUX_ARM + 19;
+		static constexpr unsigned int LINUX_ARM_SYNC = LINUX_ARM + 36;
+		static constexpr unsigned int LINUX_ARM_BRK = LINUX_ARM + 45;
+		static constexpr unsigned int LINUX_ARM_STAT = LINUX_ARM + 195;
+		static constexpr unsigned int LINUX_ARM_FSTAT = LINUX_ARM + 197;
+		static constexpr unsigned int LINUX_ARM_GETDENTS = LINUX_ARM + 141;
+		static constexpr unsigned int LINUX_ARM_OPENAT = LINUX_ARM + 322;
+		static constexpr unsigned int LINUX_ARM_SYNCFS = LINUX_ARM + 373;
 
 		static constexpr unsigned int O_RDONLY = 0x0;
 		static constexpr unsigned int O_WRONLY = 0x1;
 		static constexpr unsigned int O_RDWR = 0x2;
 
-		static constexpr unsigned int O_APPEND = 0x8;
-		static constexpr unsigned int O_ASYNC = 0x1000;
+		static constexpr unsigned int O_APPEND = 0x400;
+		static constexpr unsigned int O_ASYNC = 0x2000;
 		static constexpr unsigned int O_CLOEXEC = 0x80000;
-		static constexpr unsigned int O_CREAT = 0x100;
-		static constexpr unsigned int O_DIRECTORY = 0x10000;
-		static constexpr unsigned int O_DSYNC = 0x10;
-		static constexpr unsigned int O_EXCL = 0x400;
-		static constexpr unsigned int O_NOCTTY = 0x800;
-		static constexpr unsigned int O_NOFOLLOW = 0x20000;
-		static constexpr unsigned int O_NONBLOCK = 0x80;
-		static constexpr unsigned int O_NDELAY = 0x80;
-		static constexpr unsigned int O_SYNC = 0x4010;
+		static constexpr unsigned int O_CREAT = 0x40;
+		static constexpr unsigned int O_DIRECTORY = 0x4000;
+		static constexpr unsigned int O_DSYNC = 0x1000;
+		static constexpr unsigned int O_EXCL = 0x80;
+		static constexpr unsigned int O_NOCTTY = 0x100;
+		static constexpr unsigned int O_NOFOLLOW = 0x8000;
+		static constexpr unsigned int O_NONBLOCK = 0x800;
+		static constexpr unsigned int O_NDELAY = 0x800;
+		static constexpr unsigned int O_SYNC = 0x101000;
 		static constexpr unsigned int O_TRUNC = 0x200;
 
 		static constexpr unsigned int S_IRWXU = 0x1c0;
@@ -51,54 +51,39 @@ namespace std {
 		static constexpr unsigned int S_ISGID = 0x400;
 		static constexpr unsigned int S_ISVTX = 0x200;
 
-		static constexpr unsigned int STAT_sizeof = 144;
-		static constexpr unsigned int STAT_st_dev_OFFSET = 0;
-		static constexpr unsigned int STAT_st_pad1_OFFSET = 4;
-		static constexpr unsigned int STAT_st_ino_OFFSET = 16;
-		static constexpr unsigned int STAT_st_mode_OFFSET = 20;
-		static constexpr unsigned int STAT_st_nlink_OFFSET = 24;
-		static constexpr unsigned int STAT_st_uid_OFFSET = 28;
-		static constexpr unsigned int STAT_st_gid_OFFSET = 32;
-		static constexpr unsigned int STAT_st_rdev_OFFSET = 36;
-		static constexpr unsigned int STAT_st_pad2_OFFSET = 40;
-		static constexpr unsigned int STAT_st_size_OFFSET = 48;
-		static constexpr unsigned int STAT_st_pad3_OFFSET = 52;
-		static constexpr unsigned int STAT_st_atim_tv_sec_OFFSET = 56;
-		static constexpr unsigned int STAT_st_atim_tv_nsec_OFFSET = 60;
-		static constexpr unsigned int STAT_st_mtim_tv_sec_OFFSET = 64;
-		static constexpr unsigned int STAT_st_mtim_tv_nsec_OFFSET = 68;
-		static constexpr unsigned int STAT_st_ctim_tv_sec_OFFSET = 72;
-		static constexpr unsigned int STAT_st_ctim_tv_nsec_OFFSET = 76;
-		static constexpr unsigned int STAT_st_blksize_OFFSET = 80;
-		static constexpr unsigned int STAT_st_blocks_OFFSET = 84;
-		static constexpr unsigned int STAT_st_pad5_OFFSET = 88;
-
 		static constexpr unsigned int PATH_MAX = 4096;
 		static constexpr unsigned int NAME_MAX = 255;
 
 		struct stat {
 			unsigned long st_dev;
-			long st_pad1_0, st_pad1_1, st_pad1_2;
+			unsigned long st_dev_2;
+			unsigned short __pad1;
 			unsigned long st_ino;
 			unsigned int st_mode;
-			unsigned long st_nlink;
+			unsigned int st_nlink;
 			unsigned int st_uid;
 			unsigned int st_gid;
 			unsigned long st_rdev;
-			long st_pad2_0, st_pad2_1;
-			unsigned long st_size;
-			long st_pad3_0;
-			unsigned long st_atime_tv_sec;
-			unsigned long st_atime_tv_nsec;
-			unsigned long st_mtime_tv_sec;
-			unsigned long st_mtime_tv_nsec;
-			unsigned long st_ctime_tv_sec;
-			unsigned long st_ctime_tv_nsec;
-			unsigned long st_blksize;
-			unsigned long st_blocks;
-			long st_pad5_0, st_pad5_1, st_pad5_2, st_pad5_3, st_pad5_4, st_pad5_5,
-				st_pad5_6, st_pad5_7, st_pad5_8, st_pad5_9, st_pad5_10, st_pad5_11,
-				st_pad5_12, st_pad5_13;
+			unsigned long st_rdev_2;
+			unsigned short __pad2;
+			long st_size_2;
+			long st_size;
+			long st_blksize_2;
+			long st_blksize;
+			long st_blocks_2;
+			long st_blocks;
+			long st_atim_tv_sec;
+			long st_atim_tv_nsec;
+			long st_mtim_tv_sec;
+			long st_mtim_tv_nsec;
+			long st_ctim_tv_sec;
+			long st_ctim_tv_nsec;
+			unsigned long __glibc_reserved_4;
+			unsigned long __glibc_reserved_5;
+			unsigned long __glibc_reserved_6;
+			unsigned long __glibc_reserved_7;
+			unsigned long __glibc_reserved_8;
+			unsigned long __glibc_reserved_9;
 		}
 
 		static constexpr unsigned int LINUX_DIRENT_d_ino_OFFSET = 0;
@@ -131,56 +116,39 @@ namespace std {
 
 		static constexpr unsigned int AT_FDCWD = -100;
 
+		func int do_syscall4(int sysnum, int a1, int a2, int a3, int a4);
+		func int do_syscall3(int sysnum, int a1, int a2, int a3);
+		func int do_syscall2(int sysnum, int a1, int a2);
+		func int do_syscall1(int sysnum, int a1);
+		func int do_syscall0(int sysnum);
+		func int do_syscall_return(int ret);
+
 		func int direct_write(int fd, const char* buf, const unsigned int count);
-		
 		func int direct_read(int fd, char* buf, const unsigned int count);
-		
 		func void exit(const int status_code);
-
 		func byte* raw_brk(const byte* data);
-
 		func int direct_brk(const byte* data);
-
 		func byte* curr_brk();
-
 		func byte* direct_sbrk(const int inc);
-
 		func int direct_open(const char* pathname, int flags);
-
 		func int direct_open2(const char* pathname, int flags, unsigned int mode);
-
 		func int direct_close(int fd);
-
 		func void direct_sync();
-
 		func int direct_syncfs(int fd);
-
 		func int direct_stat(const char* pathname, type stat* statbuf);
-
 		func int direct_fstat(int fd, type stat* statbuf);
-
-		func void bytes_to_stat(byte* stream, type stat* statbuf);
-	
 		func int direct_getdents(unsigned int fd, byte* stream, unsigned int count);
 
 		func bool S_ISREG(int m);
-
 		func bool S_ISDIR(int m);
-
 		func bool S_ISCHR(int m);
-
 		func bool S_ISBLK(int m);
-
 		func bool S_ISFIFO(int m);
-
 		func bool S_ISLNK(int m);
-
 		func bool S_ISSOCK(int m);
 
 		func int direct_lseek(int fd, int offset, int whence);
-		
 		func int direct_openat(int fd, const char* pathname, int flags);
-
 		func int direct_openat2(int fd, const char* pathname, int flags, unsigned int mode);
 	}
 }

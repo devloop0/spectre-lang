@@ -35,8 +35,10 @@ func int main() {
 	char* m2 = malloc(50) as char*, m3 = malloc(50) as char*;
 	for(int i = 0; i < 50; i++) m2[i] = 100 + i, m3[i] = 200 + i;
 	m2 = realloc(m2 as byte*, 100) as char*, m3 = realloc(m3 as byte*, 25) as char*;
-	for(int i = 0; i < 50; i++)
-		if(m2[i] != i + 100) fail();
+	for(int i = 0; i < 50; i++) {
+		if(m2[i] != i + 100)
+			fail();
+	}
 	for(int i = 0; i < 25; i++)
 		if(m3[i] != i + 200) fail();
 	free(m3 as byte*), free(m2 as byte*);

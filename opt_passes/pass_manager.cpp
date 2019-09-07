@@ -80,11 +80,16 @@ namespace spectre {
 			}
 
 			shared_ptr<basic_blocks> bbs = generate_cfg(mi);
+			place_insns_in_bb(bbs);
+			simplify_cfg(bbs);
+			remove_unreachable_bbs(bbs);
+			bbs = insns_in_bb_2_straight_line(bbs);
 
 			auto print_bbs = [this](shared_ptr<basic_blocks> bbs) {
-				if (_debug >= debug_level::KIND_DEBUG)
+				if (_debug >= debug_level::KIND_DEBUG) {
 					print_bbs_cfg(bbs);
-				cout << endl << "=========================" << endl;
+					cout << endl << "=========================" << endl;
+				}
 			};
 
 			if (_debug >= debug_level::KIND_DEBUG)

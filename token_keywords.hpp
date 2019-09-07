@@ -52,6 +52,7 @@ namespace spectre {
 		const static string _auto = "auto";
 		const static string _delete = "delete";
 		const static string _union = "union";
+		const static string _alignof = "alignof";
 	}
 }
 

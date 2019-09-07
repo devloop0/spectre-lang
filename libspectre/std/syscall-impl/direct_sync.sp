@@ -4,10 +4,7 @@ namespace std {
 	namespace syscall {
 
 		func void direct_sync() {
-			__asm__ (
-				LINUX_MIPS_SYNC "$2" : 
-				"syscall"
-			);
+			do_syscall0(LINUX_ARM_SYNC);
 		}
 	}
 }

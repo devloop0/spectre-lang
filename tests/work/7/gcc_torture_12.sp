@@ -23,7 +23,7 @@ struct d {
 }
 
 func int main() {
-	if(sub1(20, 3) != sizeof{type d} * 3) {
+	if(sub1(20, 3) != sizeof{type d} * 6) {
 		std::syscall::direct_write(1, "N\n", 2);
 		return 1;
 	}

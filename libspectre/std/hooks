@@ -15,5 +15,10 @@ namespace std {
 		func int sp_at_quick_exit(fn void() f);
 	
 		func void sp_quick_exit(int status);
+
+		func int idiv(int n, int d);
+		func unsigned int uidiv(unsigned int n, unsigned int d);
+		func int imod(int n, int d);
+		func unsigned int uimod(unsigned int n, unsigned int d);
 	}
 }

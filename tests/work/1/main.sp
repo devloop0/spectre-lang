@@ -5,7 +5,7 @@ func int main() {
 	using std::string::strlen;
 	using std::syscall::exit;
 	# exit(1);
-	char* name = new char(256);
+	char* name = stk char(256);
 	using std::syscall::direct_write;
 	using std::syscall::direct_read;
 	char* to_write1 = "Please enter your name: ";

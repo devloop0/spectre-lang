@@ -2,6 +2,7 @@ import <"std/syscall">
 import <"stdx/vector">
 import <"std/string">
 import <"std/lib">
+import <"std/io">
 
 import "ltoa.sp"
 

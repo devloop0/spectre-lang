@@ -44,15 +44,15 @@ func void load_data() {
 func int main() {
 	load_data();
 	if(sizeof{int} == 2) {
-		direct_write(1, "N\n", 2);
+		direct_write(1, "N1\n", 2);
 		return 1;
 	}
 	else if(sizeof{int} == 2 && data_ptr[0].dummy != 0x55'55) {
-		direct_write(1, "N\n", 2);
+		direct_write(1, "N2\n", 2);
 		return 1;
 	}
 	else if(sizeof{int} > 2 && data_ptr[0].dummy != 0x55'55'55'55) {
-		direct_write(1, "N\n", 2);
+		direct_write(1, "N3\n", 2);
 		return 1;
 	}
 	direct_write(1, "Y\n", 2);

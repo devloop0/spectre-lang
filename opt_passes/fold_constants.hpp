@@ -1,5 +1,5 @@
-#ifndef SPECTRE_FOLD_CONSTANTS_HPP
-#define SPECTRE_FOLD_CONSTANTS_HPP
+#ifndef SPECTRE_OPT_FOLD_CONSTANTS_HPP
+#define SPECTRE_OPT_FOLD_CONSTANTS_HPP
 
 #include "basic_block.hpp"
 #include "middle_ir.hpp"
@@ -16,12 +16,14 @@ using std::variant;
 
 namespace spectre {
 	namespace opt {
+		shared_ptr<basic_blocks> insns_in_bb_2_straight_line(shared_ptr<basic_blocks> bbs);
+
 		class constant_data {
 		public:
 			using immediate_data = variant<char, short, int, long, float, double, string>;
 		private:
 			bool _constant;
-			 immediate_data _immediate;
+			immediate_data _immediate;
 		public:
 			constant_data(immediate_data v);
 			constant_data(char c);
@@ -36,7 +38,7 @@ namespace spectre {
 			immediate_data immediate();
 		};
 
-		unordered_map<int, unordered_map<int, shared_ptr<constant_data>>> fold_constants(shared_ptr<basic_blocks> bbs);
+		unordered_map<int, unordered_map<int, shared_ptr<constant_data>>> fold_constants(shared_ptr<basic_blocks>& bbs);
 
 		class fold_constants_pass : public pass {
 		private:
@@ -48,6 +50,8 @@ namespace spectre {
 			shared_ptr<basic_blocks> run_pass(shared_ptr<basic_blocks> bbs) override;
 			unordered_map<int, unordered_map<int, shared_ptr<constant_data>>> data();
 		};
+
+		void propagate_type_changes(shared_ptr<basic_blocks> bbs, unordered_map<int, shared_ptr<type>> reg_2_type);
 	}
 }
 

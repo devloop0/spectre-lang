@@ -4,12 +4,7 @@ namespace std {
 	namespace syscall {
 
 		func void exit(const int status_code) {
-			__asm__ (
-				status_code "$4" :
-				"lw $4, 0($4)" :
-				LINUX_MIPS_EXIT "$2" :
-				"syscall"
-			);
+			do_syscall1(LINUX_ARM_EXIT, status_code);
 		}
 	}
 }

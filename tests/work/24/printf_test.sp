@@ -8,12 +8,12 @@ import <"std/io">
 func int avg(int n, int weight, ...) {
 	using namespace std::aliases;
 
-	type arg::va_list* v = arg::va_start(arg::align(sizeof(n)) + arg::align(sizeof(weight)), weight$ as byte*);
+	type arg::va_list* v = arg::va_start(weight$ as byte*, sizeof{int});
 	
 	int sum = 0;
 	for (int i = 0; i < n; i++) {
 		int i;
-		arg::va_arg(v, i$ as byte*, sizeof{int});
+		arg::va_arg(v, i$ as byte*, sizeof{int}, alignof{int});
 		sum += i;
 	}
 	arg::va_end(v);

@@ -3,6 +3,10 @@
 2
 3
 ------------Return code: 0-------------
+------------Building ./strcmp_test.sp-------------
+------------Running ./strcmp_test.sp-------------
+Before
+------------Return code: 0-------------
 ------------Building ./post_inc_test.sp-------------
 ------------Running ./post_inc_test.sp-------------
 2
@@ -10,10 +14,4 @@
 ------------Return code: 0-------------
 ------------Building ./cpp_sucks.sp-------------
 ------------Running ./cpp_sucks.sp-------------
-skcuS++C¿ð
-Lol jk, and big endian :/
-------------Return code: 0-------------
-------------Building ./strcmp_test.sp-------------
-------------Running ./strcmp_test.sp-------------
-Before
-------------Return code: 0-------------
+C++Sucks------------Return code: 0-------------

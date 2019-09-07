@@ -1,5 +1,5 @@
-#ifndef SPECTRE_INSNS_IN_BB_HPP
-#define SPECTRE_INSNS_IN_BB_HPP
+#ifndef SPECTRE_OPT_INSNS_IN_BB_HPP
+#define SPECTRE_OPT_INSNS_IN_BB_HPP
 
 #include "pass_manager.hpp"
 #include "pass.hpp"

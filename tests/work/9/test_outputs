@@ -1,21 +1,9 @@
-------------Building ./gcc_torture_26.sp-------------
-------------Running ./gcc_torture_26.sp-------------
-Y
-------------Return code: 0-------------
-------------Building ./gcc_torture_22.sp-------------
-------------Running ./gcc_torture_22.sp-------------
-Y
-------------Return code: 0-------------
 ------------Building ./gcc_torture_21.sp-------------
 ------------Running ./gcc_torture_21.sp-------------
 Y
 ------------Return code: 0-------------
-------------Building ./fn_ptr_eq.sp-------------
-------------Running ./fn_ptr_eq.sp-------------
-Y
-------------Return code: 0-------------
-------------Building ./tern_expr_2.sp-------------
-------------Running ./tern_expr_2.sp-------------
+------------Building ./gcc_torture_26.sp-------------
+------------Running ./gcc_torture_26.sp-------------
 Y
 ------------Return code: 0-------------
 ------------Building ./gcc_torture_24.sp-------------
@@ -26,11 +14,23 @@ Y
 ------------Running ./gcc_torture_25.sp-------------
 Y
 ------------Return code: 0-------------
-------------Building ./gcc_torture_23.sp-------------
-------------Running ./gcc_torture_23.sp-------------
+------------Building ./gcc_torture_22.sp-------------
+------------Running ./gcc_torture_22.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./fn_ptr_eq.sp-------------
+------------Running ./fn_ptr_eq.sp-------------
 Y
 ------------Return code: 0-------------
 ------------Building ./median.sp-------------
 ------------Running ./median.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./tern_expr_2.sp-------------
+------------Running ./tern_expr_2.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./gcc_torture_23.sp-------------
+------------Running ./gcc_torture_23.sp-------------
 Y
 ------------Return code: 0-------------

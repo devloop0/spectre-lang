@@ -1,5 +1,7 @@
 import <"std/syscall">
+import <"std/string">
 import <"std/lib">
+import <"std/assert">
 
 func void fail() {
 	using std::syscall::direct_write;

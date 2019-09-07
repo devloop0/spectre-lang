@@ -58,6 +58,10 @@ namespace spectre {
 			return _insns_contained;
 		}
 
+		void basic_block::set_insns_contained(bool b) {
+			_insns_contained = b;
+		}
+
 		vector<shared_ptr<insn>> basic_block::insn_list() {
 			return _insn_list;
 		}
@@ -66,6 +70,16 @@ namespace spectre {
 			if (j < 0 || j >= _insn_list.size())
 				return;
 			_insn_list[j] = i;
+		}
+
+		void basic_block::insert_insn(int j, shared_ptr<insn> i) {
+			if (j < 0 || j > _insn_list.size())
+				return;
+			_insn_list.insert(_insn_list.begin() + j, i);
+		}
+
+		void basic_block::add_insn(shared_ptr<insn> i) {
+			_insn_list.push_back(i);
 		}
 
 		shared_ptr<insn> basic_block::get_insn(int j) {
@@ -86,6 +100,12 @@ namespace spectre {
 
 		void basic_block::set_insn_list(vector<shared_ptr<insn>> il) {
 			_insn_list = il;
+		}
+
+		void basic_block::clear_insn_list() {
+			if (!_insns_contained)
+				return;
+			_insn_list.clear();
 		}
 
 		vector<shared_ptr<insn>> basic_block::get_insns(shared_ptr<basic_blocks> bbs) {
@@ -157,6 +177,12 @@ namespace spectre {
 			if (0 <= i && i < _basic_blocks.size())
 				return _basic_blocks[i];
 			return nullptr;
+		}
+
+		void basic_blocks::remove_basic_block(int i) {
+			if (i < 0 || i >= _basic_blocks.size())
+				return;
+			_basic_blocks.erase(_basic_blocks.begin() + i);
 		}
 
 		vector<shared_ptr<basic_block>> basic_blocks::get_basic_blocks() {
