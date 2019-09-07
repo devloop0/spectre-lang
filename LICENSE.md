@@ -11,7 +11,7 @@ or code, those changes must be made open source with this license.
 code in this repository), feel free to just use the tooling and keep your code to yourself.
 * If you contribute something to this repository with this license, you accept that all of your code will fall under this same license. This means that if you
 change the code and re-distribute any resulting outputs or code, then you need to open source it. The same holds for me.
-* If you have any questions about this license, please contact me so that I can answer your questions and if need be, modify this license accordingly.
+* If you have any questions about this license, please contact me so that I can answer your questions.
 
 ### Philosophy 
 **Note:** This is not part of the license above, even though this is a subsection.
@@ -28,4 +28,4 @@ In summary, even though I have read online that what I have written is similar t
 read the license from a legal background, I do not feel comfortable changing it.
 
 If you've read this far, you can probably tell that the minutia of legality is not my cup of tea. Just follow the rules outlined above in good faith and I'm sure that
-there'll be no problems.
+there'll be no problems. If you have any questions, just send me a message, and I'm sure we can reach an understanding.
