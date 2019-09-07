@@ -98,7 +98,7 @@ with a Raspbian Linux distribution.
 If you are looking for the old, MIPS backend, check out [this README](MIPS_AST_backend_README.md).
 
 ## Testing
-Inside the `tests/` folder, there are two folders, `work/` and `reg_outputs/`. `work/` contains tests you can automatically run (see below). `ref_outputs/` contains the
+Inside the `tests/` folder, there are two folders, `work/` and `ref_outputs/`. `work/` contains tests you can automatically run (see below). `ref_outputs/` contains the
 reference outputs for the tests.
 Once again, this assumes the standard library from before.
 ```
@@ -117,7 +117,7 @@ The more complex ones include:
 * A full expression evaluator. All of C's binary operators are supported; multiple statements (separated by semicolons) are also supported as well.
 This is in the `samples/expr_eval/` folder.
 * A simple ls clone; this includes some of the output provided by the traditional `ls -la` including displaying hidden files, file permissions, file sizes, etc.
-* A simple du clone; this is essentially the output of `du -b` on a regular files.
+* A simple du clone; this is essentially the output of `du -b` on regular files.
 
 ## Future Work
 * Should make the `sp` script more robust by just doing the entire thing in C++ so it'll handle more options as well. Currently, it takes all files as inputs and assumes your first file is the file with your main function.
