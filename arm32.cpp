@@ -299,7 +299,11 @@ namespace spectre {
 							bool needs_stk = fp_arg_reg_num >= registers::num_fp_argument_registers
 								|| is_variadic;
 							if (needs_stk) {
-								curr_stk_offs += (curr_stk_offs % sd->alignment);
+								if (curr_stk_offs % sd->alignment != 0) {
+									int to_next_alignment = sd->alignment
+										- (curr_stk_offs % sd->alignment);
+									curr_stk_offs += to_next_alignment;
+								}
 								arg_pos_2_stk_offs[arg_pos] = curr_stk_offs;
 								curr_stk_offs += sd->size;
 							}
@@ -311,7 +315,11 @@ namespace spectre {
 								|| is_struct_type(bbs->get_middle_ir(), param_type)
 								|| is_variadic;
 							if (needs_stk) {
-								curr_stk_offs += (curr_stk_offs % sd->alignment);
+								if (curr_stk_offs % sd->alignment != 0) {
+									int to_next_alignment = sd->alignment
+										- (curr_stk_offs % sd->alignment);
+									curr_stk_offs += to_next_alignment;
+								}
 								arg_pos_2_stk_offs[arg_pos] = curr_stk_offs;
 								curr_stk_offs += sd->size;
 							}

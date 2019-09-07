@@ -100,6 +100,12 @@ namespace std {
 							else while (iter != buf[-1]$) sys::direct_write(1, iter, 1), ret++, iter = iter[-1]$;
 						}
 							break;
+						case 'c': {
+							char c;
+							arg::va_arg(args, c$ as byte*, sizeof{char}, alignof{char});
+							sys::direct_write(1, c$, 1);
+						}
+							break;
 						default:
 							break;
 						}
