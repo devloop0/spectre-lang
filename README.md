@@ -1,4 +1,4 @@
-# Spectre: A C-like compiled language.
+# Spectre: A C-like, compiled programming language
 
 ## Why?
 To sum it up simply: I like C and did it for fun. I also like namespaces.
