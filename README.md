@@ -1,7 +1,20 @@
 # Spectre: A C-like compiled language.
 
 ## Why?
-I like C and did it for fun. I also like namespaces.
+To sum it up simply: I like C and did it for fun. I also like namespaces.
+
+If you enjoy programming in C, you'll definitely feel quite at home with this language.
+
+## Contributing
+* There'll probably always be more things to add to the standard library and now, more optimizations to add to the compiler (this is putting aside language features as well).
+Feel free to lend a hand! Any help would always be appreciated :^).
+* See the [LICENSE](LICENSE.md) for what applies to this code (and code you would contribute).
+* If something went terribly wrong, feel free to let me know and I'll try my best to rectify it.
+* Most importantly, this project was a chance for me to build something from the ground up and learn how stuff I works. If you are reading this and want to contribute,
+I'd like to keep this spirit going and hope you feel the same way.
+
+## License
+See the [LICENSE](LICENSE.md) file.
 
 ## Dependencies
 * CMake (>= 3.0)
@@ -68,7 +81,7 @@ Save either snippet in a file called `hello.sp` (or really whatever you want, I'
 Now, run the following:
 ```
 $ spectre hello.sp
-$ as -mips32 hello.s -o hello.o
+$ as -mfloat-abi=hard -mfpu=vfp hello.s -o hello.o
 $ ld hello.o -o hello -L/usr/include/libspectre -l:libspectre.a
 $ ./hello
 ```
@@ -81,24 +94,30 @@ Where the `sp` command is just a bash script wrapper around the `spectre` compil
 
 ## Tips
 If you don't have access to a physical ARMV6L machine, I would recommend using QEMU to emulate one. I've tested this on a QEMU 32-bit emulated CPU that has floating point support
-with the a Raspbian distribution.
+with a Raspbian Linux distribution.
 If you are looking for the old, MIPS backend, check out [this README](MIPS_AST_backend_README.md).
 
 ## Testing
 Inside the `tests/` folder, there are two folders, `work/` and `reg_outputs/`. `work/` contains tests you can automatically run (see below). `ref_outputs/` contains the
 reference outputs for the tests.
 Once again, this assumes the standard library from before.
-NOTE: the following output clears the reference outputs in each folder called `test_outputs` if you want to compare to make sure things work, you'll need to save these somewhere else.
 ```
 $ ./clear_outputs.sh
 $ ./check_outputs
 $ ./run.sh
 ```
-This will run all the tests in each directory, pipes outputs and return values to files, and checks the outputs of the tests to see if they match the reference outputs.
+This will run all the tests in each directory, pipe outputs and return values to files, and check the outputs of the tests to see if they match the reference outputs.
 These folders contain examples of practical spectre programs such as linked lists, ternary search trees, etc. So if you're confused about how to use spectre, this is a good place to start!
 
 ## Samples
-Inside the `samples/` folder, you will see some simple spectre programs that display the power of the spectre programming language and standard library. In addition to the tests, these samples are a great place to start seeing spectre in action in a practical setting. These currently include things like a decimal to hexadecimal converter (and vice versa), a simple echo program, and more. 
+Inside the `samples/` folder, you will see some simple spectre programs that display the power of the spectre programming language and standard library.
+In addition to the tests, these samples are a great place to start seeing spectre in action in a practical setting.
+These currently include things like a decimal to hexadecimal converter (and vice versa), a simple echo program, and more. 
+The more complex ones include:
+* A full expression evaluator. All of C's binary operators are supported; multiple statements (separated by semicolons) are also supported as well.
+This is in the `samples/expr_eval/` folder.
+* A simple ls clone; this includes some of the output provided by the traditional `ls -la` including displaying hidden files, file permissions, file sizes, etc.
+* A simple du clone; this is essentially the output of `du -b` on a regular files.
 
 ## Future Work
 * Should make the `sp` script more robust by just doing the entire thing in C++ so it'll handle more options as well. Currently, it takes all files as inputs and assumes your first file is the file with your main function.
@@ -108,11 +127,3 @@ See the `Testing` section above.
 * Implement pre-coloring and support register coalescing in `alloc_regs.{c,h}pp`. Also make the algorithm more efficient.
 * Look into linking calls dynamically; currently everything is statically linked which makes life easier, but dynamic linking should be supported.
 
-## Contributions
-* If something went horribly wrong, let me know and I'll try to fix it. Of course, if you want to fix it yourself, contributions are always welcome :^)
-* There'll probably always be more things to add to the standard library and now, more optimizations to add to the compiler (this is putting aside language features as well).
-Feel free to lend a hand! Any help would always be appreciated.
-
-## License
-* If you modify the compiler or standard library, make it open source if you plan on re-distributing it.
-* If you write something in the spectre programming language, link against or just use the spectre standard library, or build an executable using spectre, do whatever you want.
