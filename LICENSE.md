@@ -18,14 +18,15 @@ change the code and re-distribute any resulting outputs or code, then you need t
 
 I realize that this license is very informal legally (to say the least). However, the reason I chose to spend the time to write is because of the following:
 
-1. I have spent a lot working on this code; I don't know what that says about me (I definitely have a lot to learn), but I do know I value this code a lot.
+1. I have spent a lot of time and effort working on this code; I don't know what that says about me (I definitely have a lot to learn),
+but I do know I value this code a lot.
 2. I rarely like accepting things that I have no control over and I don't understand.
 
 What this means is that unless I have fully read a license and understand exactly what it says, I will definitely not agree to use it. Perhaps at some point in the
 future, I will read the text for the \*GPL\* licenses, but until then, this is what the license is going to be. I find it likely there might be something I'll
 disagree with, so I don't want to commit to something I don't fully understand. All I know is that what I've written above is what I feel about the usage of my code.
 In summary, even though I have read online that what I have written is similar to some variation of GPLv2 or GPLv3, until I have the time and the knowledge to have
-read the license from a legal background, I do not feel comfortable changing it.
+read the license from a legal background, I do not feel comfortable adopting it.
 
 If you've read this far, you can probably tell that the minutia of legality is not my cup of tea. Just follow the rules outlined above in good faith and I'm sure that
 there'll be no problems. If you have any questions, just send me a message, and I'm sure we can reach an understanding.
