@@ -1,5 +1,6 @@
 Debug/
 build/
+opt_build/
 arm_build/
 spectre-outputs/
 spectre.vcxproj
