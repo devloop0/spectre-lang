@@ -124,6 +124,6 @@ This is in the `samples/expr_eval/` folder.
 * ~~Should make testing more robust and intuitive (this includes updating all tests to include the `test.sp` include and automate checking for tests).~~ This is being accomplished with the `tests/work/check_outputs.sh` script.
 See the `Testing` section above.
 * Implement more optimizations (copy propagation, CSE, etc.).
-* Implement pre-coloring and support register coalescing in `alloc_regs.{c,h}pp`. Also make the algorithm more efficient.
+* Implement pre-coloring and support register coalescing in `alloc_regs.{c,h}pp`. Also make the algorithm more efficient. (WIP: Optimized register allocation quite a bit but more can be done).
 * Look into linking calls dynamically; currently everything is statically linked which makes life easier, but dynamic linking should be supported.
 
