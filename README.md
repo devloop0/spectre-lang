@@ -18,6 +18,7 @@ See the [LICENSE](LICENSE.md) file.
 
 ## Dependencies
 * CMake (>= 3.0)
+* Make (>= 3.81)
 * g++\-9 (C++17)
 * realpath
 * GNU binutils
@@ -32,21 +33,19 @@ $ make
 ```
 This will setup and compile spectre for you.
 
-## Library Setup
+## Standard Library Setup
 The standard library only works on an actual 32-bit ARMV6L Linux system. If you don't have access to one, you'll need to emulate one.
 First, you'll need to copy the `libspectre` directory into your `/usr/include` directory. The spectre compiler searches for system includes from the
 `/usr/include/libspectre` path. I'd recommend giving your current user full permissions over the folder during setup (you can change this later if you want).
 Additionally, you'll need to add the spectre compiler to your `$PATH` for this build script to work.
 From here on out, I'll assume that you have full permissions to the `/usr/include/libspectre` folder and `spectre` is in your `$PATH`.
-Now, do the following (inside the `/usr/include/libspectre` folder for example):
+Now, do the following inside the `/usr/include/libspectre` folder:
 ```
-$ mkdir build
-$ cd build
-$ /usr/include/libspectre/build.sh
-$ cp libspectre.a /usr/include/libspectre/
+$ make # optionally, -j<# jobs>)
 ```
-This creates a temporary build directory and builds the standard library and statically links it to a `libspectre.a` archive.
-Then you'll need to place this in the `/usr/include/libspectre` folder since this is spectre's system folder.
+This creates a temporary build directory (`/usr/include/libspectre/libspectre.a`) and builds the standard library and statically links it to a `libspectre.a` archive.
+The `libspectre.a` archive will automatically placed in the root of the standard library (`/usr/include/libspectre`); this matches what the `sp` looks for when
+linking your program with standard library functions.
 You can remove the `build/` folder now if you want.
 
 ## Running
