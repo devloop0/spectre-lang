@@ -41,7 +41,7 @@ Additionally, you'll need to add the spectre compiler to your `$PATH` for this b
 From here on out, I'll assume that you have full permissions to the `/usr/include/libspectre` folder and `spectre` is in your `$PATH`.
 Now, do the following inside the `/usr/include/libspectre` folder:
 ```
-$ make # optionally, -j<# jobs>)
+$ make
 ```
 This creates a temporary build directory (`/usr/include/libspectre/libspectre.a`) and builds the standard library and statically links it to a `libspectre.a` archive.
 The `libspectre.a` archive will automatically placed in the root of the standard library (`/usr/include/libspectre`); this matches what the `sp` looks for when
