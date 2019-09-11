@@ -16,7 +16,7 @@ for ARG in $@; do
 	if [ -f $ASM_FILE ]; then
 		mv $ASM_FILE $CURRENT_DIR 2>/dev/null
 		cd $CURRENT_DIR
-		as -mips32 $ASM_FILE -o $O_FILE
+		as -mfloat-abi=hard -mfpu=vfp $ASM_FILE -o $O_FILE
 		OBJ_FILES=("${OBJ_FILES[@]}" $O_FILE)
 		rm $ASM_FILE
 	else
