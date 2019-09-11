@@ -43,8 +43,8 @@ Now, do the following inside the `/usr/include/libspectre` folder:
 ```
 $ make
 ```
-This creates a temporary build directory (`/usr/include/libspectre/libspectre.a`) and builds the standard library and statically links it to a `libspectre.a` archive.
-The `libspectre.a` archive will automatically placed in the root of the standard library (`/usr/include/libspectre`); this matches what the `sp` looks for when
+This creates a temporary build directory (`/usr/include/libspectre/build`), builds the standard library, and statically links everything into a `libspectre.a` archive.
+The `libspectre.a` archive will automatically placed in the root of the standard library (`/usr/include/libspectre`); this matches what the `sp` script looks for when
 linking your program with standard library functions.
 You can remove the `build/` folder now if you want.
 
