@@ -4589,7 +4589,8 @@ namespace spectre {
 		main_function_kind main_function_defined(shared_ptr<function_symbol> fsym) {
 			if (fsym->function_symbol_defined_kind() != function_stmt::defined_kind::KIND_DEFINITION)
 				return main_function_kind::NONE;
-			if (fsym->function_name().raw_text() != "main")
+			if (fsym->function_name().raw_text() != "main"
+				|| fsym->parent_scope()->scope_kind() != scope::kind::KIND_GLOBAL)
 				return main_function_kind::NONE;
 			shared_ptr<function_type> ft = fsym->function_symbol_type();
 			if (ft->type_static_kind() != type::static_kind::KIND_NON_STATIC

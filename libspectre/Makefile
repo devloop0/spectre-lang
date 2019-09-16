@@ -22,7 +22,7 @@ $(ASSEMBLIES): $(ASM_DIR)/%.s: ./$$(subst !,/,%.sp)
 	mv $(patsubst %.sp, %.s, $^) $@
 
 clean:
-	rm -rf build libspectre.a
+	rm -rf $(BUILD_DIR) $(STATIC_LIBRARY)
 
 setup:
-	mkdir -p build/asm build/o
+	mkdir -p $(ASM_DIR) $(O_DIR)
