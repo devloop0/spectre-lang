@@ -3070,7 +3070,19 @@ namespace spectre {
 				(pe->postfix_type_list()[0]->postfix_type_kind() == postfix_expression::kind::KIND_INCREMENT
 					|| pe->postfix_type_list()[0]->postfix_type_kind() == postfix_expression::kind::KIND_DECREMENT
 					|| pe->postfix_type_list()[0]->postfix_type_kind() == postfix_expression::kind::KIND_ADDRESS);
-			shared_ptr<operand> op = generate_primary_expression_middle_ir(mi, pe->contained_primary_expression(), need_lvalue || lvalue);
+			shared_ptr<operand> op = nullptr;
+			bool pure_function_call = !pe->postfix_type_list().empty()
+				&& pe->postfix_type_list()[0]->postfix_type_kind() == postfix_expression::kind::KIND_FUNCTION_CALL
+				&& pe->contained_primary_expression()->primary_expression_kind() == primary_expression::kind::KIND_IDENTIFIER
+				&& pe->contained_primary_expression()->identifier_symbol() != nullptr
+				&& pe->contained_primary_expression()->identifier_symbol()->symbol_kind() == symbol::kind::KIND_FUNCTION;
+			bool first_postfix = true;
+			if (pure_function_call) {
+				string ident_sym = c_symbol_2_string(mi, pe->contained_primary_expression()->identifier_symbol());
+				op = make_shared<label_operand>(ident_sym, pe->contained_primary_expression()->primary_expression_type());
+			}
+			else
+				op = generate_primary_expression_middle_ir(mi, pe->contained_primary_expression(), need_lvalue || lvalue);
 			shared_ptr<type> prev_type = pe->contained_primary_expression()->primary_expression_type();
 			value_kind prev_vk = pe->contained_primary_expression()->primary_expression_value_kind();
 			for (shared_ptr<postfix_expression::postfix_type> ptype : pe->postfix_type_list()) {
@@ -3194,7 +3206,8 @@ namespace spectre {
 				}
 					break;
 				case postfix_expression::kind::KIND_FUNCTION_CALL: {
-					if (prev_vk == value_kind::VALUE_LVALUE)
+					if (first_postfix && pure_function_call && op->operand_kind() == operand::kind::KIND_LABEL);
+					else if (prev_vk == value_kind::VALUE_LVALUE)
 						op = load_lvalue_to_register(mi, op);
 					vector<shared_ptr<operand>> args;
 					if (ptype->function_type()->type_kind() != type::kind::KIND_FUNCTION)
@@ -3253,6 +3266,7 @@ namespace spectre {
 					break;
 				}
 				prev_type = ptype->postfix_type_type();
+				first_postfix = false;
 			}
 			if (lvalue) return op;
 			else {
@@ -3461,6 +3475,7 @@ namespace spectre {
 					}
 					else if (pe->identifier_symbol()->symbol_kind() == symbol::kind::KIND_FUNCTION)
 						deref = false;
+					copy_res->set_dereference(deref);
 					return copy_res;
 				}
 			}
