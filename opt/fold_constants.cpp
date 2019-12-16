@@ -722,12 +722,12 @@ case binary_insn::kind::KIND_ ## OP_TEXT ## GE: { \
 #undef HANDLE_NON_CONSTANT
 #define CAST_VISITOR(FROM, UNSIGNED, TO, SRC) \
 	visit(overload{ \
-		[] (char c) { return make_shared<constant_data>((TO) (UNSIGNED TO) (UNSIGNED FROM) (FROM) c); }, \
-		[] (short s) { return make_shared<constant_data>((TO) (UNSIGNED TO) (UNSIGNED FROM) (FROM) s); }, \
-		[] (int i) { return make_shared<constant_data>((TO) (UNSIGNED TO) (UNSIGNED FROM) (FROM) i); }, \
-		[] (long l) { return make_shared<constant_data>((TO) (UNSIGNED TO) (UNSIGNED FROM) (FROM) l); }, \
-		[] (float f) { return make_shared<constant_data>((TO) (UNSIGNED TO) (UNSIGNED FROM) (FROM) f); }, \
-		[] (double d) { return make_shared<constant_data>((TO) (UNSIGNED TO) (UNSIGNED FROM) (FROM) d); }, \
+		[] (char c) { UNSIGNED FROM temp1 = c; UNSIGNED TO temp2 = temp1; return make_shared<constant_data>((TO) temp2); }, \
+		[] (short s) { UNSIGNED FROM temp1 = s; UNSIGNED TO temp2 = temp1; return make_shared<constant_data>((TO) temp2); }, \
+		[] (int i) { UNSIGNED FROM temp1 = i; UNSIGNED TO temp2 = temp1; return make_shared<constant_data>((TO) temp2); }, \
+		[] (long l) { UNSIGNED FROM temp1 = l; UNSIGNED TO temp2 = temp1; return make_shared<constant_data>((TO) temp2); }, \
+		[] (float f) { UNSIGNED FROM temp1 = f; UNSIGNED TO temp2 = temp1; return make_shared<constant_data>((TO) temp2); }, \
+		[] (double d) { UNSIGNED FROM temp1 = d; UNSIGNED TO temp2 = temp1; return make_shared<constant_data>((TO) temp2); }, \
 		[] (string s) { return make_shared<constant_data>(); } \
 	}, (SRC))
 #define PERFORM_CAST(UNSIGNED, TO, FROM_TYPE, SRC, RES, MOV) do { \

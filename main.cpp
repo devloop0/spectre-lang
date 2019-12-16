@@ -110,7 +110,6 @@ int main(int argc, char* argv[]) {
 				vector<shared_ptr<spectre::opt::pass>>{ fcp, bdce, scp });
 			pm->add_pass(basic_cycle);
 
-
 			shared_ptr<spectre::opt::check_pass> ssa_check = make_shared<spectre::opt::check_pass>(pm, "ssa_check", "Checks SSA integrity.",
 					[] (shared_ptr<basic_blocks>& bbs) {
 						bbs = spectre::opt::insns_in_bb_2_straight_line(bbs);

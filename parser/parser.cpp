@@ -2469,6 +2469,12 @@ namespace spectre {
 			while (true) {
 				_stream.push_back(tok);
 				if (tok.token_kind() == token::kind::TOKEN_SIGNED || tok.token_kind() == token::kind::TOKEN_UNSIGNED) {
+					if (signed_unsigned_hit) {
+						_contained_type = make_shared<type>(type::kind::KIND_NONE, type::const_kind::KIND_NON_CONST, type::static_kind::KIND_NONE);
+						_valid = false;
+						p->report(error(error::kind::KIND_ERROR, "Cannot repeately specify 'signed' or 'unsigned' for a type.", _stream, _stream.size() - 1));
+						return;
+					}
 					signed_unsigned_hit = true;
 					important_sign = tok;
 					if (struct_hit || function_hit) {
