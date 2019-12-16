@@ -720,28 +720,28 @@ case binary_insn::kind::KIND_ ## OP_TEXT ## GE: { \
 						HANDLE_NON_CONSTANT(call_insn, dest_operand);
 						break;
 #undef HANDLE_NON_CONSTANT
-#define CAST_VISITOR(FROM, UNSIGNED, TO, SRC) \
+#define CAST_VISITOR(FROM, SIGN, TO, SRC) \
 	visit(overload{ \
-		[] (char c) { UNSIGNED FROM temp1 = c; UNSIGNED TO temp2 = temp1; return make_shared<constant_data>((TO) temp2); }, \
-		[] (short s) { UNSIGNED FROM temp1 = s; UNSIGNED TO temp2 = temp1; return make_shared<constant_data>((TO) temp2); }, \
-		[] (int i) { UNSIGNED FROM temp1 = i; UNSIGNED TO temp2 = temp1; return make_shared<constant_data>((TO) temp2); }, \
-		[] (long l) { UNSIGNED FROM temp1 = l; UNSIGNED TO temp2 = temp1; return make_shared<constant_data>((TO) temp2); }, \
-		[] (float f) { UNSIGNED FROM temp1 = f; UNSIGNED TO temp2 = temp1; return make_shared<constant_data>((TO) temp2); }, \
-		[] (double d) { UNSIGNED FROM temp1 = d; UNSIGNED TO temp2 = temp1; return make_shared<constant_data>((TO) temp2); }, \
+		[] (char c) { SIGN FROM temp1 = c; SIGN TO temp2 = temp1; return make_shared<constant_data>((TO) temp2); }, \
+		[] (short s) { SIGN FROM temp1 = s; SIGN TO temp2 = temp1; return make_shared<constant_data>((TO) temp2); }, \
+		[] (int i) { SIGN FROM temp1 = i; SIGN TO temp2 = temp1; return make_shared<constant_data>((TO) temp2); }, \
+		[] (long l) { SIGN FROM temp1 = l; SIGN TO temp2 = temp1; return make_shared<constant_data>((TO) temp2); }, \
+		[] (float f) { SIGN FROM temp1 = f; SIGN TO temp2 = temp1; return make_shared<constant_data>((TO) temp2); }, \
+		[] (double d) { SIGN FROM temp1 = d; SIGN TO temp2 = temp1; return make_shared<constant_data>((TO) temp2); }, \
 		[] (string s) { return make_shared<constant_data>(); } \
 	}, (SRC))
-#define PERFORM_CAST(UNSIGNED, TO, FROM_TYPE, SRC, RES, MOV) do { \
+#define PERFORM_CAST(SIGN, TO, FROM_TYPE, SRC, RES, MOV) do { \
 	switch (TO) { \
 	case 1: \
-		(RES) = CAST_VISITOR(FROM_TYPE, UNSIGNED, char, (SRC)); \
+		(RES) = CAST_VISITOR(FROM_TYPE, SIGN, char, (SRC)); \
 		(MOV) = unary_insn::kind::KIND_CMOV; \
 		break; \
 	case 2: \
-		(RES) = CAST_VISITOR(FROM_TYPE, UNSIGNED, short, (SRC)); \
+		(RES) = CAST_VISITOR(FROM_TYPE, SIGN, short, (SRC)); \
 		(MOV) = unary_insn::kind::KIND_SMOV; \
 		break; \
 	case 4: \
-		(RES) = CAST_VISITOR(FROM_TYPE, UNSIGNED, int, (SRC)); \
+		(RES) = CAST_VISITOR(FROM_TYPE, SIGN, int, (SRC)); \
 		(MOV) = unary_insn::kind::KIND_IMOV; \
 		break; \
 	default: \
@@ -769,21 +769,21 @@ case binary_insn::kind::KIND_ ## OP_TEXT ## GE: { \
 						switch (from) {
 						case 1: {
 							if (signed_ext)
-								PERFORM_CAST(, to, char, s, res, which_mov);
+								PERFORM_CAST(signed, to, char, s, res, which_mov);
 							else
 								PERFORM_CAST(unsigned, to, char, s, res, which_mov);
 						}
 							break;
 						case 2: {
 							if (signed_ext)
-								PERFORM_CAST(, to, short, s, res, which_mov);
+								PERFORM_CAST(signed, to, short, s, res, which_mov);
 							else
 								PERFORM_CAST(unsigned, to, short, s, res, which_mov);
 						}
 							break;
 						case 4: {
 							if (signed_ext)
-								PERFORM_CAST(, to, int, s, res, which_mov);
+								PERFORM_CAST(signed, to, int, s, res, which_mov);
 							else
 								PERFORM_CAST(unsigned, to, int, s, res, which_mov);
 						}
