@@ -1070,9 +1070,7 @@ namespace spectre {
 								e_type += "uxt";
 							else
 								bbs->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
-							if (ei->to() == ei->from())
-								break;
-							if (ei->from() >= ei->to())
+							if (ei->from() > ei->to())
 								bbs->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 							switch (ei->from()) {
 							case 1:
@@ -1082,10 +1080,13 @@ namespace spectre {
 								e_type += "h";
 								break;
 							case 4:
+								break;
 							default:
 								bbs->report_internal("This should be unreachable.", __FUNCTION__, __LINE__, __FILE__);
 								break;
 							}
+							if (ei->to() == ei->from())
+								e_type = "mov";
 							if (ei->lhs()->operand_kind() != operand::kind::KIND_REGISTER)
 								bbs->report_internal("This should be unreachable", __FUNCTION__, __LINE__, __FILE__);
 							shared_ptr<register_operand> lhs_reg = static_pointer_cast<register_operand>(ei->lhs());
