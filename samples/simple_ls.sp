@@ -30,7 +30,6 @@ struct print_info {
 	unsigned int st_mode;
 }
 
-func void regular_white();
 func void display_print_info(type print_info* pi, unsigned int max_nlink_len, unsigned int max_size_len);
 func int print_info_cmp(const byte* a, const byte* b);
 func void update_type(char d_type, char* krwx);
