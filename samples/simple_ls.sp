@@ -18,14 +18,19 @@ const char* empty_krwx = "----------";
 const char* question = "??";
 const char* curr_dir = ".", parent_dir = "..";
 const char* total_sp = "total ";
+const char* bold_green_code = "\033[1m\033[32m";
+const char* bold_blue_code = "\033[1m\033[34m";
+const char* regular_white_code = "\033[0m";
 
 struct print_info {
 	char* perm_string,
 	      nlink_string,
 	      size_string,
 	      name;
+	unsigned int st_mode;
 }
 
+func void regular_white();
 func void display_print_info(type print_info* pi, unsigned int max_nlink_len, unsigned int max_size_len);
 func int print_info_cmp(const byte* a, const byte* b);
 func void update_type(char d_type, char* krwx);
@@ -35,7 +40,7 @@ func int ls_dir(char* dir);
 func int ls_file(char* file, type std::syscall::stat statbuf);
 
 func void display_print_info(type print_info* pi, unsigned int max_nlink_len, unsigned int max_size_len) {
-	using std::syscall::direct_write;
+	using namespace std::syscall;
 	using std::lib::free;
 	using std::string::strlen;
 
@@ -56,7 +61,12 @@ func void display_print_info(type print_info* pi, unsigned int max_nlink_len, un
 	free(pi->size_string as byte*);
 	direct_write(1, sp$, 1);
 
+	if (S_ISDIR(pi->st_mode))
+		direct_write(1, bold_blue_code, strlen(bold_blue_code));
+	else if ((pi->st_mode & S_IXUSR) != 0)
+		direct_write(1, bold_green_code, strlen(bold_green_code));
 	direct_write(1, pi->name, strlen(pi->name));
+	direct_write(1, regular_white_code, strlen(regular_white_code));
 	free(pi->name as byte*);
 
 	free(pi as byte*);
@@ -183,6 +193,7 @@ func int ls_dir(char* dir) {
 			strcpy(q2, question);
 			pi->nlink_string = q1;
 			pi->size_string = q2;
+			pi->st_mode = 0;
 		}
 		else {
 			total_blocks += statbuf.st_blocks;
@@ -190,6 +201,7 @@ func int ls_dir(char* dir) {
 			pi->perm_string = krwx;
 			pi->nlink_string = ltoa(statbuf.st_nlink);
 			pi->size_string = ltoa(statbuf.st_size);
+			pi->st_mode = statbuf.st_mode;
 		}
 		if(strlen(pi->nlink_string) > max_nlink_len)
 			max_nlink_len = strlen(pi->nlink_string);
@@ -239,6 +251,7 @@ func int ls_file(char* file, type std::syscall::stat statbuf) {
 	pi->nlink_string = ltoa(statbuf.st_nlink);
 	pi->size_string = ltoa(statbuf.st_size);
 	pi->name = malloc(sizeof{char} * (strlen(file) + 1)) as char*;
+	pi->st_mode = statbuf.st_mode;
 	strcpy(pi->name, file);
 
 	display_print_info(pi, strlen(pi->nlink_string), strlen(pi->size_string));
