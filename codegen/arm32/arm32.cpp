@@ -911,7 +911,7 @@ namespace spectre {
 						shared_ptr<insn> i = bb->get_insn(insn_counter);
 						if (dl >= pass_manager::debug_level::KIND_DEBUG) {
 							if (i->insn_kind() != insn::kind::KIND_LABEL)
-								function_body.push_back({TAB, "; ", i->to_string()});
+								function_body.push_back({TAB, "@ ", i->to_string()});
 						}
 
 						switch (i->insn_kind()) {

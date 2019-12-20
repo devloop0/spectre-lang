@@ -26,6 +26,8 @@ namespace spectre {
 			unordered_map<string, int> label_to_bb;
 			unordered_map<int, string> bb_to_j, bb_to_label, bb_to_cond;
 			unordered_map<string, int> branch_count;
+			pair<unordered_set<int>, unordered_set<int>> funcs_and_glob = function_and_global_headers(bbs);
+			unordered_set<int> funcs = funcs_and_glob.first, globs = funcs_and_glob.second;
 
 			for (int i = 0; i < bbs->get_basic_blocks().size(); i++) {
 				shared_ptr<basic_block> bb = bbs->get_basic_block(i);
@@ -160,7 +162,7 @@ namespace spectre {
 				for (int i = 0; i < bbs->get_basic_blocks().size(); i++) {
 					shared_ptr<basic_block> bb = bbs->get_basic_block(i);
 					if (bb->get_insns(bbs).size() != 1 || i == bbs->get_basic_blocks().size() - 1
-						|| !phi_preds[i].empty())
+						|| !phi_preds[i].empty() || funcs.find(i) != funcs.end() || globs.find(i) != globs.end())
 						continue;
 					shared_ptr<basic_block> bb_next = bbs->get_basic_block(i + 1);
 					unordered_set<int> adjs = bbs->cfg().adjacent(i);
