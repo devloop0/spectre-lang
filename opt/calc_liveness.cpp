@@ -178,7 +178,18 @@ namespace spectre {
 						break;
 					case insn::kind::KIND_ACCESS: {
 						shared_ptr<access_insn> ai = static_pointer_cast<access_insn>(i);
-						handle_lhs(ai->variable(), bb_counter, insn_counter);
+						shared_ptr<operand> lhs_op = ai->variable();
+						if (lhs_op->operand_kind() == operand::kind::KIND_REGISTER) {
+							shared_ptr<register_operand> reg_op = static_pointer_cast<register_operand>(lhs_op);
+							if (reg_op->dereference())
+								handle_lhs(ai->variable(), bb_counter, insn_counter);
+							else {
+								reg_num_2_type[reg_op->virtual_register_number()] = reg_op->register_type();
+								stk_resv_location.insert(reg_op->virtual_register_number());
+							}
+						}
+						else
+							handle_lhs(ai->variable(), bb_counter, insn_counter);
 					}
 						break;
 					case insn::kind::KIND_BINARY: {
