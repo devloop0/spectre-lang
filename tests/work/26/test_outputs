@@ -1,0 +1,27 @@
+------------Building ./2_funcs.sp-------------
+------------Running ./2_funcs.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./gcc_torture_35.sp-------------
+------------Running ./gcc_torture_35.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./struct_funcs.sp-------------
+------------Running ./struct_funcs.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./test_rand.sp-------------
+------------Running ./test_rand.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./printf_char_test.sp-------------
+------------Running ./printf_char_test.sp-------------
+Hello World!
+Y
+------------Return code: 0-------------
+------------Building ./func_ptrs.sp-------------
+------------Running ./func_ptrs.sp-------------
+Added everything. Goodbye...
+Added second; should be called first.
+Added first; should be called second.
+------------Return code: 0-------------

@@ -7,9 +7,17 @@ namespace std {
 		static constexpr unsigned int LINUX_ARM_WRITE = LINUX_ARM + 4;
 		static constexpr unsigned int LINUX_ARM_OPEN = LINUX_ARM + 5;
 		static constexpr unsigned int LINUX_ARM_CLOSE = LINUX_ARM + 6;
+		static constexpr unsigned int LINUX_ARM_UNLINK = LINUX_ARM + 10;
+		static constexpr unsigned int LINUX_ARM_CHMOD = LINUX_ARM + 15;
 		static constexpr unsigned int LINUX_ARM_LSEEK = LINUX_ARM + 19;
 		static constexpr unsigned int LINUX_ARM_SYNC = LINUX_ARM + 36;
+		static constexpr unsigned int LINUX_ARM_RENAME = LINUX_ARM + 38;
+		static constexpr unsigned int LINUX_ARM_MKDIR = LINUX_ARM + 39;
+		static constexpr unsigned int LINUX_ARM_RMDIR = LINUX_ARM + 40;
 		static constexpr unsigned int LINUX_ARM_BRK = LINUX_ARM + 45;
+		static constexpr unsigned int LINUX_ARM_GETTIMEOFDAY = LINUX_ARM + 78;
+		static constexpr unsigned int LINUX_ARM_SETTIMEOFDAY = LINUX_ARM + 79;
+		static constexpr unsigned int LINUX_ARM_TRUNCATE = LINUX_ARM + 92;
 		static constexpr unsigned int LINUX_ARM_STAT = LINUX_ARM + 195;
 		static constexpr unsigned int LINUX_ARM_FSTAT = LINUX_ARM + 197;
 		static constexpr unsigned int LINUX_ARM_GETDENTS = LINUX_ARM + 141;
@@ -53,6 +61,16 @@ namespace std {
 
 		static constexpr unsigned int PATH_MAX = 4096;
 		static constexpr unsigned int NAME_MAX = 255;
+
+		struct timeval {
+			int tv_sec;
+			int tv_usec;
+		}
+
+		struct timezone {
+			int tz_minuteswest;
+			int tz_dsttime;
+		}
 
 		struct stat {
 			unsigned long st_dev;
@@ -150,5 +168,13 @@ namespace std {
 		func int direct_lseek(int fd, int offset, int whence);
 		func int direct_openat(int fd, const char* pathname, int flags);
 		func int direct_openat2(int fd, const char* pathname, int flags, unsigned int mode);
+		func int direct_truncate(const char* pathname, long length);
+		func int direct_mkdir(const char* pathname, unsigned int mode);
+		func int direct_gettimeofday(type timeval* tv, type timezone* tz);
+		func int direct_settimeofday(const type timeval* tv, const type timezone* tz);
+		func int direct_unlink(const char* pathname);
+		func int direct_rmdir(const char* pathname);
+		func int direct_rename(const char* oldpath, const char* newpath);
+		func int direct_chmod(const char* pathname, unsigned int mode);
 	}
 }
