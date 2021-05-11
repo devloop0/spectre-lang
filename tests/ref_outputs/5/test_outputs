@@ -1,28 +1,28 @@
-------------Building ./strcat_test.sp-------------
-------------Running ./strcat_test.sp-------------
-these strings are concatenated!!
-------------Return code: 33-------------
+------------Building ./gt_2_fp_args.sp-------------
+------------Running ./gt_2_fp_args.sp-------------
+Y
+------------Return code: 0-------------
 ------------Building ./gt_4_args.sp-------------
 ------------Running ./gt_4_args.sp-------------
 ------------Return code: 50-------------
-------------Building ./nested_function_calls.sp-------------
-------------Running ./nested_function_calls.sp-------------
-------------Return code: 44-------------
 ------------Building ./linked_list_test.sp-------------
 ------------Running ./linked_list_test.sp-------------
 0 1 2 3 4 5 6 7 8 
 1 2 3 4 5 6 7 8 9 
 ------------Return code: 0-------------
+------------Building ./nested_function_calls.sp-------------
+------------Running ./nested_function_calls.sp-------------
+------------Return code: 44-------------
+------------Building ./resv_stk_deref.sp-------------
+------------Running ./resv_stk_deref.sp-------------
+------------Return code: 0-------------
+------------Building ./strcat_test.sp-------------
+------------Running ./strcat_test.sp-------------
+these strings are concatenated!!
+------------Return code: 33-------------
 ------------Building ./struct_args.sp-------------
 ------------Running ./struct_args.sp-------------
 4 5
 4 5
 9 2
-------------Return code: 0-------------
-------------Building ./gt_2_fp_args.sp-------------
-------------Running ./gt_2_fp_args.sp-------------
-Y
-------------Return code: 0-------------
-------------Building ./resv_stk_deref.sp-------------
-------------Running ./resv_stk_deref.sp-------------
 ------------Return code: 0-------------

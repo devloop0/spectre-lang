@@ -899,6 +899,7 @@ namespace spectre {
 					function_body.push_back({TAB, ".align ", is_float ? "2" : "3"});
 					function_body.push_back({TAB, lab, is_float ? ": .float " : ": .double ",
 						fp_max_prec_to_string(retrieve_immediate_operand<double>(bbs, rhs_imm))});
+					function_body.push_back({".ltorg"});
 					function_body.push_back({asm_lab, ":"});
 					return lab;
 				};
@@ -920,6 +921,7 @@ namespace spectre {
 							break;
 						case insn::kind::KIND_JUMP:
 							function_body.push_back({TAB, "b ", static_pointer_cast<jump_insn>(i)->label()->label_text()});
+							function_body.push_back({".ltorg"});
 							break;
 						case insn::kind::KIND_ALIGN:
 						case insn::kind::KIND_VAR:
@@ -967,8 +969,10 @@ namespace spectre {
 								}
 								else {
 									int val = retrieve_immediate_operand<int>(bbs, io);
-									if (val != 0)
+									if (val != 0) {
 										function_body.push_back({TAB, "b ", ci->branch()->label_text()});
+										function_body.push_back({".ltorg"});
+									}
 								}
 							}
 								break;

@@ -11,7 +11,7 @@ for d in $(find . -mindepth 1 -type d); do
 		echo "------------Running ${f}-------------"
 		./$fname >> test_outputs
 		echo "------------Return code: $?-------------" >> test_outputs
-		find . -type f -executable -delete
+		rm $fname
 	done
 	cd ..
 done

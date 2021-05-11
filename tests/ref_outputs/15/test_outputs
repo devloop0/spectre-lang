@@ -1,14 +1,6 @@
-------------Building ./sbrk_test.sp-------------
-------------Running ./sbrk_test.sp-------------
-14
-------------Return code: 0-------------
-------------Building ./mem_sanity.sp-------------
-------------Running ./mem_sanity.sp-------------
+------------Building ./brk_test.sp-------------
+------------Running ./brk_test.sp-------------
 Y
-------------Return code: 0-------------
-------------Building ./raw_brk_test.sp-------------
-------------Running ./raw_brk_test.sp-------------
-09
 ------------Return code: 0-------------
 ------------Building ./calloc_test.sp-------------
 ------------Running ./calloc_test.sp-------------
@@ -24,11 +16,19 @@ thrice :)
 ------------Building ./malloc_test_2.sp-------------
 ------------Running ./malloc_test_2.sp-------------
 ------------Return code: 0-------------
-------------Building ./brk_test.sp-------------
-------------Running ./brk_test.sp-------------
+------------Building ./mem_sanity.sp-------------
+------------Running ./mem_sanity.sp-------------
 Y
+------------Return code: 0-------------
+------------Building ./raw_brk_test.sp-------------
+------------Running ./raw_brk_test.sp-------------
+09
 ------------Return code: 0-------------
 ------------Building ./realloc_test.sp-------------
 ------------Running ./realloc_test.sp-------------
 Y
+------------Return code: 0-------------
+------------Building ./sbrk_test.sp-------------
+------------Running ./sbrk_test.sp-------------
+14
 ------------Return code: 0-------------

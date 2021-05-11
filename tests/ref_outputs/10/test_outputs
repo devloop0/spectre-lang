@@ -1,24 +1,24 @@
-------------Building ./gcc_torture_32.sp-------------
-------------Running ./gcc_torture_32.sp-------------
-Y
-------------Return code: 0-------------
-------------Building ./gcc_torture_31.sp-------------
-------------Running ./gcc_torture_31.sp-------------
-Y
-------------Return code: 0-------------
-------------Building ./gcc_torture_30.sp-------------
-------------Running ./gcc_torture_30.sp-------------
-Y
-------------Return code: 0-------------
 ------------Building ./gcc_torture_27.sp-------------
 ------------Running ./gcc_torture_27.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./gcc_torture_28.sp-------------
+------------Running ./gcc_torture_28.sp-------------
 Y
 ------------Return code: 0-------------
 ------------Building ./gcc_torture_29.sp-------------
 ------------Running ./gcc_torture_29.sp-------------
 Y
 ------------Return code: 0-------------
-------------Building ./gcc_torture_28.sp-------------
-------------Running ./gcc_torture_28.sp-------------
+------------Building ./gcc_torture_30.sp-------------
+------------Running ./gcc_torture_30.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./gcc_torture_31.sp-------------
+------------Running ./gcc_torture_31.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./gcc_torture_32.sp-------------
+------------Running ./gcc_torture_32.sp-------------
 Y
 ------------Return code: 0-------------

@@ -1,17 +1,13 @@
+------------Building ./alloca_test.sp-------------
+------------Running ./alloca_test.sp-------------
+Y
+------------Return code: 0-------------
 ------------Building ./bsearch_test.sp-------------
 ------------Running ./bsearch_test.sp-------------
 Y
 ------------Return code: 0-------------
-------------Building ./va_args_test.sp-------------
-------------Running ./va_args_test.sp-------------
-Y
-------------Return code: 0-------------
-------------Building ./union_test.sp-------------
-------------Running ./union_test.sp-------------
-Y
-------------Return code: 0-------------
-------------Building ./alloca_test.sp-------------
-------------Running ./alloca_test.sp-------------
+------------Building ./delete_test.sp-------------
+------------Running ./delete_test.sp-------------
 Y
 ------------Return code: 0-------------
 ------------Building ./printf_test.sp-------------
@@ -23,11 +19,15 @@ Average: 3
 1234567
 123 45 345
 ------------Return code: 0-------------
-------------Building ./delete_test.sp-------------
-------------Running ./delete_test.sp-------------
+------------Building ./union_test.sp-------------
+------------Running ./union_test.sp-------------
 Y
 ------------Return code: 0-------------
 ------------Building ./union_test_2.sp-------------
 ------------Running ./union_test_2.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./va_args_test.sp-------------
+------------Running ./va_args_test.sp-------------
 Y
 ------------Return code: 0-------------

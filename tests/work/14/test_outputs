@@ -1,5 +1,5 @@
-------------Building ./isdigit_test.sp-------------
-------------Running ./isdigit_test.sp-------------
+------------Building ./isalnum_test.sp-------------
+------------Running ./isalnum_test.sp-------------
 Y
 ------------Return code: 0-------------
 ------------Building ./isalpha_test.sp-------------
@@ -10,8 +10,8 @@ Y
 ------------Running ./isblank_test.sp-------------
 Y
 ------------Return code: 0-------------
-------------Building ./isalnum_test.sp-------------
-------------Running ./isalnum_test.sp-------------
+------------Building ./isdigit_test.sp-------------
+------------Running ./isdigit_test.sp-------------
 Y
 ------------Return code: 0-------------
 ------------Building ./isspace_test.sp-------------
@@ -21,15 +21,15 @@ is-
 C3PO-
 :^).-
 ------------Return code: 0-------------
+------------Building ./isxdigit_test.sp-------------
+------------Running ./isxdigit_test.sp-------------
+Y
+------------Return code: 0-------------
 ------------Building ./trie.sp-------------
 ------------Running ./trie.sp-------------
 Y
 ------------Return code: 0-------------
 ------------Building ./tst.sp-------------
 ------------Running ./tst.sp-------------
-Y
-------------Return code: 0-------------
-------------Building ./isxdigit_test.sp-------------
-------------Running ./isxdigit_test.sp-------------
 Y
 ------------Return code: 0-------------

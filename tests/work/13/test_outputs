@@ -1,19 +1,32 @@
+------------Building ./abort_test.sp-------------
+------------Running ./abort_test.sp-------------
+------------Return code: 1-------------
+------------Building ./access_test.sp-------------
+------------Running ./access_test.sp-------------
+Y
+3
+2
+1
+------------Return code: 0-------------
 ------------Building ./atexit_quick_exit.sp-------------
 ------------Running ./atexit_quick_exit.sp-------------
+------------Return code: 0-------------
+------------Building ./at_quick_exit_exit.sp-------------
+------------Running ./at_quick_exit_exit.sp-------------
 ------------Return code: 0-------------
 ------------Building ./explicit_exit_test.sp-------------
 ------------Running ./explicit_exit_test.sp-------------
 2
 1
 ------------Return code: 0-------------
-------------Building ./at_quick_exit_exit.sp-------------
-------------Running ./at_quick_exit_exit.sp-------------
-------------Return code: 0-------------
-------------Building ./abort_test.sp-------------
-------------Running ./abort_test.sp-------------
-------------Return code: 1-------------
 ------------Building ./implicit_at_quick_exit_exit.sp-------------
 ------------Running ./implicit_at_quick_exit_exit.sp-------------
+------------Return code: 0-------------
+------------Building ./implicit_exit_test.sp-------------
+------------Running ./implicit_exit_test.sp-------------
+3
+2
+1
 ------------Return code: 0-------------
 ------------Building ./_at_quick_exit_test.sp-------------
 ------------Running ./_at_quick_exit_test.sp-------------
@@ -22,17 +35,4 @@
 ------------Return code: 0-------------
 ------------Building ./_Exit_test.sp-------------
 ------------Running ./_Exit_test.sp-------------
-------------Return code: 0-------------
-------------Building ./access_test.sp-------------
-------------Running ./access_test.sp-------------
-Y
-3
-2
-1
-------------Return code: 0-------------
-------------Building ./implicit_exit_test.sp-------------
-------------Running ./implicit_exit_test.sp-------------
-3
-2
-1
 ------------Return code: 0-------------

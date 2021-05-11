@@ -1,5 +1,36 @@
+------------Building ./alpha.sp-------------
+------------Running ./alpha.sp-------------
+ABCDEFGHIJKLMNOPQRSTUVWXYZ------------Return code: 0-------------
+------------Building ./gcc_torture_10.sp-------------
+------------Running ./gcc_torture_10.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./gcc_torture_11.sp-------------
+------------Running ./gcc_torture_11.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./gcc_torture_12.sp-------------
+------------Running ./gcc_torture_12.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./gcc_torture_13.sp-------------
+------------Running ./gcc_torture_13.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./gcc_torture_5.sp-------------
+------------Running ./gcc_torture_5.sp-------------
+Y
+------------Return code: 0-------------
 ------------Building ./gcc_torture_6.sp-------------
 ------------Running ./gcc_torture_6.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./gcc_torture_7.sp-------------
+------------Running ./gcc_torture_7.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./gcc_torture_8.sp-------------
+------------Running ./gcc_torture_8.sp-------------
 Y
 ------------Return code: 0-------------
 ------------Building ./gcc_torture_9.sp-------------
@@ -55,37 +86,6 @@ Y
                           !!!!!!                                               
                            !!!!                                                
    ------------Return code: 0-------------
-------------Building ./gcc_torture_10.sp-------------
-------------Running ./gcc_torture_10.sp-------------
-Y
-------------Return code: 0-------------
-------------Building ./gcc_torture_12.sp-------------
-------------Running ./gcc_torture_12.sp-------------
-Y
-------------Return code: 0-------------
-------------Building ./gcc_torture_8.sp-------------
-------------Running ./gcc_torture_8.sp-------------
-Y
-------------Return code: 0-------------
-------------Building ./gcc_torture_13.sp-------------
-------------Running ./gcc_torture_13.sp-------------
-Y
-------------Return code: 0-------------
-------------Building ./gcc_torture_7.sp-------------
-------------Running ./gcc_torture_7.sp-------------
-Y
-------------Return code: 0-------------
-------------Building ./gcc_torture_5.sp-------------
-------------Running ./gcc_torture_5.sp-------------
-Y
-------------Return code: 0-------------
-------------Building ./alpha.sp-------------
-------------Running ./alpha.sp-------------
-ABCDEFGHIJKLMNOPQRSTUVWXYZ------------Return code: 0-------------
-------------Building ./gcc_torture_11.sp-------------
-------------Running ./gcc_torture_11.sp-------------
-Y
-------------Return code: 0-------------
 ------------Building ./swap.sp-------------
 ------------Running ./swap.sp-------------
 Y

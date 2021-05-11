@@ -1,5 +1,13 @@
+------------Building ./constexpr_scoping_check.sp-------------
+------------Running ./constexpr_scoping_check.sp-------------
+Y
+------------Return code: 0-------------
 ------------Building ./namespace_scoping.sp-------------
 ------------Running ./namespace_scoping.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./namespace_scoping2.sp-------------
+------------Running ./namespace_scoping2.sp-------------
 Y
 ------------Return code: 0-------------
 ------------Building ./open_check.sp-------------
@@ -8,13 +16,5 @@ Y
 ------------Return code: 0-------------
 ------------Building ./realloc_test.sp-------------
 ------------Running ./realloc_test.sp-------------
-Y
-------------Return code: 0-------------
-------------Building ./constexpr_scoping_check.sp-------------
-------------Running ./constexpr_scoping_check.sp-------------
-Y
-------------Return code: 0-------------
-------------Building ./namespace_scoping2.sp-------------
-------------Running ./namespace_scoping2.sp-------------
 Y
 ------------Return code: 0-------------

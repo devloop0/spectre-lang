@@ -2,10 +2,6 @@
 ------------Running ./string.sp-------------
 My name is Nikhil, Hello World!
 ------------Return code: 0-------------
-------------Building ./string_3.sp-------------
-------------Running ./string_3.sp-------------
-Y
-------------Return code: 0-------------
 ------------Building ./string_2.sp-------------
 ------------Running ./string_2.sp-------------
 Hellok
@@ -14,8 +10,16 @@ Hello k
 My name is Nikhil, Hello k
 My name is Nikhil, Hello World
 ------------Return code: 0-------------
+------------Building ./string_3.sp-------------
+------------Running ./string_3.sp-------------
+Y
+------------Return code: 0-------------
 ------------Building ./string_4.sp-------------
 ------------Running ./string_4.sp-------------
+Y
+------------Return code: 0-------------
+------------Building ./struct_test.sp-------------
+------------Running ./struct_test.sp-------------
 Y
 ------------Return code: 0-------------
 ------------Building ./value_strings.sp-------------
@@ -23,8 +27,4 @@ Y
 Hello
 World!
 Nikhil says, Hello the Earth/World!
-------------Return code: 0-------------
-------------Building ./struct_test.sp-------------
-------------Running ./struct_test.sp-------------
-Y
 ------------Return code: 0-------------
